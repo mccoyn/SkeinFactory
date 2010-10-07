@@ -1,0 +1,18 @@
+This is still very early development.  It does not work at all.  The
+dependancies in the make file are not completely thought out.  The exact
+conversion process has not been finalized.
+
+To get this to work, you will need the build-essentials and libgc-dev
+packages.  Please let me know if there is another dependancy not mentioned
+here.
+
+To build (this does not work, yet):
+	make all
+	
+To just create c++ source files:
+	make skeinfactory/makefile
+	
+To remove intermediate files, including c++ source files:
+	make clean
+	
+Be patient.  A full `make all` takes me about 30 minutes.
