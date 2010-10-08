@@ -1,23 +1,23 @@
 class Tk:
-	def foo( self):
-		return
+	"Mock type"
 
 class Scrollbar:
-	def set( self, lo, high ):
-		return
+	"Mock type"
 
 class Canvas:
-	def foo( self):
-		return
+	"Mock type"
 		
 class Label:
-	def foo( self):
-		return
+	"Mock type"
 		
 class Menu:
-	def foo( self):
-		return
+	"Mock type"
 		
 class Button:
-	def foo( self):
-		return
+	"Mock type"
+		
+class Radiobutton:
+	"Mock type"
+		
+class StringVar:
+	"Mock type"

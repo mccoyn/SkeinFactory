@@ -80,3 +80,6 @@ def getctime(s):
 
 def walk(top, func, arg):
     func(arg, '', [''])
+
+def expanduser(s):
+    return '/home/user'

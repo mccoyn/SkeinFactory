@@ -341,7 +341,7 @@ class ProfilePluginRadioButtonsSaveListener:
 				return
 
 
-class ProfileRepository:
+class ProfileRepository( settings.Repository ):
 	"A class to handle the profile entities."
 	def __init__( self ):
 		"Set the default entities, execute title & repository fileName."

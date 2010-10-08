@@ -784,7 +784,9 @@ def connect_actual_formal(expr, func, parent_constr=False, check_error=False, me
     return pairs, len(extra)
 
 def parent_func(thing):
-    if inode(thing) is not None:
+    if inode(thing) is None:
+        parent = None
+    else:
         parent = inode(thing).parent
     while parent:
         if not isinstance(parent, function) or not parent.listcomp:

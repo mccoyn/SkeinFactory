@@ -9,7 +9,7 @@ import __init__
 
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
-from skeinforge_application.skeinforge_utilities import skeinforge_help
+#from skeinforge_application.skeinforge_utilities import skeinforge_help
 import cStringIO
 import math
 import os
@@ -556,6 +556,10 @@ def writeSettingsPrintMessage( repository ):
 	writeSettings( repository )
 	print( repository.title.lower().capitalize() + ' have been saved.')
 
+
+class Repository:
+	def __init__( self ):
+		"This is just a mock object to be used as a base class"
 
 class StringSetting:
 	"A class to display, read & write a string."

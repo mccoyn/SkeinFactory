@@ -1515,6 +1515,8 @@ def parse_module(name, ast=None, parent=None, node=None):
         # --- check cache
         modpath = '.'.join(mod.mod_path)
         if modpath in getgx().modules: # cached?
+            if not hasattr(getgx().modules[modpath], 'classes'):
+                error('circular imports detected:  %s' % (getgx().modules[modpath]), node, warning=True)
             return getgx().modules[modpath]
         getgx().modules[modpath] = mod
 

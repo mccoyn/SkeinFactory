@@ -505,7 +505,7 @@ def writeOutput( fileName ):
 	skeinforge_craft.writeOutput( fileName )
 
 
-class SkeinforgeRepository:
+class SkeinforgeRepository( settings.Repository ):
 	"A class to handle the skeinforge settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

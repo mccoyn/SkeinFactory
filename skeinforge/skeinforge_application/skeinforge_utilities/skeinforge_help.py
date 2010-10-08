@@ -20,7 +20,7 @@ def getNewRepository():
 	return HelpRepository()
 
 
-class HelpRepository:
+class HelpRepository( settings.Repository ):
 	"A class to handle the help settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."
