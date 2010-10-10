@@ -3,7 +3,7 @@ Boolean geometry utilities.
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -14,7 +14,7 @@ from fabmetheus_utilities import settings
 import math
 import os
 import sys
-import traceback
+#import traceback
 
 
 __author__ = "Enrique Perez (perez_enrique@yahoo.com)"
@@ -215,26 +215,28 @@ def getEvaluatedExpressionValue( value, xmlElement ):
 	except:
 		print('Warning, in getEvaluatedExpressionValue in evaluate could not get a value for:')
 		print( value )
-		traceback.print_exc( file = sys.stdout )
+		#traceback.print_exc( file = sys.stdout )
 		return None
 
 def getEvaluatedExpressionValueBySplitLine( words, xmlElement ):
 	"Evaluate the expression value."
-	evaluators = []
-	for wordIndex, word in enumerate( words ):
-		nextWord = ''
-		nextWordIndex = wordIndex + 1
-		if nextWordIndex < len( words ):
-			nextWord = words[ nextWordIndex ]
-		evaluator = getEvaluator( evaluators, nextWord, word, xmlElement )
-		if evaluator != None:
-			evaluators.append( evaluator )
-	while getBracketsExist( evaluators ):
-		pass
-	evaluatedExpressionValueEvaluators = getEvaluatedExpressionValueEvaluators( evaluators )
-	if len( evaluatedExpressionValueEvaluators ) > 0:
-		return evaluatedExpressionValueEvaluators[0].value
+	print('Error, getEvaluatedExpressionValueBySplitLine not implemented')
 	return None
+#	evaluators = []
+#	for wordIndex, word in enumerate( words ):
+#		nextWord = ''
+#		nextWordIndex = wordIndex + 1
+#		if nextWordIndex < len( words ):
+#			nextWord = words[ nextWordIndex ]
+#		evaluator = getEvaluator( evaluators, nextWord, word, xmlElement )
+#		if evaluator != None:
+#			evaluators.append( evaluator )
+#	while getBracketsExist( evaluators ):
+#		pass
+#	evaluatedExpressionValueEvaluators = getEvaluatedExpressionValueEvaluators( evaluators )
+#	if len( evaluatedExpressionValueEvaluators ) > 0:
+#		return evaluatedExpressionValueEvaluators[0].value
+#	return None
 
 def getEvaluatedExpressionValueEvaluators( evaluators ):
 	"Evaluate the expression value from the numeric and operation evaluators."
@@ -328,38 +330,38 @@ def getEvaluatedValueObliviously( key, xmlElement ):
 		return value
 	return getEvaluatedLinkValue( value, xmlElement )
 
-def getEvaluator( evaluators, nextWord, word, xmlElement ):
-	"Get the evaluator."
-	global globalSplitDictionary
-	if word in globalSplitDictionary:
-		return globalSplitDictionary[ word ]( word, xmlElement )
-	if getStartsWithChainWord( word ):
-		word = getValueByKeysXMLElement( word.split('.'), xmlElement )
-		if word == None:
-			return None
-		if word.__class__.__name__ == 'XMLElement':
-			if word.className == 'function':
-				return EvaluatorFunction( str( word ), word )
-			else:
-				return EvaluatorValue( word )
-		if word.__class__ != str:
-			return EvaluatorValue( word )
-	firstCharacter = word[ : 1 ]
-	if firstCharacter == "'" or firstCharacter == '"':
-		if len( word ) > 1:
-			if firstCharacter == word[ - 1 ]:
-				return EvaluatorValue( word[ 1 : - 1 ] )
-	if firstCharacter.isalpha() or firstCharacter == '_':
-		functions = xmlElement.getXMLProcessor().functions
-		if len( functions ) > 0:
-			if word in functions[ - 1 ].localDictionary:
-				return EvaluatorLocal( word, xmlElement )
-		functionElement = xmlElement.getXMLElementByImportID( word )
-		if functionElement != None:
-			if functionElement.className == 'function':
-				return EvaluatorFunction( word, functionElement )
-		return EvaluatorValue( word )
-	return EvaluatorNumeric( word, xmlElement )
+#def getEvaluator( evaluators, nextWord, word, xmlElement ):
+#	"Get the evaluator."
+#	global globalSplitDictionary
+#	if word in globalSplitDictionary:
+#		return globalSplitDictionary[ word ]( word, xmlElement )
+#	if getStartsWithChainWord( word ):
+#		word = getValueByKeysXMLElement( word.split('.'), xmlElement )
+#		if word == None:
+#			return None
+#		if word.__class__.__name__ == 'XMLElement':
+#			if word.className == 'function':
+#				return EvaluatorFunction( str( word ), word )
+#			else:
+#				return EvaluatorValue( word )
+#		if word.__class__ != str:
+#			return EvaluatorValue( word )
+#	firstCharacter = word[ : 1 ]
+#	if firstCharacter == "'" or firstCharacter == '"':
+#		if len( word ) > 1:
+#			if firstCharacter == word[ - 1 ]:
+#				return EvaluatorValue( word[ 1 : - 1 ] )
+#	if firstCharacter.isalpha() or firstCharacter == '_':
+#		functions = xmlElement.getXMLProcessor().functions
+#		if len( functions ) > 0:
+#			if word in functions[ - 1 ].localDictionary:
+#				return EvaluatorLocal( word, xmlElement )
+#		functionElement = xmlElement.getXMLElementByImportID( word )
+#		if functionElement != None:
+#			if functionElement.className == 'function':
+#				return EvaluatorFunction( word, functionElement )
+#		return EvaluatorValue( word )
+#	return EvaluatorNumeric( word, xmlElement )
 
 def getEvaluatorSplitWords( value ):
 	"Get split words for evaluators."
@@ -627,26 +629,26 @@ def getSidesMinimumThree(radius, xmlElement):
 	"Get the nunber of poygon sides, with a minimum of three."
 	return max(getSides(radius, xmlElement), 3.0)
 
-def getSplitDictionary():
-	"Get split dictionary."
-	global globalSplitDictionaryOperator
-	splitDictionary = globalSplitDictionaryOperator.copy()
-	global globalDictionaryOperatorBegin
-	splitDictionary.update( globalDictionaryOperatorBegin )
-	addPrefixDictionary( splitDictionary, globalMathConstantDictionary.keys(), 'math.', EvaluatorConstant )
-	splitDictionary['and'] = EvaluatorAnd
-	splitDictionary['false'] = EvaluatorFalse
-	splitDictionary['False'] = EvaluatorFalse
-	splitDictionary['or'] = EvaluatorOr
-	splitDictionary['not'] = EvaluatorNot
-	splitDictionary['true'] = EvaluatorTrue
-	splitDictionary['True'] = EvaluatorTrue
-	global globalCreationDictionary
-	for key in globalCreationDictionary.keys():
-		splitDictionary['creation.get' + key.capitalize()] = EvaluatorCreation
-	functionNameString = 'acos asin atan atan2 ceil cos cosh degrees exp fabs floor fmod frexp hypot ldexp log log10 modf pow radians sin sinh sqrt tan tanh'
-	addPrefixDictionary( splitDictionary, functionNameString.split(), 'math.', EvaluatorMath )
-	return splitDictionary
+#def getSplitDictionary():
+#	"Get split dictionary."
+#	global globalSplitDictionaryOperator
+#	splitDictionary = globalSplitDictionaryOperator.copy()
+#	global globalDictionaryOperatorBegin
+#	splitDictionary.update( globalDictionaryOperatorBegin )
+#	addPrefixDictionary( splitDictionary, globalMathConstantDictionary.keys(), 'math.', EvaluatorConstant )
+#	splitDictionary['and'] = EvaluatorAnd
+#	splitDictionary['false'] = EvaluatorFalse
+#	splitDictionary['False'] = EvaluatorFalse
+#	splitDictionary['or'] = EvaluatorOr
+#	splitDictionary['not'] = EvaluatorNot
+#	splitDictionary['true'] = EvaluatorTrue
+#	splitDictionary['True'] = EvaluatorTrue
+#	global globalCreationDictionary
+#	for key in globalCreationDictionary.keys():
+#		splitDictionary['creation.get' + key.capitalize()] = EvaluatorCreation
+#	functionNameString = 'acos asin atan atan2 ceil cos cosh degrees exp fabs floor fmod frexp hypot ldexp log log10 modf pow radians sin sinh sqrt tan tanh'
+#	addPrefixDictionary( splitDictionary, functionNameString.split(), 'math.', EvaluatorMath )
+#	return splitDictionary
 
 def getStartsWithChainWord( word ):
 	"Determine if the word starts with an element chain word."
@@ -1254,15 +1256,6 @@ class EvaluatorConstant( Evaluator ):
 		global globalMathConstantDictionary
 		self.value = globalMathConstantDictionary[ word[ len('math.') : ] ]
 
-def getVisibleObjects( archivableObjects ):
-	"Get the visible objects."
-	visibleObjects = []
-	for archivableObject in archivableObjects:
-		if archivableObject.getVisible():
-			visibleObjects.append( archivableObject )
-	return visibleObjects
-
-
 class EvaluatorCreation(Evaluator):
 	'Creation evaluator class.'
 	def __init__(self, word, xmlElement):
@@ -1437,29 +1430,29 @@ class EvaluatorLocal( EvaluatorCreation ):
 			self.value = localDictionary[ word ]
 
 
-class EvaluatorMath(EvaluatorCreation):
-	'Math evaluator class.'
-	def executeFunction(self, evaluators, evaluatorIndex, nextEvaluator):
-		'Execute the function.'
-		function = math.__dict__[self.word[len('math.') : ].lower()]
-		argumentsCopy = nextEvaluator.arguments[:]
-		if len(argumentsCopy) == 1:
-			firstElement = argumentsCopy[0]
-			if firstElement.__class__ == list:
-				argumentsCopy = firstElement
-		while len(argumentsCopy) > 0:
-			try:
-				result = function(*argumentsCopy)
-				nextEvaluator.value = result
-				del evaluators[evaluatorIndex]
-				return
-			except:
-				argumentsCopy = argumentsCopy[: -1]
-		print('Warning, the EvaluatorMath in evaluate can not handle:')
-		print(self)
-		print(nextEvaluator.arguments)
-		print(nextEvaluator)
-		del evaluators[evaluatorIndex]
+#class EvaluatorMath(EvaluatorCreation):
+#	'Math evaluator class.'
+#	def executeFunction(self, evaluators, evaluatorIndex, nextEvaluator):
+#		'Execute the function.'
+#		function = math.__dict__[self.word[len('math.') : ].lower()]
+#		argumentsCopy = nextEvaluator.arguments[:]
+#		if len(argumentsCopy) == 1:
+#			firstElement = argumentsCopy[0]
+#			if firstElement.__class__ == list:
+#				argumentsCopy = firstElement
+#		while len(argumentsCopy) > 0:
+#			try:
+#				result = function(*argumentsCopy)
+#				nextEvaluator.value = result
+#				del evaluators[evaluatorIndex]
+#				return
+#			except:
+#				argumentsCopy = argumentsCopy[: -1]
+#		print('Warning, the EvaluatorMath in evaluate can not handle:')
+#		print(self)
+#		print(nextEvaluator.arguments)
+#		print(nextEvaluator)
+#		del evaluators[evaluatorIndex]
 
 
 class EvaluatorModulo( EvaluatorDivision ):
@@ -1729,4 +1722,4 @@ globalSplitDictionaryOperator = {
 	'%' : EvaluatorModulo,
 	'*' : EvaluatorMultiplication,
 	'-' : EvaluatorSubtraction }
-globalSplitDictionary = getSplitDictionary() # must be after globalSplitDictionaryOperator
+#globalSplitDictionary = getSplitDictionary() # must be after globalSplitDictionaryOperator

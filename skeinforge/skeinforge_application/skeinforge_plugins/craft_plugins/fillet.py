@@ -376,7 +376,7 @@ class ArcRadiusSkein( ArcPointSkein ):
 		return ' R' + ( self.distanceFeedRate.getRounded(radius) )
 
 
-class FilletRepository:
+class FilletRepository( settings.Repository ):
 	"A class to handle the fillet settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

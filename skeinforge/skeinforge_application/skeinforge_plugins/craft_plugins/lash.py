@@ -101,7 +101,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'lash')
 
 
-class LashRepository:
+class LashRepository( settings.Repository ):
 	"A class to handle the lash settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

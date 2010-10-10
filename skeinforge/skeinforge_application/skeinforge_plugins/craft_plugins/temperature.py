@@ -146,7 +146,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'temperature')
 
 
-class TemperatureRepository:
+class TemperatureRepository( settings.Repository ):
 	"A class to handle the temperature settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

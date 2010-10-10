@@ -117,7 +117,7 @@ class ThreadLayer:
 		return '%s, %s' % ( self.z, self.points )
 
 
-class DrillRepository:
+class DrillRepository( settings.Repository ):
 	"A class to handle the drill settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -25,7 +25,7 @@ This brings up the description setting dialog.
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -42,7 +42,7 @@ def getNewRepository():
 	return DescriptionRepository()
 
 
-class DescriptionRepository:
+class DescriptionRepository( settings.Repository ):
 	"A class to handle the description settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

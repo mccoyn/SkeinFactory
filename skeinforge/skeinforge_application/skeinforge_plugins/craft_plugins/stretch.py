@@ -136,13 +136,13 @@ class LineIteratorBackward:
 			if firstWord == 'M103':
 				return lineIndex - 2
 		print('This should never happen in stretch, no deactivate command was found for this thread.')
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 	def getNext( self ):
 		"Get next line going backward or raise exception."
 		while self.lineIndex > 3:
 			if self.lineIndex == self.firstLineIndex:
-				raise StopIteration, "You've reached the end of the line."
+				raise StopIteration
 			if self.firstLineIndex == None:
 				self.firstLineIndex = self.lineIndex
 			nextLineIndex = self.lineIndex - 1
@@ -153,18 +153,18 @@ class LineIteratorBackward:
 				if self.isLoop:
 					nextLineIndex = self.getIndexBeforeNextDeactivate()
 				else:
-					raise StopIteration, "You've reached the end of the line."
+					raise StopIteration
 			if firstWord == 'G1':
 				if self.isBeforeExtrusion():
 					if self.isLoop:
 						nextLineIndex = self.getIndexBeforeNextDeactivate()
 					else:
-						raise StopIteration, "You've reached the end of the line."
+						raise StopIteration
 				else:
 					self.lineIndex = nextLineIndex
 					return line
 			self.lineIndex = nextLineIndex
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 	def isBeforeExtrusion( self ):
 		"Determine if index is two or more before activate command."
@@ -200,13 +200,13 @@ class LineIteratorForward:
 			if firstWord == 'M101':
 				return lineIndex + 1
 		print('This should never happen in stretch, no activate command was found for this thread.')
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 	def getNext( self ):
 		"Get next line or raise exception."
 		while self.lineIndex < len( self.lines ):
 			if self.lineIndex == self.firstLineIndex:
-				raise StopIteration, "You've reached the end of the line."
+				raise StopIteration
 			if self.firstLineIndex == None:
 				self.firstLineIndex = self.lineIndex
 			nextLineIndex = self.lineIndex + 1
@@ -217,14 +217,14 @@ class LineIteratorForward:
 				if self.isLoop:
 					nextLineIndex = self.getIndexJustAfterActivate()
 				else:
-					raise StopIteration, "You've reached the end of the line."
+					raise StopIteration
 			self.lineIndex = nextLineIndex
 			if firstWord == 'G1':
 				return line
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 
-class StretchRepository:
+class StretchRepository( settings.Repository ):
 	"A class to handle the stretch settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

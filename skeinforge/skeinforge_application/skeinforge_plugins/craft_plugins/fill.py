@@ -760,7 +760,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'fill')
 
 
-class FillRepository:
+class FillRepository( settings.Repository ):
 	"A class to handle the fill settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

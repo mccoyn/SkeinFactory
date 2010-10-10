@@ -136,7 +136,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'cool')
 
 
-class CoolRepository:
+class CoolRepository( settings.Repository ):
 	"A class to handle the cool settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

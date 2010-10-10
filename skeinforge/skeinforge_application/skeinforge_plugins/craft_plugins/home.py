@@ -94,7 +94,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'home')
 
 
-class HomeRepository:
+class HomeRepository( settings.Repository ):
 	"A class to handle the home settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

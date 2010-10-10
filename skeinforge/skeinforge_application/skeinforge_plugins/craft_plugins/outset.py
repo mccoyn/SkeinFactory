@@ -90,7 +90,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'outset')
 
 
-class OutsetRepository:
+class OutsetRepository( settings.Repository ):
 	"A class to handle the outset settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

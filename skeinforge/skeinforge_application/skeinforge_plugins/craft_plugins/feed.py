@@ -109,7 +109,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'feed')
 
 
-class FeedRepository:
+class FeedRepository( settings.Repository ):
 	"A class to handle the feed settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

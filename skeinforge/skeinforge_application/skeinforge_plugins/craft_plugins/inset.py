@@ -249,7 +249,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'inset')
 
 
-class InsetRepository:
+class InsetRepository( settings.Repository ):
 	"A class to handle the inset settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

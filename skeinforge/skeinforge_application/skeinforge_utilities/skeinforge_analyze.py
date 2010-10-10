@@ -10,6 +10,7 @@ import __init__
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
+import dynamicImports
 import os
 
 
@@ -36,7 +37,7 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 	pluginFileNames = getPluginFileNames()
 	for pluginFileName in pluginFileNames:
 		analyzePluginsDirectoryPath = getPluginsDirectoryPath()
-		pluginModule = gcodec.getModuleWithDirectoryPath( analyzePluginsDirectoryPath, pluginFileName )
+		pluginModule = dynamicImports.getModuleWithDirectoryPath( analyzePluginsDirectoryPath, pluginFileName )
 		if pluginModule != None:
 			try:
 				pluginModule.writeOutput( fileName, fileNameSuffix, gcodeText )
@@ -44,7 +45,7 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 				print('Warning, the tool %s could not analyze the output.' % pluginFileName )
 
 
-class AnalyzeRepository:
+class AnalyzeRepository( settings.Repository ):
 	"A class to handle the analyze settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -162,7 +162,7 @@ class Average:
 		self.total = 0.0
 
 
-class MillRepository:
+class MillRepository( settings.Repository ):
 	"A class to handle the mill settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -98,7 +98,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'hop')
 
 
-class HopRepository:
+class HopRepository( settings.Repository ):
 	"A class to handle the hop settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

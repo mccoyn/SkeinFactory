@@ -89,7 +89,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'flow')
 
 
-class FlowRepository:
+class FlowRepository( settings.Repository ):
 	"A class to handle the flow settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

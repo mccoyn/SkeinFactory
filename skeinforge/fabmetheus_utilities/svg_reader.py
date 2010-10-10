@@ -4,7 +4,7 @@ Svg reader.
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -20,7 +20,7 @@ from fabmetheus_utilities import xml_simple_writer
 import math
 import os
 import sys
-import traceback
+#import traceback
 
 
 __author__ = "Enrique Perez (perez_enrique@yahoo.com)"
@@ -833,7 +833,7 @@ class SVGReader:
 			except:
 				print('Warning, in processXMLElement in svg_reader, could not process:')
 				print(xmlElement)
-				traceback.print_exc( file = sys.stdout )
+				#traceback.print_exc( file = sys.stdout )
 		for child in xmlElement.children:
 			self.processXMLElement( child )
 

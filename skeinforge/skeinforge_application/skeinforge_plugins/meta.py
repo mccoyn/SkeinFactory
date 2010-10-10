@@ -4,7 +4,7 @@ Meta is a script to access the plugins which handle meta information.
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 

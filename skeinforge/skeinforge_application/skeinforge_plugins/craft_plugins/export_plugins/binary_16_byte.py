@@ -152,7 +152,7 @@ def writeOutput( fileName, gcodeText = ''):
 	print('The converted file is saved as ' + gcodec.getSummarizedFileName( suffixFileName ) )
 
 
-class Binary16ByteRepository:
+class Binary16ByteRepository( settings.Repository ):
 	"A class to handle the export settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

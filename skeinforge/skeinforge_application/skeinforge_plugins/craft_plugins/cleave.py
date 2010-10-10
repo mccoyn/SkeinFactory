@@ -148,7 +148,7 @@ def writeOutput( fileName = ''):
 	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
 
-class CleaveRepository:
+class CleaveRepository( settings.Repository ):
 	"A class to handle the cleave settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

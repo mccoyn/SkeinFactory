@@ -130,7 +130,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'oozebane')
 
 
-class OozebaneRepository:
+class OozebaneRepository( settings.Repository ):
 	"A class to handle the oozebane settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

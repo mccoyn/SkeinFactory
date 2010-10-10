@@ -144,7 +144,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'wipe')
 
 
-class WipeRepository:
+class WipeRepository( settings.Repository ):
 	"A class to handle the wipe settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

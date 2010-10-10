@@ -130,7 +130,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'widen')
 
 
-class WidenRepository:
+class WidenRepository( settings.Repository ):
 	"A class to handle the widen settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -140,7 +140,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'comb')
 
 
-class CombRepository:
+class CombRepository( settings.Repository ):
 	"A class to handle the comb settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

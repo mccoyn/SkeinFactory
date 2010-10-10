@@ -97,7 +97,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'limit')
 
 
-class LimitRepository:
+class LimitRepository( settings.Repository ):
 	"A class to handle the limit settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -242,7 +242,8 @@ def possible_argtypes(node, funcs, worklist):
         if (arg, node.dcpa, node.cpa) in getgx().cnode:
             argtypes.append(getgx().cnode[arg,node.dcpa,node.cpa].types())
         else:
-            argtypes.append(inode(arg).types()) # XXX def arg?
+            if inode(arg) is not None:
+                argtypes.append(inode(arg).types()) # XXX def arg?
 
     # store arg count for wrappers to builtin refs
     if funcs and (func.lambdawrapper or node.thing in getgx().lambdawrapper):

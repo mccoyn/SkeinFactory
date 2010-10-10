@@ -681,10 +681,15 @@ class generateVisitor(ASTVisitor):
                 for types in z: merge.update(types)
                 merged.append(merge)
                 
-            for subcl in subclasses:
-                if ident in subcl.funcs:
-                    formals = subcl.funcs[ident].formals[1:]
-                    break
+            if (ident in list(subclasses)[0].funcs):
+                formals = list(subclasses)[0].funcs[ident].formals[1:]
+            else:
+                error('Function not found in first subclass:  %s' % ident, None, warning = True)
+                for subcl in subclasses:
+                    if ident in subcl.funcs:
+                        formals = subcl.funcs[ident].formals[1:]
+                        break
+
             ftypes = [self.padme(typestrnew({(1,0): m}, func.parent, True, func.parent)) for m in merged]
 
             # --- prepare for having to cast back arguments (virtual function call means multiple targets)
@@ -692,7 +697,7 @@ class generateVisitor(ASTVisitor):
                 if (ident in subcl.funcs):
                     subcl.funcs[ident].ftypes = ftypes
                 else:
-                    error('Function not found:  %s' % ident, None, warning = True)
+                    error('Function not found in subclass:  %s  %s' % (ident, subcl), None, warning = True)
 
             # --- virtual function declaration
             if declare:

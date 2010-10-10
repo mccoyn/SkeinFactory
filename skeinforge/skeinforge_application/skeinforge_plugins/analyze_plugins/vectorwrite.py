@@ -56,7 +56,7 @@ The vectorwrite file is saved as Screw_Holder_penultimate_vectorwrite.svg
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -158,7 +158,7 @@ class ThreadLayer:
 		return '%s, %s' % ( self.innerLoops, self.innerPerimeters, self.outerLoops, self.outerPerimeters, self.paths, self.z )
 
 
-class VectorwriteRepository:
+class VectorwriteRepository( settings.Repository ):
 	"A class to handle the vectorwrite settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

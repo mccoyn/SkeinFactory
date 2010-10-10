@@ -98,7 +98,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'lift')
 
 
-class LiftRepository:
+class LiftRepository( settings.Repository ):
 	"A class to handle the lift settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

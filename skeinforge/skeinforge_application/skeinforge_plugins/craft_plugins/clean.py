@@ -81,7 +81,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'clean')
 
 
-class CleanRepository:
+class CleanRepository( settings.Repository ):
 	"A class to handle the clean settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

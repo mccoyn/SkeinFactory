@@ -96,7 +96,7 @@ def writeOutput( fileName = ''):
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'coil')
 
 
-class CoilRepository:
+class CoilRepository( settings.Repository ):
 	"A class to handle the coil settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

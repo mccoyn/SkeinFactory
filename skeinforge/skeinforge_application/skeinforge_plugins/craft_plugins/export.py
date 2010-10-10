@@ -187,7 +187,7 @@ def writeOutput( fileName = ''):
 	print('It took %s to export the file.' % euclidean.getDurationString( time.time() - startTime ) )
 
 
-class ExportRepository:
+class ExportRepository( settings.Repository ):
 	"A class to handle the export settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

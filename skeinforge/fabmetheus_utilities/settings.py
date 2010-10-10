@@ -560,6 +560,12 @@ def writeSettingsPrintMessage( repository ):
 class Repository:
 	def __init__( self ):
 		"This is just a mock object to be used as a base class"
+		
+	def execute( self ):
+		pass
+		
+	def save( self ):
+		pass
 
 class StringSetting:
 	"A class to display, read & write a string."
@@ -665,7 +671,7 @@ class BooleanSetting( StringSetting ):
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
 		gridPosition.increment()
-		self.checkbutton = Tkinter.Checkbutton( gridPosition.master, command = self.toggleCheckbutton, text = self.name )
+		self.checkbutton = Tkinter.Checkbutton( gridPosition.master, {command : self.toggleCheckbutton, text : self.name} )
 #toggleCheckbutton is being used instead of a Tkinter IntVar because there is a weird bug where it doesn't work properly if this setting is not on the first window.
 		self.checkbutton.grid( row = gridPosition.row, columnspan = 5, sticky = Tkinter.W )
 		self.setStateToValue()
@@ -683,7 +689,7 @@ class BooleanSetting( StringSetting ):
 	def addToMenuFrameable( self, repositoryMenu ):
 		"Add this to the frameable repository menu."
 		titleFromName = getTitleFromName( self.name )
-		helpWindowMenu = Tkinter.Menu( repositoryMenu, tearoff = 0 )
+		helpWindowMenu = Tkinter.Menu( repositoryMenu, {tearoff : 0} )
 		repositoryMenu.add_cascade( label = titleFromName, menu = helpWindowMenu, underline = 0 )
 		self.addToMenu( helpWindowMenu )
 		helpWindowMenu.add_separator()
@@ -752,7 +758,7 @@ class DisplayToolButton:
 	"A class to display the tool dialog button, in a two column wide table."
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
-		self.displayButton = Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', text = getEachWordCapitalized( self.name ), command = self.displayDialog )
+		self.displayButton = Tkinter.Button( gridPosition.master, {activebackground : 'black', activeforeground : 'white', text : getEachWordCapitalized( self.name ), command : self.displayDialog} )
 		setButtonFontWeightString( self.displayButton, self.important )
 		gridPosition.incrementGivenNumberOfColumns( 2 )
 		self.displayButton.grid( row = gridPosition.row, column = gridPosition.column, columnspan = 2 )
@@ -778,7 +784,7 @@ class FileHelpMenuBar:
 		self.menuBar = Tkinter.Menu( root )
 		self.root = root
 		root.config( menu = self.menuBar )
-		self.fileMenu = Tkinter.Menu( self.menuBar, tearoff = 0 )
+		self.fileMenu = Tkinter.Menu( self.menuBar, {tearoff : 0} )
 		self.menuBar.add_cascade( label = "File", menu = self.fileMenu, underline = 0 )
 		self.underlineLetters.append('f')
 
@@ -799,7 +805,7 @@ class FileHelpMenuBar:
 		if pluginModule == None:
 			print('this should never happen, pluginModule in addMenuToMenuBar in settings is None.')
 			return None
-		repositoryMenu = Tkinter.Menu( self.menuBar, tearoff = 0 )
+		repositoryMenu = Tkinter.Menu( self.menuBar, {tearoff : 0} )
 		labelText = getEachWordCapitalized( os.path.basename( modulePath ) )
 		self.addMenuToMenuBar( labelText, repositoryMenu )
 		pluginModule.addToMenu( self.root, repositoryMenu, repository, window )
@@ -933,7 +939,7 @@ class FloatSpin( FloatSetting ):
 
 	def createEntry( self, root ):
 		"Create the entry."
-		self.entry = Tkinter.Spinbox( root, command = self.setColorToDisplay, from_ = self.from_, increment = self.increment, to = self.to )
+		self.entry = Tkinter.Spinbox( root, {command : self.setColorToDisplay, from_ : self.from_, increment : self.increment, to : self.to} )
 
 	def decrease( self ):
 		"Decrease the value then set the state and color to the value."
@@ -995,7 +1001,7 @@ class FloatSpinUpdate( FloatSpin ):
 	"A class to display, read, update & write an float in a spin box."
 	def createEntry( self, root ):
 		"Create the entry."
-		self.entry = Tkinter.Spinbox( root, command = self.entryUpdated, from_ = self.from_, increment = self.increment, to = self.to )
+		self.entry = Tkinter.Spinbox( root, {command : self.entryUpdated, from_ : self.from_, increment : self.increment, to : self.to} )
 
 
 class FrameList:
@@ -1110,7 +1116,7 @@ class HelpPage:
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
 		capitalizedName = getEachWordCapitalized( self.name )
-		self.displayButton = Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', command = self.openPage, text = capitalizedName )
+		self.displayButton = Tkinter.Button( gridPosition.master, {activebackground : 'black', activeforeground : 'white', command : self.openPage, text : capitalizedName} )
 		if len( capitalizedName ) < 12:
 			self.displayButton['width'] = 10
 		self.displayButton.grid( row = gridPosition.row, column = self.column, columnspan = 2 )
@@ -1246,7 +1252,7 @@ class LabelDisplay:
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
 		gridPosition.increment()
-		self.label = Tkinter.Label( gridPosition.master, text = self.name )
+		self.label = Tkinter.Label( gridPosition.master, {text : self.name} )
 		self.label.grid( row = gridPosition.row, column = 0, columnspan = 3, sticky = Tkinter.W )
 		LabelHelp( self.repository.fileNameHelp, gridPosition.master, self.name, self.label )
 
@@ -1620,7 +1626,7 @@ class Radio( BooleanSetting ):
 
 	def createRadioButton( self, gridPosition ):
 		"Create the radio button."
-		self.radiobutton = Tkinter.Radiobutton( gridPosition.master, command = self.clickRadio, text = self.name, value = self.name, variable = self.latentStringVar.getVar() )
+		self.radiobutton = Tkinter.Radiobutton( gridPosition.master, {command : self.clickRadio, text : self.name, value : self.name, variable : self.latentStringVar.getVar()} )
 		LabelHelp( self.repository.fileNameHelp, gridPosition.master, self.name, self.radiobutton )
 
 	def getFromRadio( self, latentStringVar, name, repository, value ):
@@ -1653,7 +1659,7 @@ class RadioCapitalized( Radio ):
 	def createRadioButton( self, gridPosition ):
 		"Create the radio button."
 		capitalizedName = getEachWordCapitalized( self.name )
-		self.radiobutton = Tkinter.Radiobutton( gridPosition.master, command = self.clickRadio, text = capitalizedName, value = self.name, variable = self.latentStringVar.getVar() )
+		self.radiobutton = Tkinter.Radiobutton( gridPosition.master, {command : self.clickRadio, text : capitalizedName, value : self.name, variable : self.latentStringVar.getVar()} )
 
 
 class RadioCapitalizedButton( Radio ):
@@ -1661,8 +1667,8 @@ class RadioCapitalizedButton( Radio ):
 	def createRadioButton( self, gridPosition ):
 		"Create the radio button."
 		capitalizedName = getEachWordCapitalized( self.name )
-		self.radiobutton = Tkinter.Radiobutton( gridPosition.master, command = self.clickRadio, text = capitalizedName, value = self.name, variable = self.latentStringVar.getVar() )
-		self.displayButton = Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', text = capitalizedName, command = self.displayDialog )
+		self.radiobutton = Tkinter.Radiobutton( gridPosition.master, {command : self.clickRadio, text : capitalizedName, value : self.name, variable : self.latentStringVar.getVar()} )
+		self.displayButton = Tkinter.Button( gridPosition.master, {activebackground : 'black', activeforeground : 'white', text : capitalizedName, command : self.displayDialog} )
 		self.displayButton.grid( row = gridPosition.row, column = 3, columnspan = 2 )
 
 	def displayDialog( self ):
@@ -1719,7 +1725,7 @@ class TextSetting( StringSetting ):
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
 		gridPosition.increment()
-		self.label = Tkinter.Label( gridPosition.master, text = self.name )
+		self.label = Tkinter.Label( gridPosition.master, {text : self.name} )
 		self.label.grid( row = gridPosition.row, column = 0, columnspan = 3, sticky = Tkinter.W )
 		gridPosition.increment()
 		self.entry = Tkinter.Text( gridPosition.master )
@@ -1876,17 +1882,17 @@ class RepositoryDialog:
 			saveCommand = saveAll
 			saveText = 'Save All'
 		if repository.executeTitle != None:
-			executeButton = Tkinter.Button( root, activebackground = 'black', activeforeground = 'blue', text = repository.executeTitle, command = self.gridPosition.execute )
+			executeButton = Tkinter.Button( root, {activebackground : 'black', activeforeground : 'blue', text : repository.executeTitle, command : self.gridPosition.execute} )
 			executeButton.grid( row = self.gridPosition.row, column = columnIndex, columnspan = 2, sticky = Tkinter.W )
 			columnIndex += 2
-		self.helpButton = Tkinter.Button( root, activebackground = 'black', activeforeground = 'white', text = "?", command = HelpPageRepository( self.repository ).openPage )
+		self.helpButton = Tkinter.Button( root, {activebackground : 'black', activeforeground : 'white', text : "?", command : HelpPageRepository( self.repository ).openPage} )
 		self.helpButton.grid( row = self.gridPosition.row, column = columnIndex, sticky = Tkinter.W )
 		self.closeListener.listenToWidget( self.helpButton )
 		columnIndex += 6
-		cancelButton = Tkinter.Button( root, activebackground = 'black', activeforeground = 'orange', command = self.cancel, fg = 'orange', text = 'Cancel')
+		cancelButton = Tkinter.Button( root, {activebackground : 'black', activeforeground : 'orange', command : self.cancel, fg : 'orange', text : 'Cancel'})
 		cancelButton.grid( row = self.gridPosition.row, column = columnIndex )
 		columnIndex += 1
-		self.saveButton = Tkinter.Button( root, activebackground = 'black', activeforeground = 'darkgreen', command = saveCommand, fg = 'darkgreen', text = saveText )
+		self.saveButton = Tkinter.Button( root, {activebackground : 'black', activeforeground : 'darkgreen', command : saveCommand, fg : 'darkgreen', text : saveText} )
 		self.saveButton.grid( row = self.gridPosition.row, column = columnIndex )
 
 	def cancel( self, event = None ):

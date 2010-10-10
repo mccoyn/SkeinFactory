@@ -309,7 +309,7 @@ def writeOutput( fileName = ''):
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'raft')
 
 
-class RaftRepository:
+class RaftRepository( settings.Repository ):
 	"A class to handle the raft settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

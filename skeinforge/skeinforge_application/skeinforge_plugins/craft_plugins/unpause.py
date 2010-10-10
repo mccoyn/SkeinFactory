@@ -106,7 +106,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'unpause')
 
 
-class UnpauseRepository:
+class UnpauseRepository( settings.Repository ):
 	"A class to handle the unpause settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -32,7 +32,7 @@ def getNewRepository():
 	return PostscriptRepository()
 
 
-class PostscriptRepository:
+class PostscriptRepository( settings.Repository ):
 	"A class to handle the export settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

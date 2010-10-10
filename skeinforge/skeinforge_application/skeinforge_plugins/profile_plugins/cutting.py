@@ -25,7 +25,7 @@ This brings up the cutting setting dialog.
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 import __init__
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
@@ -46,7 +46,7 @@ def getNewRepository():
 	return CuttingRepository()
 
 
-class CuttingRepository:
+class CuttingRepository( settings.Repository ):
 	"A class to handle the cutting settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

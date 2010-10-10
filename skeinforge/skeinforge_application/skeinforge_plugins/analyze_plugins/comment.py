@@ -45,7 +45,7 @@ The commente file is saved as Screw_Holder_penultimate_comment.gcode
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -85,7 +85,7 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText )
 
 
-class CommentRepository:
+class CommentRepository( settings.Repository ):
 	"A class to handle the comment settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

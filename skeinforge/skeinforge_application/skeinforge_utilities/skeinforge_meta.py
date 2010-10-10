@@ -30,7 +30,7 @@ def getNewRepository():
 	return MetaRepository()
 
 
-class MetaRepository:
+class MetaRepository( settings.Repository ):
 	"A class to handle the meta settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

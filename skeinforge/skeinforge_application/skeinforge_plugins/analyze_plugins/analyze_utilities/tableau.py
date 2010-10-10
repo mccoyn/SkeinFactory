@@ -97,7 +97,7 @@ class ExportCanvasDialog:
 		settings.getDisplayedDialogFromConstructor( pluginRepository )
 
 
-class TableauRepository:
+class TableauRepository( settings.Repository ):
 	"The viewer base repository class."
 	def addAnimation( self ):
 		"Add the animation settings."

@@ -137,7 +137,7 @@ class ThreadLayer:
 		return '%s' % self.islands
 
 
-class TowerRepository:
+class TowerRepository( settings.Repository ):
 	"A class to handle the tower settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

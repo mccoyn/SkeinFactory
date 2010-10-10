@@ -39,7 +39,7 @@ The help menu has an item for each button on the help page.  Also, at the very t
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 

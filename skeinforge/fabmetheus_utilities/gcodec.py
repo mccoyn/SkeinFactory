@@ -192,32 +192,6 @@ def getLocationFromSplitLine( oldLocation, splitLine ):
 		getDoubleFromCharacterSplitLineValue('Y', splitLine, oldLocation.y ),
 		getDoubleFromCharacterSplitLineValue('Z', splitLine, oldLocation.z ) )
 
-def getModuleWithDirectoryPath( directoryPath, fileName ):
-	"Get the module from the fileName and folder name."
-	if fileName == '':
-		print('The file name in getModule in gcodec was empty.')
-		return None
-	originalSystemPath = sys.path[ : ]
-	try:
-		sys.path.insert( 0, directoryPath )
-		folderPluginsModule = __import__( fileName )
-		sys.path = originalSystemPath
-		return folderPluginsModule
-	except:
-		sys.path = originalSystemPath
-		print('')
-		print('Exception traceback in getModuleWithDirectoryPath in gcodec:')
-		traceback.print_exc( file = sys.stdout )
-		print('')
-		print('That error means; could not import a module with the fileName ' + fileName )
-		print('and an absolute directory name of ' + directoryPath )
-		print('')
-	return None
-
-def getModuleWithPath( path ):
-	"Get the module from the path."
-	return getModuleWithDirectoryPath( os.path.dirname( path ), os.path.basename( path ) )
-
 def getPluginFileNamesFromDirectoryPath( directoryPath ):
 	"Get the file names of the python plugins in the directory path."
 	fileInDirectory = os.path.join( directoryPath, '__init__.py')

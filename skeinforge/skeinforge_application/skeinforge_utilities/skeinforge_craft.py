@@ -161,7 +161,7 @@ class CraftRadioButtonsSaveListener:
 		self.repository.pluginFrame.update()
 
 
-class CraftRepository:
+class CraftRepository( settings.Repository ):
 	"A class to handle the craft settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

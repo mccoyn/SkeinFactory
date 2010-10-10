@@ -153,7 +153,7 @@ def writeOutput( fileName = ''):
 	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
 
-class ChopRepository:
+class ChopRepository( settings.Repository ):
 	"A class to handle the chop settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

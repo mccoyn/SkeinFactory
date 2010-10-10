@@ -134,7 +134,7 @@ def writeOutput( fileName = ''):
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'preface')
 
 
-class PrefaceRepository:
+class PrefaceRepository( settings.Repository ):
 	"A class to handle the preface settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

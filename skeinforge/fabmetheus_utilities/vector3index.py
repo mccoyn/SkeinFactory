@@ -33,7 +33,7 @@ import __init__
 
 from fabmetheus_utilities import xml_simple_writer
 import math
-import operator
+#import operator
 
 
 __author__ = "Enrique Perez (perez_enrique@yahoo.com)"

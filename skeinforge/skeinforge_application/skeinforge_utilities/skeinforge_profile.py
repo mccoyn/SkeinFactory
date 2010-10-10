@@ -29,6 +29,7 @@ from fabmetheus_utilities.hidden_scrollbar import HiddenScrollbar
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
+import dynamicImports
 import os
 #import shutil
 
@@ -87,7 +88,7 @@ def getCraftTypePluginModule( craftTypeName = ''):
 	if craftTypeName == '':
 		craftTypeName = getCraftTypeName()
 	profilePluginsDirectoryPath = getPluginsDirectoryPath()
-	return gcodec.getModuleWithDirectoryPath( profilePluginsDirectoryPath, craftTypeName )
+	return dynamicImports.getModuleWithDirectoryPath( profilePluginsDirectoryPath, craftTypeName )
 
 def getNewRepository():
 	"Get the repository constructor."

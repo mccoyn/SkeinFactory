@@ -125,7 +125,7 @@ def writeOutput( fileName = ''):
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'dimension')
 
 
-class DimensionRepository:
+class DimensionRepository( settings.Repository ):
 	"A class to handle the dimension settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

@@ -96,7 +96,7 @@ def writeOutput( fileName = ''):
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'whittle')
 
 
-class WhittleRepository:
+class WhittleRepository( settings.Repository ):
 	"A class to handle the whittle settings."
 	def __init__( self ):
 		"Set the default settings, execute title & settings fileName."

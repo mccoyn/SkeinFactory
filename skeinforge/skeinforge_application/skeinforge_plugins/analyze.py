@@ -16,7 +16,7 @@ http://forums.reprap.org/file.php?12,file=565
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -42,7 +42,7 @@ def getNewRepository():
 def main():
 	"Display the analyze dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		skeinforge_analyze.writeOutput(' '.join( sys.argv[ 1 : ] ) , None)
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 
