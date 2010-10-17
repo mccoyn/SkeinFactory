@@ -26,27 +26,27 @@ This brings up the profile setting dialog.
 import __init__
 
 from fabmetheus_utilities.hidden_scrollbar import HiddenScrollbar
+from fabmetheus_utilities import archive
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
-import dynamicImports
 import os
-#import shutil
+import shutil
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
-def addListsSetCraftProfileArchive( craftSequence, defaultProfile, repository, fileNameHelp ):
-	"Set the craft profile archive."
+def addListsSetCraftProfile( craftSequence, defaultProfile, repository, fileNameHelp ):
+	"Set the craft profile repository."
 	settings.addListsToRepository( fileNameHelp, '', repository )
 	repository.craftSequenceLabel = settings.LabelDisplay().getFromName('Craft Sequence: ', repository )
 	craftToolStrings = []
 	for craftTool in craftSequence[ : - 1 ]:
 		craftToolStrings.append( settings.getEachWordCapitalized( craftTool ) + '->')
-	craftToolStrings.append( settings.getEachWordCapitalized( craftSequence[ - 1 ] ) )
+	craftToolStrings.append( settings.getEachWordCapitalized( craftSequence[-1] ) )
 	for craftToolStringIndex in xrange( 0, len( craftToolStrings ), 5 ):
 		craftLine = ' '.join( craftToolStrings[ craftToolStringIndex : craftToolStringIndex + 5 ] )
 		settings.LabelDisplay().getFromName( craftLine, repository )
@@ -55,8 +55,8 @@ def addListsSetCraftProfileArchive( craftSequence, defaultProfile, repository, f
 	repository.profileListbox = ProfileListboxSetting().getFromListSetting( repository.profileList, 'Profile Selection:', repository, defaultProfile )
 	repository.addListboxSelection = AddProfile().getFromProfileListboxSettingRepository( repository.profileListbox, repository )
 	repository.deleteListboxSelection = DeleteProfile().getFromProfileListboxSettingRepository( repository.profileListbox, repository )
-	directoryName = settings.getProfilesDirectoryPath()
-	settings.makeDirectory( directoryName )
+	directoryName = archive.getProfilesPath()
+	gcodec.makeDirectory(directoryName)
 	repository.windowPosition.value = '0+400'
 
 def addListsToCraftTypeRepository( fileNameHelp, repository ):
@@ -75,7 +75,7 @@ def cancelAll():
 	for globalRepositoryDialogValue in settings.getGlobalRepositoryDialogValues():
 		globalRepositoryDialogValue.cancel()
 
-def getCraftTypeName( subName = ''):
+def getCraftTypeName(subName=''):
 	"Get the craft type from the profile."
 	profileSettings = getReadProfileRepository()
 	craftTypeName = settings.getSelectedPluginName( profileSettings.craftRadios )
@@ -88,7 +88,7 @@ def getCraftTypePluginModule( craftTypeName = ''):
 	if craftTypeName == '':
 		craftTypeName = getCraftTypeName()
 	profilePluginsDirectoryPath = getPluginsDirectoryPath()
-	return dynamicImports.getModuleWithDirectoryPath( profilePluginsDirectoryPath, craftTypeName )
+	return gcodec.getModuleWithDirectoryPath( profilePluginsDirectoryPath, craftTypeName )
 
 def getNewRepository():
 	"Get the repository constructor."
@@ -136,7 +136,7 @@ class AddProfile:
 		self.addButton = settings.Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', text = 'Add Profile', command = self.addSelection )
 		self.addButton.grid( row = gridPosition.row, column = 0 )
 
-	def addSelection( self ):
+	def addSelection(self):
 		"Add the selection of a listbox setting."
 		entryText = self.entry.get()
 		if entryText == '':
@@ -147,14 +147,14 @@ class AddProfile:
 			print('There is already a profile by the name of %s, so no profile will be added.' % entryText )
 			return
 		self.entry.delete( 0, settings.Tkinter.END )
-		craftTypeProfileDirectory = settings.getProfilesDirectoryPath( self.profileListboxSetting.listSetting.craftTypeName )
+		craftTypeProfileDirectory = archive.getProfilesPath( self.profileListboxSetting.listSetting.craftTypeName )
 		destinationDirectory = os.path.join( craftTypeProfileDirectory, entryText )
 		shutil.copytree( self.profileListboxSetting.getSelectedFolder(), destinationDirectory )
 		self.profileListboxSetting.listSetting.setValueToFolders()
 		self.profileListboxSetting.value = entryText
 		self.profileListboxSetting.setStateToValue()
 
-	def addSelectionWithEvent( self, event ):
+	def addSelectionWithEvent(self, event):
 		"Add the selection of a listbox setting, given an event."
 		self.addSelection()
 
@@ -162,7 +162,7 @@ class AddProfile:
 		"Initialize."
 		self.profileListboxSetting = profileListboxSetting
 		self.repository = repository
-		repository.displayEntities.append( self )
+		repository.displayEntities.append(self)
 		return self
 
 
@@ -174,7 +174,7 @@ class DeleteProfile( AddProfile ):
 		self.deleteButton = settings.Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', text = "Delete Profile", command = self.deleteSelection )
 		self.deleteButton.grid( row = gridPosition.row, column = 0 )
 
-	def deleteSelection( self ):
+	def deleteSelection(self):
 		"Delete the selection of a listbox setting."
 		DeleteProfileDialog( self.profileListboxSetting, settings.Tkinter.Tk() )
 
@@ -197,7 +197,7 @@ class DeleteProfileDialog:
 		noButton = settings.Tkinter.Button( root, activebackground = 'black', activeforeground = 'darkgreen', command = self.no, fg = 'darkgreen', text = 'Do Nothing')
 		noButton.grid( row = self.row, column = columnIndex )
 
-	def delete( self ):
+	def delete(self):
 		"Delete the selection of a listbox setting."
 		self.profileListboxSetting.setToDisplay()
 		self.profileListboxSetting.listSetting.setValueToFolders()
@@ -210,19 +210,19 @@ class DeleteProfileDialog:
 		else:
 			print('No profile is selected, so no profile will be deleted.')
 			return
-		settings.deleteDirectory( settings.getProfilesDirectoryPath( self.profileListboxSetting.listSetting.craftTypeName ), self.profileListboxSetting.value )
+		settings.deleteDirectory( archive.getProfilesPath( self.profileListboxSetting.listSetting.craftTypeName ), self.profileListboxSetting.value )
 		settings.deleteDirectory( getProfilesDirectoryInAboveDirectory( self.profileListboxSetting.listSetting.craftTypeName ), self.profileListboxSetting.value )
 		self.profileListboxSetting.listSetting.setValueToFolders()
 		if len( self.profileListboxSetting.listSetting.value ) < 1:
-			defaultSettingsDirectory = settings.getProfilesDirectoryPath( os.path.join( self.profileListboxSetting.listSetting.craftTypeName, self.profileListboxSetting.defaultValue ) )
-			settings.makeDirectory( defaultSettingsDirectory )
+			defaultSettingsDirectory = archive.getProfilesPath( os.path.join( self.profileListboxSetting.listSetting.craftTypeName, self.profileListboxSetting.defaultValue ) )
+			gcodec.makeDirectory( defaultSettingsDirectory )
 			self.profileListboxSetting.listSetting.setValueToFolders()
 		lastSelectionIndex = min( lastSelectionIndex, len( self.profileListboxSetting.listSetting.value ) - 1 )
 		self.profileListboxSetting.value = self.profileListboxSetting.listSetting.value[ lastSelectionIndex ]
 		self.profileListboxSetting.setStateToValue()
 		self.no()
 
-	def no( self ):
+	def no(self):
 		"The dialog was closed."
 		self.root.destroy()
 
@@ -237,9 +237,9 @@ class ProfileList:
 		self.setValueToFolders()
 		return self
 
-	def setValueToFolders( self ):
+	def setValueToFolders(self):
 		"Set the value to the folders in the profiles directories."
-		self.value = settings.getFolders( settings.getProfilesDirectoryPath( self.craftTypeName ) )
+		self.value = settings.getFolders( archive.getProfilesPath( self.craftTypeName ) )
 		defaultFolders = settings.getFolders( settings.getProfilesDirectoryInAboveDirectory( self.craftTypeName ) )
 		for defaultFolder in defaultFolders:
 			if defaultFolder not in self.value:
@@ -264,32 +264,32 @@ class ProfileListboxSetting( settings.StringSetting ):
 		self.setStateToValue()
 		self.repository.saveListenerTable['updateProfileSaveListeners'] = updateProfileSaveListeners
 
-	def buttonReleaseOne( self, event ):
+	def buttonReleaseOne(self, event):
 		"Button one released."
 		self.setValueToIndex( self.listbox.nearest( event.y ) )
 
-	def focusIn( self, event ):
+	def focusIn(self, event):
 		"The root has gained focus."
-		settings.getReadRepository( self.repository )
+		settings.getReadRepository(self.repository)
 		self.setStateToValue()
 
 	def getFromListSetting( self, listSetting, name, repository, value ):
 		"Initialize."
 		self.getFromValueOnly( name, repository, value )
 		self.listSetting = listSetting
-		repository.archive.append( self )
-		repository.displayEntities.append( self )
+		repository.displayEntities.append(self)
+		repository.preferences.append(self)
 		return self
 
-	def getSelectedFolder( self ):
+	def getSelectedFolder(self):
 		"Get the selected folder."
-		settingProfileSubfolder = settings.getSubfolderWithBasename( self.value, settings.getProfilesDirectoryPath( self.listSetting.craftTypeName ) )
+		settingProfileSubfolder = settings.getSubfolderWithBasename( self.value, archive.getProfilesPath( self.listSetting.craftTypeName ) )
 		if settingProfileSubfolder != None:
 			return settingProfileSubfolder
 		toolProfileSubfolder = settings.getSubfolderWithBasename( self.value, settings.getProfilesDirectoryInAboveDirectory( self.listSetting.craftTypeName ) )
 		return toolProfileSubfolder
 
-	def setStateToValue( self ):
+	def setStateToValue(self):
 		"Set the listbox items to the list setting."
 		self.listbox.delete( 0, settings.Tkinter.END )
 		for item in self.listSetting.value:
@@ -297,7 +297,7 @@ class ProfileListboxSetting( settings.StringSetting ):
 			if self.value == item:
 				self.listbox.select_set( settings.Tkinter.END )
 
-	def setToDisplay( self ):
+	def setToDisplay(self):
 		"Set the selection value to the listbox selection."
 		currentSelectionTuple = self.listbox.curselection()
 		if len( currentSelectionTuple ) > 0:
@@ -329,10 +329,10 @@ class ProfilePluginRadioButtonsSaveListener:
 		self.name = 'ProfilePluginRadioButtonsSaveListener'
 		self.radioPlugins = radioPlugins
 		self.repository = repository
-		repository.displayEntities.append( self )
+		repository.displayEntities.append(self)
 		return self
 
-	def save( self ):
+	def save(self):
 		"Profile has been saved and profile radio plugins should be updated."
 		craftTypeName = getCraftTypeName()
 		for radioPlugin in self.radioPlugins:
@@ -342,9 +342,9 @@ class ProfilePluginRadioButtonsSaveListener:
 				return
 
 
-class ProfileRepository( settings.Repository ):
+class ProfileRepository(settings.Repository):
 	"A class to handle the profile entities."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default entities, execute title & repository fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_utilities.skeinforge_profile.html', '', self )
 		importantFileNames = ['extrusion']
@@ -352,11 +352,11 @@ class ProfileRepository( settings.Repository ):
 		ProfilePluginRadioButtonsSaveListener().getFromRadioPlugins( self.craftRadios, self )
 		for craftRadio in self.craftRadios:
 			craftRadio.updateFunction = self.updateRelay
-		directoryName = settings.getProfilesDirectoryPath()
-		settings.makeDirectory( directoryName )
+		directoryName = archive.getProfilesPath()
+		gcodec.makeDirectory(directoryName)
 		self.windowPosition.value = '0+200'
 
-	def updateRelay( self ):
+	def updateRelay(self):
 		"Update the plugin frame then the ProfileSaveListeners."
 		self.pluginFrame.update()
 		updateProfileSaveListeners()
@@ -376,7 +376,7 @@ class ProfileSelectionMenuRadio:
 		euclidean.addElementToListTableIfNotThere( self.repository, self.repository.repositoryDialog, settings.globalProfileSaveListenerListTable )
 		self.activate = True
 
-	def clickRadio( self ):
+	def clickRadio(self):
 		"Workaround for Tkinter bug, invoke and set the value when clicked."
 		if not self.activate:
 			return
@@ -396,16 +396,16 @@ class ProfileSelectionMenuRadio:
 	def setToMenuButtonDisplay( self, menuButtonDisplay, name, repository, value ):
 		"Initialize."
 		self.menuButtonDisplay = menuButtonDisplay
-		self.menuButtonDisplay.menuRadios.append( self )
+		self.menuButtonDisplay.menuRadios.append(self)
 		self.name = name
 		self.repository = repository
 		self.value = value
-		repository.displayEntities.append( self )
+		repository.displayEntities.append(self)
 
 
 class ProfileTypeMenuRadio( ProfileSelectionMenuRadio ):
 	"A class to display a profile type menu radio button."
-	def clickRadio( self ):
+	def clickRadio(self):
 		"Workaround for Tkinter bug, invoke and set the value when clicked."
 		if not self.activate:
 			return

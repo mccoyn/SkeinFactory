@@ -46,10 +46,10 @@ The whittle tool has created the file:
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 try:
-	import psyco
-	psyco.full()
+	"import psyco"
+	"psyco.full()"
 except:
 	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
@@ -65,9 +65,9 @@ import math
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = "$Date: 2008/28/04 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, text = '', whittleRepository = None ):
@@ -90,15 +90,15 @@ def getNewRepository():
 
 def writeOutput( fileName = ''):
 	"Whittle the carving of a gcode file.  If no fileName is specified, whittle the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName == '':
 		return
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'whittle')
 
 
-class WhittleRepository( settings.Repository ):
+class WhittleRepository:
 	"A class to handle the whittle settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.whittle.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File to be Whittled', self, '')
@@ -106,16 +106,16 @@ class WhittleRepository( settings.Repository ):
 		self.maximumVerticalStep = settings.FloatSpin().getFromValue( 0.02, 'Maximum Vertical Step (mm):', self, 0.42, 0.1 )
 		self.executeTitle = 'Whittle'
 
-	def execute( self ):
+	def execute(self):
 		"Whittle button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class WhittleSkein:
 	"A class to whittle a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.layerThickness = 0.3333333333
 		self.lineIndex = 0
@@ -133,31 +133,31 @@ class WhittleSkein:
 
 	def getLinearMove( self, line, splitLine ):
 		"Get the linear move."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		self.movementLines.append(line)
 		z = location.z + self.layerDeltas[0]
 		self.oldLocation = location
 		return self.distanceFeedRate.getLineWithZ( line, splitLine, z )
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ].lstrip()
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedLine('procedureDone', 'whittle')
 				return
 			elif firstWord == '(<layerThickness>':
-				self.setLayerThinknessVerticalDeltas( splitLine )
+				self.setLayerThinknessVerticalDeltas(splitLine)
 				self.distanceFeedRate.addTagBracketedLine('layerStep', self.layerStep )
 			self.distanceFeedRate.addLine(line)
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line and add it to the whittle skein."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
@@ -166,19 +166,19 @@ class WhittleSkein:
 			self.repeatLines()
 		self.distanceFeedRate.addLine(line)
 
-	def repeatLines( self ):
+	def repeatLines(self):
 		"Repeat the lines at decreasing altitude."
-		for layerDelta in self.layerDeltas[ 1 : ]:
+		for layerDelta in self.layerDeltas[1 :]:
 			for movementLine in self.movementLines:
 				splitLine = movementLine.split()
-				location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+				location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 				z = location.z + layerDelta
 				self.distanceFeedRate.addLine( self.distanceFeedRate.getLineWithZ( movementLine, splitLine, z ) )
 		self.movementLines = []
 
 	def setLayerThinknessVerticalDeltas( self, splitLine ):
 		"Set the layer thickness and the vertical deltas."
-		self.layerThickness = float( splitLine[1] )
+		self.layerThickness = float(splitLine[1])
 		numberOfSteps = int( math.ceil( self.layerThickness / self.whittleRepository.maximumVerticalStep.value ) )
 		self.layerStep = self.layerThickness / float( numberOfSteps )
 		self.layerDeltas = []
@@ -191,7 +191,7 @@ class WhittleSkein:
 def main():
 	"Display the whittle dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

@@ -16,9 +16,9 @@ from skeinforge_application.skeinforge_plugins.analyze_plugins.analyze_utilities
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewMouseTool():
@@ -33,30 +33,30 @@ class DisplayLine( MouseToolBase ):
 		self.destroyEverythingGetFocus()
 		x = self.canvas.canvasx( event.x )
 		y = self.canvas.canvasy( event.y )
-		tags = self.getTagsGivenXY( x, y )
+		tags = self.getTagsGivenXY(x, y)
 		if tags == 'pointer':
 			self.canvas.delete('pointer')
-			tags = self.getTagsGivenXY( x, y )
+			tags = self.getTagsGivenXY(x, y)
 		if tags == '':
 			return
 		if tags.startswith('colored_line_index:'):
 			splitLine = tags.split()
-			coloredLineIndex = int( splitLine[1] )
+			coloredLineIndex = int(splitLine[1])
 			self.repository.line.value = coloredLineIndex
 			tags = self.getSelectedColoredLine().displayString
-		self.drawLineText( complex( float( x ), float( y ) ), tags )
+		self.drawLineText( complex( float(x), float(y) ), tags )
 
 	def drawLineText( self, location, tags ):
 		"Draw the line text."
 		self.window.getDrawnLineText( location, 'mouse_item', tags )
 
-	def drawSelectedColoredLineText( self ):
+	def drawSelectedColoredLineText(self):
 		"Draw the selected line and text."
 		selectedColoredLine = self.getSelectedColoredLine()
 		if len( self.canvas.find_withtag('mouse_item') ) < 1 or selectedColoredLine == None:
 			return
 		tags = selectedColoredLine.displayString
-		lineCoordinates = self.canvas.coords( self.canvas.find_withtag('mouse_item')[ - 1 ] )
+		lineCoordinates = self.canvas.coords( self.canvas.find_withtag('mouse_item')[-1] )
 		begin = complex( lineCoordinates[0], lineCoordinates[1] )
 		end = complex( lineCoordinates[2], lineCoordinates[3] )
 		segment = end - begin
@@ -68,7 +68,7 @@ class DisplayLine( MouseToolBase ):
 		location = begin + towardEnd + segmentClockwise
 		self.drawLineText( location, tags )
 
-	def getSelectedColoredLine( self ):
+	def getSelectedColoredLine(self):
 		"Draw the selected line, add it to the items and return the colored line."
 		self.window.cancelTimerResetButtons()
 		coloredLines = self.window.getColoredLines()
@@ -87,16 +87,16 @@ class DisplayLine( MouseToolBase ):
 		self.window.setLineButtonsState()
 		return coloredLine
 
-	def isSelectionTool( self ):
+	def isSelectionTool(self):
 		"Return if this mouse tool is a selection tool."
 		return True
 
-	def keyPressDown( self, event ):
+	def keyPressDown(self, event):
 		"The down arrow was pressed."
 		self.destroyEverything()
 		self.window.setLayerIndex( self.repository.layer.value - 1 )
 
-	def keyPressLeft( self, event ):
+	def keyPressLeft(self, event):
 		"The left arrow was pressed."
 		self.destroyEverything()
 		self.repository.line.value -= 1
@@ -104,7 +104,7 @@ class DisplayLine( MouseToolBase ):
 			return
 		self.drawSelectedColoredLineText()
 
-	def keyPressRight( self, event ):
+	def keyPressRight(self, event):
 		"The right arrow was pressed."
 		self.destroyEverything()
 		self.repository.line.value += 1
@@ -112,12 +112,12 @@ class DisplayLine( MouseToolBase ):
 			return
 		self.drawSelectedColoredLineText()
 
-	def keyPressUp( self, event ):
+	def keyPressUp(self, event):
 		"The up arrow was pressed."
 		self.destroyEverything()
 		self.window.setLayerIndex( self.repository.layer.value + 1 )
 
-	def update( self ):
+	def update(self):
 		"Update the mouse tool."
 		self.destroyEverything()
 		self.drawSelectedColoredLineText()

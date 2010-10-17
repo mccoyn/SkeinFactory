@@ -12,9 +12,9 @@ from fabmetheus_utilities import settings
 import os
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getPluginFileNames():
@@ -30,9 +30,9 @@ def getNewRepository():
 	return MetaRepository()
 
 
-class MetaRepository( settings.Repository ):
+class MetaRepository(settings.Repository):
 	"A class to handle the meta settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_utilities.skeinforge_meta.html', '', self )
 		importantFileNames = ['polyfile']

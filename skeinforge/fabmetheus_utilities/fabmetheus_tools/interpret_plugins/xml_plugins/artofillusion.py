@@ -26,7 +26,7 @@ An xml file can be exported from Art of Illusion by going to the "File" menu, th
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -43,10 +43,10 @@ from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import euclidean
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCarvingFromParser( xmlParser ):
@@ -98,7 +98,7 @@ def processXMLElement( archivableObjects, parent, xmlElement ):
 	archivableObject.xmlElement.attributeDictionary['visible'] = xmlElement.attributeDictionary['visible']
 	archivableObject.setToObjectAttributeDictionary()
 	archivableObject.xmlElement.parent = parent
-	archivableObjects.append( archivableObject )
+	archivableObjects.append(archivableObject)
 
 def removeListArtOfIllusionFromDictionary( dictionary, scrubKeys ):
 	"Remove the list and art of illusion keys from the dictionary."
@@ -108,7 +108,7 @@ def removeListArtOfIllusionFromDictionary( dictionary, scrubKeys ):
 
 class BooleanSolid( booleansolid.BooleanSolid ):
 	"An Art of Illusion CSG object info."
-	def setToObjectAttributeDictionary( self ):
+	def setToObjectAttributeDictionary(self):
 		"Set the shape of this carvable object info."
 		processXMLElement( self.archivableObjects, self.xmlElement, self.xmlElement.getFirstChildWithClassName('obj1') )
 		processXMLElement( self.archivableObjects, self.xmlElement, self.xmlElement.getFirstChildWithClassName('obj2') )
@@ -121,7 +121,7 @@ class BooleanSolid( booleansolid.BooleanSolid ):
 
 class Cube( cube.Cube ):
 	"An Art of Illusion Cube object."
-	def setToObjectAttributeDictionary( self ):
+	def setToObjectAttributeDictionary(self):
 		"Set the shape of this carvable object info."
 		self.inradius = Vector3(
 			float( self.xmlElement.attributeDictionary['halfx'] ),
@@ -154,7 +154,7 @@ class Cylinder(cylinder.Cylinder):
 
 class Group( group.Group ):
 	"An Art of Illusion Group object."
-	def setToObjectAttributeDictionary( self ):
+	def setToObjectAttributeDictionary(self):
 		"Set the shape of this group."
 		childrenElement = self.xmlElement.parent.getFirstChildWithClassName('children')
 		children = childrenElement.getChildrenWithClassName('bf:Elem')
@@ -165,7 +165,7 @@ class Group( group.Group ):
 
 class Sphere( sphere.Sphere ):
 	"An Art of Illusion Sphere object."
-	def setToObjectAttributeDictionary( self ):
+	def setToObjectAttributeDictionary(self):
 		"Set the shape of this carvable object."
 		self.radius = Vector3(
 			float( self.xmlElement.attributeDictionary['rx'] ),
@@ -180,14 +180,14 @@ class Sphere( sphere.Sphere ):
 
 class TriangleMesh( trianglemesh.TriangleMesh ):
 	"An Art of Illusion triangle mesh object."
-	def setToObjectAttributeDictionary( self ):
+	def setToObjectAttributeDictionary(self):
 		"Set the shape of this carvable object info."
 		vertexElement = self.xmlElement.getFirstChildWithClassName('vertex')
 		vertexPointElements = vertexElement.getChildrenWithClassName('bf:Elem')
 		for vertexPointElement in vertexPointElements:
 			coordinateElement = vertexPointElement.getFirstChildWithClassName('r')
 			vertex = Vector3( float( coordinateElement.attributeDictionary['x'] ), float( coordinateElement.attributeDictionary['y'] ), float( coordinateElement.attributeDictionary['z'] ) )
-			self.vertices.append(vertex)
+			self.vertexes.append(vertex)
 		edgeElement = self.xmlElement.getFirstChildWithClassName('edge')
 		edgeSubelements = edgeElement.getChildrenWithClassName('bf:Elem')
 		for edgeSubelementIndex in xrange( len( edgeSubelements ) ):

@@ -8,26 +8,26 @@ Display line is a mouse tool to display the line index of the line clicked, coun
 import __init__
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 class MouseToolBase:
 	"The mouse tool base class, which does nothing."
-	def button1( self, event ):
+	def button1(self, event):
 		"The left button was clicked, <Button-1> function."
 		pass
 
-	def buttonRelease1( self, event ):
+	def buttonRelease1(self, event):
 		"The left button was released, <ButtonRelease-1> function."
 		pass
 
-	def destroyEverything( self ):
+	def destroyEverything(self):
 		"Destroy items."
 		self.canvas.delete('mouse_item')
 
-	def destroyEverythingGetFocus( self ):
+	def destroyEverythingGetFocus(self):
 		"Destroy items and get the focus for the canvas."
 		self.destroyEverything()
 		self.canvas.focus_set()
@@ -40,33 +40,33 @@ class MouseToolBase:
 
 	def getTagsGivenXY( self, x, y ):
 		"Get the tag for the x and y."
-		tags = self.canvas.itemcget( self.canvas.find_closest( x, y ), 'tags')
+		tags = self.canvas.itemcget( self.canvas.find_closest(x, y), 'tags')
 		currentEnd = ' current'
 		if tags.find( currentEnd ) != - 1:
 			return tags[ : - len( currentEnd ) ]
 		return tags
 
-	def isSelectionTool( self ):
+	def isSelectionTool(self):
 		"Return if this mouse tool is a selection tool."
 		return False
 
-	def keyPressDown( self, event ):
+	def keyPressDown(self, event):
 		"The down arrow was pressed."
 		pass
 
-	def keyPressLeft( self, event ):
+	def keyPressLeft(self, event):
 		"The left arrow was pressed."
 		pass
 
-	def keyPressReturn( self, event ):
+	def keyPressReturn(self, event):
 		"The return key was pressed."
 		pass
 
-	def keyPressRight( self, event ):
+	def keyPressRight(self, event):
 		"The right arrow was pressed."
 		pass
 
-	def keyPressUp( self, event ):
+	def keyPressUp(self, event):
 		"The up arrow was pressed."
 		pass
 
@@ -80,6 +80,6 @@ class MouseToolBase:
 		self.repository = window.repository
 		self.window = window
 
-	def update( self ):
+	def update(self):
 		"Update the mouse tool."
 		pass

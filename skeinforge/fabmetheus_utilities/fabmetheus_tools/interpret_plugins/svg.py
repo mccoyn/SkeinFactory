@@ -24,12 +24,12 @@ many more lines of the carving
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
-from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities.svg_reader import SVGReader
+from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import svg_writer
@@ -37,65 +37,65 @@ from fabmetheus_utilities import xml_simple_writer
 import math
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCarving( fileName = ''):
 	"Get the triangle mesh for the gts file."
 	carving = SVGCarving()
-	carving.parseSVG( fileName, gcodec.getFileText( fileName ) )
+	carving.parseSVG( fileName, gcodec.getFileText(fileName) )
 	return carving
 
 
 class SVGCarving:
 	"An svg carving."
-	def __init__( self ):
+	def __init__(self):
 		"Add empty lists."
 		self.layerThickness = 1.0
 		self.maximumZ = - 999999999.0
 		self.minimumZ = 999999999.0
 		self.svgReader = SVGReader()
 
-	def __repr__( self ):
+	def __repr__(self):
 		"Get the string representation of this carving."
 		return self.getCarvedSVG()
 
-	def addXML( self, depth, output ):
+	def addXML(self, depth, output):
 		"Add xml for this object."
 		xml_simple_writer.addXMLFromObjects( depth, self.svgReader.rotatedLoopLayers, output )
 
-	def getCarveCornerMaximum( self ):
-		"Get the corner maximum of the vertices."
+	def getCarveCornerMaximum(self):
+		"Get the corner maximum of the vertexes."
 		return self.cornerMaximum
 
-	def getCarveCornerMinimum( self ):
-		"Get the corner minimum of the vertices."
+	def getCarveCornerMinimum(self):
+		"Get the corner minimum of the vertexes."
 		return self.cornerMinimum
 
-	def getCarvedSVG( self ):
+	def getCarvedSVG(self):
 		"Get the carved svg text."
-		if len( self.svgReader.rotatedLoopLayers ) < 1:
-			return ''
-		decimalPlacesCarried = max(0, 2 - int(math.floor(math.log10(self.layerThickness))))
-		self.svgWriter = svg_writer.SVGWriter(True, self, decimalPlacesCarried)
-		return self.svgWriter.getReplacedSVGTemplate(self.fileName, 'basic', self.svgReader.rotatedLoopLayers)
+		return svg_writer.getSVGByLoopLayers(True, self.svgReader.rotatedLoopLayers, self)
 
-	def getCarveLayerThickness( self ):
+	def getCarveLayerThickness(self):
 		"Get the layer thickness."
 		return self.layerThickness
 
-	def getCarveRotatedBoundaryLayers( self ):
+	def getCarveRotatedBoundaryLayers(self):
 		"Get the rotated boundary layers."
 		return self.svgReader.rotatedLoopLayers
 
-	def getInterpretationSuffix( self ):
+	def getFabmetheusXML(self):
+		"Return the fabmetheus XML."
+		return None
+
+	def getInterpretationSuffix(self):
 		"Return the suffix for a carving."
 		return 'svg'
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		if self.svgReader.sliceDictionary == None:
 			return
@@ -107,16 +107,12 @@ class SVGCarving:
 		"Parse SVG text and store the layers."
 		if svgText == '':
 			return
-		self.svgReader.parseSVG( fileName, svgText )
+		self.fileName = fileName
+		self.svgReader.parseSVG(fileName, svgText)
 		self.parseInitialization()
-		self.cornerMaximum = Vector3( - 999999999.0, - 999999999.0, self.maximumZ )
-		self.cornerMinimum = Vector3( 999999999.0, 999999999.0, self.minimumZ )
-		for rotatedBoundaryLayer in self.svgReader.rotatedLoopLayers:
-			for loop in rotatedBoundaryLayer.loops:
-				for point in loop:
-					pointVector3 = Vector3( point.real, point.imag, rotatedBoundaryLayer.z )
-					self.cornerMaximum = euclidean.getPointMaximum( self.cornerMaximum, pointVector3 )
-					self.cornerMinimum = euclidean.getPointMinimum( self.cornerMinimum, pointVector3 )
+		self.cornerMaximum = Vector3(-999999999.0, -999999999.0, self.maximumZ)
+		self.cornerMinimum = Vector3(999999999.0, 999999999.0, self.minimumZ)
+		svg_writer.setSVGCarvingCorners(self.svgReader.rotatedLoopLayers, self)
 
 	def setCarveBridgeLayerThickness( self, bridgeLayerThickness ):
 		"Set the bridge layer thickness.  If the infill is not in the direction of the bridge, the bridge layer thickness should be given as None or not set at all."

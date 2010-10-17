@@ -18,9 +18,9 @@ from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import settings
 import math
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getBoundedLatitude( latitude ):
@@ -63,7 +63,7 @@ class ViewpointRotate( MouseToolBase ):
 		self.destroyEverything()
 		x = self.canvas.canvasx( event.x )
 		y = self.canvas.canvasy( event.y )
-		self.buttonOnePressedCanvasCoordinate = complex( x, y )
+		self.buttonOnePressedCanvasCoordinate = complex(x, y)
 
 	def buttonRelease1( self, event, shift = False ):
 		"The left button was released, <ButtonRelease-1> function."
@@ -71,10 +71,10 @@ class ViewpointRotate( MouseToolBase ):
 			return
 		x = self.canvas.canvasx( event.x )
 		y = self.canvas.canvasy( event.y )
-		buttonOneReleasedCanvasCoordinate = complex( x, y )
+		buttonOneReleasedCanvasCoordinate = complex(x, y)
 		self.moveViewpointGivenCoordinates( buttonOneReleasedCanvasCoordinate, shift, self.buttonOnePressedCanvasCoordinate )
 
-	def destroyEverything( self ):
+	def destroyEverything(self):
 		"Destroy items."
 		self.buttonOnePressedCanvasCoordinate = None
 		self.keyStartCanvasCoordinate = None
@@ -82,49 +82,49 @@ class ViewpointRotate( MouseToolBase ):
 		self.relativeLongitude = 0.5 * math.pi
 		self.canvas.delete('mouse_item')
 
-	def getMoveCoordinate( self ):
+	def getMoveCoordinate(self):
 		"Get the movement coordinate from the class relative latitude and longitude."
 		motionRadius = ( 0.75 + self.relativeLatitude ) * self.window.getCanvasRadius()
 		return self.window.getScreenComplex( motionRadius * euclidean.getWiddershinsUnitPolar( self.relativeLongitude ) )
 
-	def keyPressDown( self, event ):
+	def keyPressDown(self, event):
 		"The down arrow was pressed."
 		self.keyPressStart()
-		self.relativeLatitude -= math.radians( 1.0 )
+		self.relativeLatitude -= math.radians(1.0)
 		self.keyPressMotion()
 
-	def keyPressLeft( self, event ):
+	def keyPressLeft(self, event):
 		"The left arrow was pressed."
 		self.keyPressStart()
-		self.relativeLongitude += math.radians( 1.0 )
+		self.relativeLongitude += math.radians(1.0)
 		self.keyPressMotion()
 
-	def keyPressMotion( self ):
+	def keyPressMotion(self):
 		"Move the motion viewpoint for the class key press coordinates."
 		self.motionGivenCoordinates( self.getMoveCoordinate(), False, self.keyStartCanvasCoordinate )
 
-	def keyPressReturn( self, event ):
+	def keyPressReturn(self, event):
 		"The return key was pressed."
 		if self.keyStartCanvasCoordinate == None:
 			return
 		self.moveViewpointGivenCoordinates( self.getMoveCoordinate(), False, self.keyStartCanvasCoordinate )
 
-	def keyPressRight( self, event ):
+	def keyPressRight(self, event):
 		"The right arrow was pressed."
 		self.keyPressStart()
-		self.relativeLongitude -= math.radians( 1.0 )
+		self.relativeLongitude -= math.radians(1.0)
 		self.keyPressMotion()
 
-	def keyPressStart( self ):
+	def keyPressStart(self):
 		"If necessary, destroy everything and calculate the keyStartCanvasCoordinate."
 		if self.keyStartCanvasCoordinate == None:
 			self.destroyEverything()
 			self.keyStartCanvasCoordinate = self.window.getScreenComplex( complex( 0.0, 0.75 * self.window.getCanvasRadius() ) )
 
-	def keyPressUp( self, event ):
+	def keyPressUp(self, event):
 		"The up arrow was pressed."
 		self.keyPressStart()
-		self.relativeLatitude += math.radians( 1.0 )
+		self.relativeLatitude += math.radians(1.0)
 		self.keyPressMotion()
 
 	def motion( self, event, shift = False ):
@@ -133,7 +133,7 @@ class ViewpointRotate( MouseToolBase ):
 			return
 		x = self.canvas.canvasx( event.x )
 		y = self.canvas.canvasy( event.y )
-		motionCoordinate = complex( x, y )
+		motionCoordinate = complex(x, y)
 		self.motionGivenCoordinates( motionCoordinate, shift, self.buttonOnePressedCanvasCoordinate )
 
 	def motionGivenCoordinates( self, motionCoordinate, shift, startCoordinate ):
@@ -196,6 +196,6 @@ class ViewpointRotate( MouseToolBase ):
 		self.repository.viewpointLongitude.value = latitudeLongitude.longitude
 		self.repository.viewpointLongitude.setStateToValue()
 		startCoordinate = None
-		settings.writeSettings( self.repository )
+		settings.writeSettings(self.repository)
 		self.window.update()
 		self.destroyEverything()

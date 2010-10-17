@@ -72,11 +72,11 @@ The inset tool has created the file:
 """
 
 #from __future__ import absolute_import
-#try:
-#	import psyco
-#	psyco.full()
-#except:
-#	pass
+try:
+	"import psyco"
+	"psyco.full()"
+except:
+	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -95,9 +95,9 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = "$Date: 2008/28/04 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 def addAlreadyFilledArounds( alreadyFilledArounds, loop, radius ):
@@ -219,10 +219,10 @@ def getSegmentsFromLoopListsPoints( loopLists, pointBegin, pointEnd ):
 
 def isCloseToLast( paths, point, radius ):
 	"Determine if the point is close to the last point of the last path."
-	if len( paths ) < 1:
+	if len(paths) < 1:
 		return False
-	lastPath = paths[ - 1 ]
-	return abs( lastPath[ - 1 ] - point ) < radius
+	lastPath = paths[-1]
+	return abs( lastPath[-1] - point ) < radius
 
 def isIntersectingItself( loop, width ):
 	"Determine if the loop is intersecting itself."
@@ -244,14 +244,14 @@ def isIntersectingWithinLists( loop, loopLists ):
 
 def writeOutput( fileName = ''):
 	"Inset the carving of a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName != '':
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'inset')
 
 
-class InsetRepository( settings.Repository ):
+class InsetRepository:
 	"A class to handle the inset settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.inset.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Inset', self, '')
@@ -265,16 +265,16 @@ class InsetRepository( settings.Repository ):
 		self.turnExtruderHeaterOffAtShutDown = settings.BooleanSetting().getFromValue('Turn Extruder Heater Off at Shut Down', self, True )
 		self.executeTitle = 'Inset'
 
-	def execute( self ):
+	def execute(self):
 		"Inset button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class InsetSkein:
 	"A class to inset a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.boundary = None
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.lineIndex = 0
@@ -285,7 +285,7 @@ class InsetSkein:
 		segments = []
 		outlines = []
 		thickOutlines = []
-		allLoopLists = loopLists[ : ] + [ thickOutlines ]
+		allLoopLists = loopLists[:] + [ thickOutlines ]
 		aroundLists = loopLists
 		for pointIndex in xrange(len(loop)):
 			pointBegin = loop[pointIndex]
@@ -306,12 +306,12 @@ class InsetSkein:
 			pointBegin = segment[0].point
 			if not isCloseToLast( perimeterPaths, pointBegin, muchSmallerThanRadius ):
 				path = [ pointBegin ]
-				perimeterPaths.append( path )
+				perimeterPaths.append(path)
 			path.append( segment[1].point )
 		if len( perimeterPaths ) > 1:
 			firstPath = perimeterPaths[0]
-			lastPath = perimeterPaths[ - 1 ]
-			if abs( lastPath[ - 1 ] - firstPath[0] ) < 0.1 * muchSmallerThanRadius:
+			lastPath = perimeterPaths[-1]
+			if abs( lastPath[-1] - firstPath[0] ) < 0.1 * muchSmallerThanRadius:
 				connectedBeginning = lastPath[ : - 1 ] + firstPath
 				perimeterPaths[0] = connectedBeginning
 				perimeterPaths.remove( lastPath )
@@ -341,16 +341,16 @@ class InsetSkein:
 	def addGcodePerimeterBlockFromRemainingLoop( self, loop, loopLists, radius, z ):
 		"Add the perimter block remainder of the loop which does not overlap the alreadyFilledArounds loops."
 		if self.repository.overlapRemovalWidthOverPerimeterWidth.value < 0.2:
-			self.distanceFeedRate.addPerimeterBlock( loop, z )
+			self.distanceFeedRate.addPerimeterBlock(loop, z)
 			return
 		isIntersectingSelf = isIntersectingItself( loop, self.overlapRemovalWidth )
 		if isIntersectingWithinLists( loop, loopLists ) or isIntersectingSelf:
 			self.addGcodeFromPerimeterPaths( isIntersectingSelf, loop, loopLists, radius, z )
 		else:
-			self.distanceFeedRate.addPerimeterBlock( loop, z )
+			self.distanceFeedRate.addPerimeterBlock(loop, z)
 		addAlreadyFilledArounds( loopLists, loop, self.overlapRemovalWidth )
 
-	def addInitializationToOutput( self ):
+	def addInitializationToOutput(self):
 		"Add initialization gcode to the output."
 		if self.repository.addCustomCodeForTemperatureReading.value:
 			self.distanceFeedRate.addLine('M105') # Custom code for temperature reading.
@@ -379,12 +379,12 @@ class InsetSkein:
 			self.parseLine(line)
 		return self.distanceFeedRate.output.getvalue()
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(<decimalPlacesCarried>':
 				self.addInitializationToOutput()
@@ -395,20 +395,20 @@ class InsetSkein:
 				self.distanceFeedRate.addLine(line)
 				return
 			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float( splitLine[1] )
+				self.perimeterWidth = float(splitLine[1])
 				self.halfPerimeterWidth = 0.5 * self.perimeterWidth
 				self.overlapRemovalWidth = self.perimeterWidth * self.repository.overlapRemovalWidthOverPerimeterWidth.value
 			self.distanceFeedRate.addLine(line)
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line and add it to the inset skein."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == '(<boundaryPoint>':
-			location = gcodec.getLocationFromSplitLine( None, splitLine )
-			self.boundary.append( location.dropAxis( 2 ) )
+			location = gcodec.getLocationFromSplitLine(None, splitLine)
+			self.boundary.append( location.dropAxis(2) )
 		elif ( firstWord == '(<bridgeRotation>' or firstWord == '<!--bridgeRotation-->'):
 			secondWordWithoutBrackets = splitLine[1].replace('(', '').replace(')', '')
 			self.rotatedBoundaryLayer.rotation = complex( secondWordWithoutBrackets )
@@ -418,7 +418,7 @@ class InsetSkein:
 					self.distanceFeedRate.addLine('M104 S0') # Turn extruder heater off.
 				return
 		elif firstWord == '(<layer>':
-			self.rotatedBoundaryLayer = euclidean.RotatedLoopLayer( float( splitLine[1] ) )
+			self.rotatedBoundaryLayer = euclidean.RotatedLoopLayer( float(splitLine[1]) )
 			self.distanceFeedRate.addLine(line)
 		elif firstWord == '(</layer>)':
 			self.addInset( self.rotatedBoundaryLayer )
@@ -433,7 +433,7 @@ class InsetSkein:
 def main():
 	"Display the inset dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

@@ -88,15 +88,15 @@ from skeinforge_application.skeinforge_utilities import skeinforge_profile
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 #maybe speed up feedRate option
 def getCraftedText( fileName, gcodeText, stretchRepository = None ):
 	"Stretch a gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, gcodeText ), stretchRepository )
+	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), stretchRepository )
 
 def getCraftedTextFromText( gcodeText, stretchRepository = None ):
 	"Stretch a gcode linear move text."
@@ -114,7 +114,7 @@ def getNewRepository():
 
 def writeOutput( fileName = ''):
 	"Stretch a gcode linear move file.  Chain stretch the gcode if it is not already stretched.  If no fileName is specified, stretch the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName != '':
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'stretch')
 
@@ -127,52 +127,52 @@ class LineIteratorBackward:
 		self.lineIndex = lineIndex
 		self.lines = lines
 
-	def getIndexBeforeNextDeactivate( self ):
+	def getIndexBeforeNextDeactivate(self):
 		"Get index two lines before the deactivate command."
 		for lineIndex in xrange( self.lineIndex + 1, len( self.lines ) ):
-			line = self.lines[ lineIndex ]
+			line = self.lines[lineIndex]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'M103':
 				return lineIndex - 2
 		print('This should never happen in stretch, no deactivate command was found for this thread.')
-		raise StopIteration
+		raise StopIteration, "You've reached the end of the line."
 
-	def getNext( self ):
+	def getNext(self):
 		"Get next line going backward or raise exception."
 		while self.lineIndex > 3:
 			if self.lineIndex == self.firstLineIndex:
-				raise StopIteration
+				raise StopIteration, "You've reached the end of the line."
 			if self.firstLineIndex == None:
 				self.firstLineIndex = self.lineIndex
 			nextLineIndex = self.lineIndex - 1
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'M103':
 				if self.isLoop:
 					nextLineIndex = self.getIndexBeforeNextDeactivate()
 				else:
-					raise StopIteration
+					raise StopIteration, "You've reached the end of the line."
 			if firstWord == 'G1':
 				if self.isBeforeExtrusion():
 					if self.isLoop:
 						nextLineIndex = self.getIndexBeforeNextDeactivate()
 					else:
-						raise StopIteration
+						raise StopIteration, "You've reached the end of the line."
 				else:
 					self.lineIndex = nextLineIndex
 					return line
 			self.lineIndex = nextLineIndex
-		raise StopIteration
+		raise StopIteration, "You've reached the end of the line."
 
-	def isBeforeExtrusion( self ):
+	def isBeforeExtrusion(self):
 		"Determine if index is two or more before activate command."
 		linearMoves = 0
 		for lineIndex in xrange( self.lineIndex + 1, len( self.lines ) ):
-			line = self.lines[ lineIndex ]
+			line = self.lines[lineIndex]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'G1':
 				linearMoves += 1
 			if firstWord == 'M101':
@@ -191,42 +191,42 @@ class LineIteratorForward:
 		self.lineIndex = lineIndex
 		self.lines = lines
 
-	def getIndexJustAfterActivate( self ):
+	def getIndexJustAfterActivate(self):
 		"Get index just after the activate command."
 		for lineIndex in xrange( self.lineIndex - 1, 3, - 1 ):
-			line = self.lines[ lineIndex ]
+			line = self.lines[lineIndex]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'M101':
 				return lineIndex + 1
 		print('This should never happen in stretch, no activate command was found for this thread.')
-		raise StopIteration
+		raise StopIteration, "You've reached the end of the line."
 
-	def getNext( self ):
+	def getNext(self):
 		"Get next line or raise exception."
 		while self.lineIndex < len( self.lines ):
 			if self.lineIndex == self.firstLineIndex:
-				raise StopIteration
+				raise StopIteration, "You've reached the end of the line."
 			if self.firstLineIndex == None:
 				self.firstLineIndex = self.lineIndex
 			nextLineIndex = self.lineIndex + 1
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'M103':
 				if self.isLoop:
 					nextLineIndex = self.getIndexJustAfterActivate()
 				else:
-					raise StopIteration
+					raise StopIteration, "You've reached the end of the line."
 			self.lineIndex = nextLineIndex
 			if firstWord == 'G1':
 				return line
-		raise StopIteration
+		raise StopIteration, "You've reached the end of the line."
 
 
-class StretchRepository( settings.Repository ):
+class StretchRepository:
 	"A class to handle the stretch settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.stretch.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Stretch', self, '')
@@ -235,24 +235,24 @@ class StretchRepository( settings.Repository ):
 		self.crossLimitDistanceOverPerimeterWidth = settings.FloatSpin().getFromValue( 3.0, 'Cross Limit Distance Over Perimeter Width (ratio):', self, 10.0, 5.0 )
 		self.loopStretchOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.05, 'Loop Stretch Over Perimeter Width (ratio):', self, 0.25, 0.11 )
 		self.pathStretchOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.0, 'Path Stretch Over Perimeter Width (ratio):', self, 0.2, 0.0 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Perimeter -', self )
 		self.perimeterInsideStretchOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.12, 'Perimeter Inside Stretch Over Perimeter Width (ratio):', self, 0.52, 0.32 )
 		self.perimeterOutsideStretchOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.05, 'Perimeter Outside Stretch Over Perimeter Width (ratio):', self, 0.25, 0.1 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.stretchFromDistanceOverPerimeterWidth = settings.FloatSpin().getFromValue( 1.0, 'Stretch From Distance Over Perimeter Width (ratio):', self, 3.0, 2.0 )
 		self.executeTitle = 'Stretch'
 
-	def execute( self ):
+	def execute(self):
 		"Stretch button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class StretchSkein:
 	"A class to stretch a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.extruderActive = False
 		self.feedRateMinute = 959.0
@@ -279,7 +279,7 @@ class StretchSkein:
 		except StopIteration:
 			return crossLimitedStretch
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		pointComplex = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine ).dropAxis( 2 )
+		pointComplex = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine).dropAxis(2)
 		pointMinusLocation = locationComplex - pointComplex
 		pointMinusLocationLength = abs( pointMinusLocation )
 		if pointMinusLocationLength <= self.crossLimitDistanceFraction:
@@ -310,7 +310,7 @@ class StretchSkein:
 				return complex()
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
 			firstWord = splitLine[0]
-			pointComplex = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine ).dropAxis( 2 )
+			pointComplex = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine).dropAxis(2)
 			locationMinusPoint = lastLocationComplex - pointComplex
 			locationMinusPointLength = abs( locationMinusPoint )
 			totalLength += locationMinusPointLength
@@ -324,7 +324,7 @@ class StretchSkein:
 
 	def getStretchedLine( self, splitLine ):
 		"Get stretched gcode line."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		self.feedRateMinute = gcodec.getFeedRateMinute( self.feedRateMinute, splitLine )
 		self.oldLocation = location
 		if self.extruderActive and self.threadMaximumAbsoluteStretch > 0.0:
@@ -339,7 +339,7 @@ class StretchSkein:
 		crossIteratorBackward = LineIteratorBackward( self.isLoop, indexPreviousStart, self.lines )
 		iteratorForward = LineIteratorForward( self.isLoop, indexNextStart, self.lines )
 		iteratorBackward = LineIteratorBackward( self.isLoop, indexPreviousStart, self.lines )
-		locationComplex = location.dropAxis( 2 )
+		locationComplex = location.dropAxis(2)
 		relativeStretch = self.getRelativeStretch( locationComplex, iteratorForward ) + self.getRelativeStretch( locationComplex, iteratorBackward )
 		relativeStretch *= 0.8
 #		print('relativeStretch')
@@ -351,15 +351,15 @@ class StretchSkein:
 		if relativeStretchLength > 1.0:
 			relativeStretch /= relativeStretchLength
 		absoluteStretch = relativeStretch * self.threadMaximumAbsoluteStretch
-		stretchedPoint = location.dropAxis( 2 ) + absoluteStretch
+		stretchedPoint = location.dropAxis(2) + absoluteStretch
 		return self.distanceFeedRate.getLinearGcodeMovementWithFeedRate( self.feedRateMinute, stretchedPoint, location.z )
 
-	def isJustBeforeExtrusion( self ):
+	def isJustBeforeExtrusion(self):
 		"Determine if activate command is before linear move command."
 		for lineIndex in xrange( self.lineIndex + 1, len( self.lines ) ):
-			line = self.lines[ lineIndex ]
+			line = self.lines[lineIndex]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'G1' or firstWord == 'M103':
 				return False
 			if firstWord == 'M101':
@@ -367,18 +367,18 @@ class StretchSkein:
 #		print('This should never happen in isJustBeforeExtrusion in stretch, no activate or deactivate command was found for this thread.')
 		return False
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addLine('(<procedureDone> stretch </procedureDone>)')
 				return
 			elif firstWord == '(<perimeterWidth>':
-				perimeterWidth = float( splitLine[1] )
+				perimeterWidth = float(splitLine[1])
 				self.crossLimitDistance = self.perimeterWidth * self.stretchRepository.crossLimitDistanceOverPerimeterWidth.value
 				self.loopMaximumAbsoluteStretch = self.perimeterWidth * self.stretchRepository.loopStretchOverPerimeterWidth.value
 				self.pathAbsoluteStretch = self.perimeterWidth * self.stretchRepository.pathStretchOverPerimeterWidth.value
@@ -390,14 +390,14 @@ class StretchSkein:
 				self.crossLimitDistanceRemainder = self.crossLimitDistance - self.crossLimitDistanceFraction
 			self.distanceFeedRate.addLine(line)
 
-	def parseStretch( self, line ):
+	def parseStretch(self, line):
 		"Parse a gcode line and add it to the stretch skein."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
-			line = self.getStretchedLine( splitLine )
+			line = self.getStretchedLine(splitLine)
 		elif firstWord == 'M101':
 			self.extruderActive = True
 		elif firstWord == 'M103':
@@ -417,7 +417,7 @@ class StretchSkein:
 			self.setStretchToPath()
 		self.distanceFeedRate.addLine(line)
 
-	def setStretchToPath( self ):
+	def setStretchToPath(self):
 		"Set the thread stretch to path stretch and is loop false."
 		self.isLoop = False
 		self.threadMaximumAbsoluteStretch = self.pathAbsoluteStretch
@@ -426,7 +426,7 @@ class StretchSkein:
 def main():
 	"Display the stretch dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

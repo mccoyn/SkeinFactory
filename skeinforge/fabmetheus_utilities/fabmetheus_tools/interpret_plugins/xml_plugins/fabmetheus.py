@@ -26,12 +26,13 @@ An xml file can be exported from Art of Illusion by going to the "File" menu, th
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
 from fabmetheus_utilities.geometry.geometry_utilities import boolean_geometry
 from fabmetheus_utilities.geometry.geometry_utilities import evaluate
+from fabmetheus_utilities import archive
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from fabmetheus_utilities import xml_simple_reader
@@ -40,10 +41,10 @@ import sys
 import traceback
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCarvingFromParser( xmlParser ):
@@ -61,18 +62,19 @@ class XMLBooleanGeometryProcessor():
 	def __init__(self):
 		"Initialize processor."
 		self.functions = []
-		self.manipulationEvaluatorDictionary = evaluate.getGeometryDictionary('manipulation_evaluator')
-		self.manipulationPathDictionary = evaluate.getGeometryDictionary('manipulation_paths')
-		self.manipulationShapeDictionary = evaluate.getGeometryDictionary('manipulation_shapes')
+		self.manipulationEvaluatorDictionary = archive.getGeometryDictionary('manipulation_evaluator')
+		self.manipulationPathDictionary = archive.getGeometryDictionary('manipulation_paths')
+		self.manipulationShapeDictionary = archive.getGeometryDictionary('manipulation_shapes')
 		self.namePathDictionary = {}
 		self.namePathDictionary.update(evaluate.globalCreationDictionary)
-		self.namePathDictionary.update(evaluate.getGeometryDictionary('manipulation'))
+		self.namePathDictionary.update(archive.getGeometryDictionary('manipulation'))
 		self.namePathDictionary.update(self.manipulationEvaluatorDictionary)
 		self.namePathDictionary.update(self.manipulationPathDictionary)
 		self.namePathDictionary.update(self.manipulationShapeDictionary)
-		settings.addToNamePathDictionary(evaluate.getGeometryDirectoryPath('geometry_tools'), self.namePathDictionary)
-		settings.addToNamePathDictionary(evaluate.getGeometryDirectoryPath('solids'), self.namePathDictionary)
-		settings.addToNamePathDictionary(evaluate.getGeometryDirectoryPath('statements'), self.namePathDictionary)
+		archive.addToNamePathDictionary(archive.getGeometryToolsPath(), self.namePathDictionary)
+		archive.addToNamePathDictionary(archive.getGeometryToolsPath('path_elements'), self.namePathDictionary)
+		archive.addToNamePathDictionary(archive.getGeometryPath('solids'), self.namePathDictionary)
+		archive.addToNamePathDictionary(archive.getGeometryPath('statements'), self.namePathDictionary)
 
 	def convertXMLElement( self, geometryOutput, xmlElement ):
 		"Convert the xml element."
@@ -87,21 +89,21 @@ class XMLBooleanGeometryProcessor():
 		if pluginModule == None:
 			return None
 		xmlElement.className = lowerClassName
-		return pluginModule.convertXMLElement( geometryOutput[ firstKey ], xmlElement, self )
+		return pluginModule.convertXMLElement(geometryOutput[ firstKey ], xmlElement)
 
 	def createChildren( self, geometryOutput, parent ):
 		"Create children for the parent."
 		for geometryOutputChild in geometryOutput:
 			child = xml_simple_reader.XMLElement()
 			child.setParentAddToChildren( parent )
-			self.convertXMLElement( geometryOutputChild, child )
+			self.convertXMLElement(geometryOutputChild, child)
 
-	def processChildren( self, xmlElement ):
+	def processChildren(self, xmlElement):
 		"Process the children of the xml element."
 		for child in xmlElement.children:
 			self.processXMLElement( child )
 
-	def processXMLElement( self, xmlElement ):
+	def processXMLElement(self, xmlElement):
 		"Process the xml element."
 		lowerClassName = xmlElement.className.lower()
 		if lowerClassName not in self.namePathDictionary:
@@ -110,10 +112,10 @@ class XMLBooleanGeometryProcessor():
 		if pluginModule == None:
 			return None
 		try:
-			return pluginModule.processXMLElement( xmlElement, self )
+			return pluginModule.processXMLElement(xmlElement)
 		except:
 			print('Warning, could not processXMLElement in fabmetheus for:')
 			print( pluginModule )
 			print(xmlElement)
-			traceback.print_exc( file = sys.stdout )
+			traceback.print_exc(file=sys.stdout)
 		return None

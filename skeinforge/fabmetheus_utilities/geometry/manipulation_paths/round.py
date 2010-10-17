@@ -3,7 +3,7 @@ Add material to support overhang or remove material at the overhang angle.
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -14,10 +14,10 @@ from fabmetheus_utilities import euclidean
 import math
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Art of Illusion <http://www.artofillusion.org/>'
 __date__ = "$Date: 2008/02/05 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 globalExecutionOrder = 40
@@ -31,7 +31,7 @@ def getManipulatedPaths(close, loop, prefix, sideLength, xmlElement):
 	if radius == 0.0:
 		return loop
 	roundLoop = []
-	sidesPerRadian = 0.5 / math.pi * evaluate.getSidesMinimumThree(sideLength, xmlElement)
+	sidesPerRadian = 0.5 / math.pi * evaluate.getSidesMinimumThreeBasedOnPrecision(sideLength, xmlElement)
 	for pointIndex in xrange(len(loop)):
 		begin = loop[(pointIndex + len(loop) - 1) % len(loop)]
 		center = loop[pointIndex]
@@ -65,7 +65,7 @@ def getRoundPath( begin, center, close, end, radius, sidesPerRadian ):
 	circleCenter = Vector3( circleCenterComplex.real, circleCenterComplex.imag, center.z )
 	endMinusCircleCenterComplex = endBevelComplex - circleCenterComplex
 	beginMinusCircleCenter = beginBevel - circleCenter
-	beginMinusCircleCenterComplex = beginMinusCircleCenter.dropAxis( 2 )
+	beginMinusCircleCenterComplex = beginMinusCircleCenter.dropAxis(2)
 	angleDifference = euclidean.getAngleDifferenceByComplex( endMinusCircleCenterComplex, beginMinusCircleCenterComplex )
 	steps = int( math.ceil( abs( angleDifference ) * sidesPerRadian ) )
 	stepPlaneAngle = euclidean.getWiddershinsUnitPolar( angleDifference / float( steps ) )
@@ -78,6 +78,6 @@ def getRoundPath( begin, center, close, end, radius, sidesPerRadian ):
 		roundPath.append( arcPoint )
 	return roundPath + [ endBevel ]
 
-def processXMLElement( xmlElement, xmlProcessor ):
+def processXMLElement(xmlElement):
 	"Process the xml element."
-	lineation.processXMLElementByFunction( getManipulatedPaths, xmlElement, xmlProcessor )
+	lineation.processXMLElementByFunction(getManipulatedPaths, xmlElement)

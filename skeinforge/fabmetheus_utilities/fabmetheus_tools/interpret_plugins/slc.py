@@ -27,7 +27,7 @@ http://rapid.lpt.fi/archives/rp-ml-1999/0713.html
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -39,16 +39,17 @@ from struct import unpack
 import math
 import sys
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCarving( fileName = ''):
 	"Get the triangle mesh for the slc file."
 	carving = SLCCarving()
-	carving.readFile( fileName )
+	carving.readFile(fileName)
 	return carving
 
 def getLittleEndianFloatGivenFile( file ):
@@ -65,7 +66,7 @@ def getPointsFromFile( numPoints, file ):
 	for pointIndex in xrange( numPoints ):
 		x = getLittleEndianFloatGivenFile( file )
 		y = getLittleEndianFloatGivenFile( file )
-		points.append( complex( x, y ) )
+		points.append( complex(x, y) )
 	return points
 
 def readHeader( file ):
@@ -83,34 +84,34 @@ class SampleTableEntry:
 		self.beam_comp = getLittleEndianFloatGivenFile( file )
 		getLittleEndianFloatGivenFile( file )
 
-	def __repr__( self ):
+	def __repr__(self):
 		"Get the string representation of this sample table entry."
 		return '%s, %s, %s' % ( self.min_z_level, self.layer_thickness, self.beam_comp )
 
 
 class SLCCarving:
 	"An slc carving."
-	def __init__( self ):
+	def __init__(self):
 		"Add empty lists."
 		self.maximumZ = - 999999999.0
 		self.minimumZ = 999999999.0
 		self.layerThickness = None
 		self.rotatedBoundaryLayers = []
 	
-	def __repr__( self ):
+	def __repr__(self):
 		"Get the string representation of this carving."
 		return self.getCarvedSVG()
 
-	def addXML( self, depth, output ):
+	def addXML(self, depth, output):
 		"Add xml for this object."
-		xml_simple_writer.addXMLFromObjects( depth, self.rotatedBoundaryLayers, output )
+		xml_simple_writer.addXMLFromObjects(depth, self.rotatedBoundaryLayers, output)
 
-	def getCarveCornerMaximum( self ):
-		"Get the corner maximum of the vertices."
+	def getCarveCornerMaximum(self):
+		"Get the corner maximum of the vertexes."
 		return self.cornerMaximum
 
-	def getCarveCornerMinimum( self ):
-		"Get the corner minimum of the vertices."
+	def getCarveCornerMinimum(self):
+		"Get the corner minimum of the vertexes."
 		return self.cornerMinimum
 
 	def getCarvedSVG(self):
@@ -119,17 +120,21 @@ class SLCCarving:
 			return ''
 		decimalPlaces = max(0, 2 - int(math.floor(math.log10(self.layerThickness))))
 		self.svgWriter = svg_writer.SVGWriter(True, self, decimalPlaces)
-		return self.svgWriter.getReplacedSVGTemplate(self.fileName, 'basic', self.rotatedBoundaryLayers)
+		return self.svgWriter.getReplacedSVGTemplate(self.fileName, 'basic', self.rotatedBoundaryLayers, None)
 
-	def getCarveLayerThickness( self ):
+	def getCarveLayerThickness(self):
 		"Get the layer thickness."
 		return self.layerThickness
 
-	def getCarveRotatedBoundaryLayers( self ):
+	def getCarveRotatedBoundaryLayers(self):
 		"Get the rotated boundary layers."
 		return self.rotatedBoundaryLayers
 
-	def getInterpretationSuffix( self ):
+	def getFabmetheusXML(self):
+		"Return the fabmetheus XML."
+		return None
+
+	def getInterpretationSuffix(self):
 		"Return the suffix for a carving."
 		return 'svg'
 
@@ -157,14 +162,14 @@ class SLCCarving:
 		self.readTableEntry( pslcfile )
 		self.processContourLayers( pslcfile )
 		pslcfile.close()
-		self.cornerMaximum = Vector3( - 999999999.0, - 999999999.0, self.maximumZ )
-		self.cornerMinimum = Vector3( 999999999.0, 999999999.0, self.minimumZ )
+		self.cornerMaximum = Vector3(-999999999.0, -999999999.0, self.maximumZ)
+		self.cornerMinimum = Vector3(999999999.0, 999999999.0, self.minimumZ)
 		for rotatedBoundaryLayer in self.rotatedBoundaryLayers:
 			for loop in rotatedBoundaryLayer.loops:
 				for point in loop:
-					pointVector3 = Vector3( point.real, point.imag, rotatedBoundaryLayer.z )
-					self.cornerMaximum = euclidean.getPointMaximum( self.cornerMaximum, pointVector3 )
-					self.cornerMinimum = euclidean.getPointMinimum( self.cornerMinimum, pointVector3 )
+					pointVector3 = Vector3(point.real, point.imag, rotatedBoundaryLayer.z)
+					self.cornerMaximum = euclidean.getPointMaximum(self.cornerMaximum, pointVector3)
+					self.cornerMinimum = euclidean.getPointMinimum(self.cornerMinimum, pointVector3)
 		halfLayerThickness = 0.5 * self.layerThickness
 		self.cornerMaximum.z += halfLayerThickness
 		self.cornerMinimum.z -= halfLayerThickness
@@ -199,7 +204,7 @@ class SLCCarving:
 def main():
 	"Display the inset dialog."
 	if len( sys.argv ) > 1:
-		getCarving(' '.join( sys.argv[ 1 : ] ) )
+		getCarving(' '.join( sys.argv[1 :] ) )
 
 if __name__ == "__main__":
 	main()

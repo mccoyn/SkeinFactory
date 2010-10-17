@@ -3,7 +3,7 @@ Boolean geometry group of solids.
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -17,22 +17,22 @@ import cStringIO
 import os
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Art of Illusion <http://www.artofillusion.org/>'
 __date__ = "$Date: 2008/02/05 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
-def getXMLFromCarvingFileName( fileName ):
+def getXMLFromCarvingFileName(fileName):
 	"Get xml text from xml text."
-	carving = fabmetheus_interpret.getCarving( fileName )
+	carving = fabmetheus_interpret.getCarving(fileName)
 	if carving == None:
 		return ''
 	output = cStringIO.StringIO()
 	carving.addXML( 0, output )
 	return output.getvalue()
 
-def processXMLElement( xmlElement, xmlProcessor ):
+def processXMLElement(xmlElement):
 	"Process the xml element."
 	fileName = evaluate.getEvaluatedValue('file', xmlElement )
 	if fileName == None:
@@ -50,18 +50,15 @@ def processXMLElement( xmlElement, xmlProcessor ):
 	if '_importname' in xmlElement.attributeDictionary:
 		xmlElement.importName = xmlElement.attributeDictionary['_importname']
 	else:
-		xmlElement.importName = gcodec.getUntilDot( fileName )
+		xmlElement.importName = gcodec.getUntilDot(fileName)
 		xmlElement.attributeDictionary['_importname'] = xmlElement.importName
 	XMLSimpleReader( parserFileName, xmlElement, xmlText )
-	originalChildren = xmlElement.children[ : ]
+	originalChildren = xmlElement.children[:]
 	xmlElement.children = []
 	for child in originalChildren:
 		for subchild in child.children:
 			subchild.setParentAddToChildren(xmlElement)
 		for attributeDictionaryKey in child.attributeDictionary.keys():
 			if attributeDictionaryKey != 'version':
-				xmlElement.attributeDictionary[ attributeDictionaryKey ] = child.attributeDictionary[ attributeDictionaryKey ]
-	group.processShape( group.Group, xmlElement, xmlProcessor )
-	root = xmlElement.getRoot()
-	root.idDictionary[ xmlElement.importName ] = evaluate.ElementID(xmlElement)
-	root.nameDictionary[ xmlElement.importName ] = evaluate.ElementName(xmlElement)
+				xmlElement.attributeDictionary[attributeDictionaryKey] = child.attributeDictionary[attributeDictionaryKey]
+	group.processShape( group.Group, xmlElement)

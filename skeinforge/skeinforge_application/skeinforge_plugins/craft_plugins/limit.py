@@ -45,11 +45,11 @@ The limit tool has created the file:
 """
 
 #from __future__ import absolute_import
-#try:
-#	import psyco
-#	psyco.full()
-#except:
-#	pass
+try:
+	"import psyco"
+	"psyco.full()"
+except:
+	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -67,14 +67,14 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = "$Date: 2008/28/04 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, gcodeText = '', repository = None ):
 	"Limit a gcode file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, gcodeText ), repository )
+	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Limit a gcode text."
@@ -92,14 +92,14 @@ def getNewRepository():
 
 def writeOutput( fileName = ''):
 	"Limit a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName != '':
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'limit')
 
 
-class LimitRepository( settings.Repository ):
+class LimitRepository:
 	"A class to handle the limit settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.limit.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Limit', self, '')
@@ -108,16 +108,16 @@ class LimitRepository( settings.Repository ):
 		self.maximumInitialFeedRate = settings.FloatSpin().getFromValue( 0.5, 'Maximum Initial Feed Rate (mm/s):', self, 10.0, 1.0 )
 		self.executeTitle = 'Limit'
 
-	def execute( self ):
+	def execute(self):
 		"Limit button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class LimitSkein:
 	"A class to limit a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.feedRateMinute = None
 		self.isExtruderActive = False
@@ -135,18 +135,18 @@ class LimitSkein:
 
 	def getLimitedLinearMovement( self, line, splitLine ):
 		"Get a limited linear movement."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		if self.oldLocation == None:
 			line = self.distanceFeedRate.getLineWithFeedRate( 60.0 * self.repository.maximumInitialFeedRate.value, line, splitLine )
 		self.oldLocation = location
 		return line
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addLine('(<procedureDone> limit </procedureDone>)')
@@ -155,9 +155,9 @@ class LimitSkein:
 
 	def parseLine( self, lineIndex ):
 		"Parse a gcode line and add it to the limit skein."
-		line = self.lines[ lineIndex ].lstrip()
+		line = self.lines[lineIndex].lstrip()
 		splitLine = line.split()
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
@@ -168,7 +168,7 @@ class LimitSkein:
 def main():
 	"Display the limit dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

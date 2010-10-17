@@ -87,9 +87,9 @@ import math
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, text = '', multiplyRepository = None ):
@@ -112,41 +112,41 @@ def getNewRepository():
 
 def writeOutput( fileName = ''):
 	"Multiply a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName != '':
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'multiply')
 
 
-class MultiplyRepository( settings.Repository ):
+class MultiplyRepository:
 	"A class to handle the multiply settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.multiply.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Multiply', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://www.bitsfrombytes.com/wiki/index.php?title=Skeinforge_Multiply')
 		self.activateMultiply = settings.BooleanSetting().getFromValue('Activate Multiply:', self, False )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Center -', self )
 		self.centerX = settings.FloatSpin().getFromValue( - 100.0, 'Center X (mm):', self, 100.0, 0.0 )
 		self.centerY = settings.FloatSpin().getFromValue( -100.0, 'Center Y (mm):', self, 100.0, 0.0 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Number of Cells -', self )
 		self.numberOfColumns = settings.IntSpin().getFromValue( 1, 'Number of Columns (integer):', self, 10, 1 )
 		self.numberOfRows = settings.IntSpin().getFromValue( 1, 'Number of Rows (integer):', self, 10, 1 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.separationOverPerimeterWidth = settings.FloatSpin().getFromValue( 5.0, 'Separation over Perimeter Width (ratio):', self, 25.0, 15.0 )
 		self.executeTitle = 'Multiply'
 
-	def execute( self ):
+	def execute(self):
 		"Multiply button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class MultiplySkein:
 	"A class to multiply a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.layerIndex = 0
 		self.layerLines = []
@@ -160,16 +160,16 @@ class MultiplySkein:
 		"Add moved element to the output."
 		for line in self.layerLines:
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'G1':
 				movedLocation = self.getMovedLocationSetOldLocation( offset, splitLine )
-				line = self.distanceFeedRate.getLinearGcodeMovement( movedLocation.dropAxis( 2 ), movedLocation.z )
+				line = self.distanceFeedRate.getLinearGcodeMovement( movedLocation.dropAxis(2), movedLocation.z )
 			elif firstWord == '(<boundaryPoint>':
 				movedLocation = self.getMovedLocationSetOldLocation( offset, splitLine )
 				line = self.distanceFeedRate.getBoundaryLine( movedLocation )
 			self.distanceFeedRate.addLine(line)
 
-	def addLayer( self ):
+	def addLayer(self):
 		"Add multiplied layer to the output."
 		self.addRemoveThroughLayer()
 		offset = self.centerOffset - self.arrayCenter - self.shapeCenter
@@ -188,12 +188,12 @@ class MultiplySkein:
 			self.layerIndex += 1
 		self.layerLines = []
 
-	def addRemoveThroughLayer( self ):
+	def addRemoveThroughLayer(self):
 		"Parse gcode initialization and store the parameters."
 		for layerLineIndex in xrange( len( self.layerLines ) ):
 			line = self.layerLines[ layerLineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.addLine(line)
 			if firstWord == '(<layer>':
 				self.layerLines = self.layerLines[ layerLineIndex + 1 : ]
@@ -214,16 +214,16 @@ class MultiplySkein:
 
 	def getMovedLocationSetOldLocation( self, offset, splitLine ):
 		"Get the moved location and set the old location."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		self.oldLocation = location
 		return Vector3( location.x + offset.real, location.y + offset.imag, location.z )
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addLine('(<procedureDone> multiply </procedureDone>)')
@@ -231,13 +231,13 @@ class MultiplySkein:
 				self.lineIndex += 1
 				return
 			elif firstWord == '(<perimeterWidth>':
-				self.absolutePerimeterWidth = abs( float( splitLine[1] ) )
+				self.absolutePerimeterWidth = abs( float(splitLine[1]) )
 			self.distanceFeedRate.addLine(line)
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line and add it to the multiply skein."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == '(</layer>)':
@@ -251,18 +251,18 @@ class MultiplySkein:
 			return
 		self.distanceFeedRate.addLine(line)
 
-	def setCorners( self ):
+	def setCorners(self):
 		"Set maximum and minimum corners and z."
 		locationComplexes = []
 		for line in self.lines[self.lineIndex :]:
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'G1':
-				location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
-				locationComplexes.append( location.dropAxis( 2 ) )
+				location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
+				locationComplexes.append( location.dropAxis(2) )
 				self.oldLocation = location
-		cornerHighComplex = euclidean.getMaximumFromPoints( locationComplexes )
-		cornerLowComplex = euclidean.getMinimumFromPoints( locationComplexes )
+		cornerHighComplex = euclidean.getMaximumByPathComplex( locationComplexes )
+		cornerLowComplex = euclidean.getMinimumByPathComplex( locationComplexes )
 		self.extent = cornerHighComplex - cornerLowComplex
 		self.shapeCenter = 0.5 * ( cornerHighComplex + cornerLowComplex )
 		self.separation = self.multiplyRepository.separationOverPerimeterWidth.value * self.absolutePerimeterWidth
@@ -276,7 +276,7 @@ class MultiplySkein:
 def main():
 	"Display the multiply dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

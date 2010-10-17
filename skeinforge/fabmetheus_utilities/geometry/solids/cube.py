@@ -36,36 +36,36 @@ from fabmetheus_utilities.geometry.solids import trianglemesh
 from fabmetheus_utilities.vector3 import Vector3
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
-def processXMLElement( xmlElement, xmlProcessor ):
+def processXMLElement(xmlElement):
 	"Process the xml element."
-	group.processShape( Cube, xmlElement, xmlProcessor )
+	group.processShape( Cube, xmlElement)
 
 
 class Cube( trianglemesh.TriangleMesh ):
 	"A cube object."
-	def addXMLSection( self, depth, output ):
+	def addXMLSection(self, depth, output):
 		"Add the xml section for this object."
 		pass
 
-	def createShape( self ):
+	def createShape(self):
 		"Create the shape."
 		square = [
 			complex( - self.inradius.x, - self.inradius.y ),
 			complex( self.inradius.x, - self.inradius.y ),
 			complex( self.inradius.x, self.inradius.y ),
 			complex( - self.inradius.x, self.inradius.y ) ]
-		bottomTopSquare = trianglemesh.getAddIndexedLoops( square, self.vertices, [ - self.inradius.z, self.inradius.z ] )
+		bottomTopSquare = trianglemesh.getAddIndexedLoops( square, self.vertexes, [ - self.inradius.z, self.inradius.z ] )
 		trianglemesh.addPillarFromConvexLoops( self.faces, bottomTopSquare )
 
-	def setToObjectAttributeDictionary( self ):
+	def setToObjectAttributeDictionary(self):
 		"Set the shape of this carvable object info."
-		self.inradius = evaluate.getVector3ByPrefixes( ['demisize', 'inradius'], Vector3( 1.0, 1.0, 1.0 ), self.xmlElement )
+		self.inradius = evaluate.getVector3ByPrefixes( ['demisize', 'inradius'], Vector3(1.0, 1.0, 1.0), self.xmlElement )
 		self.inradius = evaluate.getVector3ByMultiplierPrefix( 2.0, 'size', self.inradius, self.xmlElement )
 		self.xmlElement.attributeDictionary['inradius.x'] = self.inradius.x
 		self.xmlElement.attributeDictionary['inradius.y'] = self.inradius.y

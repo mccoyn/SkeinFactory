@@ -19,9 +19,9 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def addSubmenus( menu, pluginFileName, pluginFolderPath, pluginPath ):
@@ -39,7 +39,7 @@ def addToCraftMenu( menu ):
 	settings.ToolDialog().addPluginToMenu( menu, gcodec.getUntilDot( os.path.abspath( __file__ ) ) )
 	menu.add_separator()
 	directoryPath = skeinforge_craft.getPluginsDirectoryPath()
-	directoryFolders = settings.getFolders( directoryPath )
+	directoryFolders = settings.getFolders(directoryPath)
 	pluginFileNames = skeinforge_craft.getPluginFileNames()
 	for pluginFileName in pluginFileNames:
 		pluginFolderName = pluginFileName + '_plugins'
@@ -59,7 +59,7 @@ def getNewRepository():
 
 def writeOutput( fileName = ''):
 	"Craft a gcode file."
-	skeinforge_craft.writeOutput( fileName )
+	skeinforge_craft.writeOutput(fileName)
 
 
 class CraftMenuSaveListener:
@@ -70,7 +70,7 @@ class CraftMenuSaveListener:
 		addToCraftMenu( menu )
 		euclidean.addElementToListTableIfNotThere( self, window, settings.globalProfileSaveListenerListTable )
 
-	def save( self ):
+	def save(self):
 		"Profile has been saved and profile menu should be updated."
 		settings.deleteMenuItems( self.menu )
 		addToCraftMenu( self.menu )
@@ -91,14 +91,14 @@ class CraftRadioButtonsSaveListener:
 		self.name = 'CraftRadioButtonsSaveListener'
 		self.radioPlugins = radioPlugins
 		self.repository = repository
-		repository.displayEntities.append( self )
+		repository.displayEntities.append(self)
 		return self
 
-	def save( self ):
+	def save(self):
 		"Profile has been saved and craft radio plugins should be updated."
 		self.setRadioButtons()
 
-	def setRadioButtons( self ):
+	def setRadioButtons(self):
 		"Profile has been saved and craft radio plugins should be updated."
 		craftSequence = skeinforge_profile.getCraftTypePluginModule().getCraftSequence()
 		gridPosition = self.gridPosition.getCopy()
@@ -119,7 +119,7 @@ class CraftRadioButtonsSaveListener:
 def main():
 	"Display the craft dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

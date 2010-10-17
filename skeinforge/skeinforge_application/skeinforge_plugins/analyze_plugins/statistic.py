@@ -77,24 +77,24 @@ import math
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewRepository():
 	"Get the repository constructor."
 	return StatisticRepository()
 
-def getWindowAnalyzeFile( fileName ):
+def getWindowAnalyzeFile(fileName):
 	"Write statistics for a gcode file."
-	return getWindowAnalyzeFileGivenText( fileName, gcodec.getFileText( fileName ) )
+	return getWindowAnalyzeFileGivenText( fileName, gcodec.getFileText(fileName) )
 
 def getWindowAnalyzeFileGivenText( fileName, gcodeText, repository = None ):
 	"Write statistics for a gcode file."
 	print('')
 	print('')
-	print('Statistics are being generated for the file ' + gcodec.getSummarizedFileName( fileName ) )
+	print('Statistics are being generated for the file ' + gcodec.getSummarizedFileName(fileName) )
 	if repository == None:
 		repository = settings.getReadRepository( StatisticRepository() )
 	skein = StatisticSkein()
@@ -113,18 +113,18 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 
-class StatisticRepository( settings.Repository ):
+class StatisticRepository:
 	"A class to handle the statistics settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.analyze_plugins.statistic.html', '', self )
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://www.bitsfrombytes.com/wiki/index.php?title=Skeinforge_Statistic')
 		self.activateStatistic = settings.BooleanSetting().getFromValue('Activate Statistic', self, True )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Cost -', self )
 		self.machineTime = settings.FloatSpin().getFromValue( 0.0, 'Machine Time ($/hour):', self, 2.0, 1.0 )
 		self.material = settings.FloatSpin().getFromValue( 0.0, 'Material ($/kg):', self, 20.0, 10.0 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.density = settings.FloatSpin().getFromValue( 500.0, 'Density (kg/m3):', self, 2000.0, 930.0 )
 		self.extrusionDiameterOverThickness = settings.FloatSpin().getFromValue( 1.0, 'Extrusion Diameter over Thickness (ratio):', self, 1.5, 1.25 )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( [ ('Gcode text files', '*.gcode') ], 'Open File to Generate Statistics for', self, '')
@@ -132,32 +132,27 @@ class StatisticRepository( settings.Repository ):
 		self.saveStatistics = settings.BooleanSetting().getFromValue('Save Statistics', self, False )
 		self.executeTitle = 'Generate Statistics'
 
-	def execute( self ):
+	def execute(self):
 		"Write button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrGcodeDirectory( self.fileNameInput.value, self.fileNameInput.wasCancelled, ['_comment'] )
 		for fileName in fileNames:
-			getWindowAnalyzeFile( fileName )
+			getWindowAnalyzeFile(fileName)
 
 
 class StatisticSkein:
 	"A class to get statistics for a gcode skein."
-	def __init__( self ):
+	def __init__(self):
 		self.extrusionDiameter = None
 		self.oldLocation = None
 		self.operatingFeedRatePerSecond = None
 		self.output = cStringIO.StringIO()
 		self.version = None
-		self.coolingRate = None
-		self.heatingRate = None
-		self.targetTemperature = None
-		self.actualTemperature = None
-		self.actualTempTime = 0
 
-	def addLine( self, line ):
+	def addLine(self, line):
 		"Add a line of text and a newline to the output."
-		self.output.write( line + "\n" )
+		self.output.write(line + '\n')
 
-	def addToPath( self, location ):
+	def addToPath(self, location):
 		"Add a point to travel and maybe extrusion."
 		if self.oldLocation != None:
 			travel = location.distance( self.oldLocation )
@@ -232,7 +227,7 @@ class StatisticSkein:
 		self.addLine( "Distance traveled is %s mm." % euclidean.getThreeSignificantFigures( self.totalDistanceTraveled ) )
 		if self.extruderSpeed != None:
 			self.addLine( "Extruder speed is %s" % euclidean.getThreeSignificantFigures( self.extruderSpeed ) )
-		self.addLine( "Extruder was extruding %s percent of the movement." % euclidean.getThreeSignificantFigures( 100.0 * self.totalDistanceExtruded / self.totalDistanceTraveled ) )
+		self.addLine( "Extruder was extruding %s percent of the time." % euclidean.getThreeSignificantFigures( 100.0 * self.totalDistanceExtruded / self.totalDistanceTraveled ) )
 		self.addLine( "Extruder was toggled %s times." % self.extruderToggled )
 		if self.operatingFeedRatePerSecond != None:
 			flowRate = crossSectionArea * self.operatingFeedRatePerSecond
@@ -256,7 +251,7 @@ class StatisticSkein:
 		self.addLine(' ')
 		self.addLine( "Procedures" )
 		for procedure in self.procedures:
-			self.addLine( procedure )
+			self.addLine(procedure)
 		self.addLine(' ')
 		self.addLine('Slice')
 		self.addLine( "Layer thickness is %s mm." % euclidean.getThreeSignificantFigures( self.layerThickness ) )
@@ -266,17 +261,17 @@ class StatisticSkein:
 
 	def getLocationSetFeedRateToSplitLine( self, splitLine ):
 		"Get location ans set feed rate to the plsit line."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		indexOfF = gcodec.indexOfStartingWithSecond( "F", splitLine )
 		if indexOfF > 0:
-			self.feedRateMinute = gcodec.getDoubleAfterFirstLetter( splitLine[ indexOfF ] )
+			self.feedRateMinute = gcodec.getDoubleAfterFirstLetter( splitLine[indexOfF] )
 		return location
 
 	def helicalMove( self, isCounterclockwise, splitLine ):
 		"Get statistics for a helical move."
 		if self.oldLocation == None:
 			return
-		location = self.getLocationSetFeedRateToSplitLine( splitLine )
+		location = self.getLocationSetFeedRateToSplitLine(splitLine)
 		location += self.oldLocation
 		center = self.oldLocation.copy()
 		indexOfR = gcodec.indexOfStartingWithSecond( "R", splitLine )
@@ -315,85 +310,40 @@ class StatisticSkein:
 
 	def linearMove( self, splitLine ):
 		"Get statistics for a linear move."
-		location = self.getLocationSetFeedRateToSplitLine( splitLine )
+		location = self.getLocationSetFeedRateToSplitLine(splitLine)
 		self.addToPath( location )
-		
-	def updateExtruderTemperature( self ):
-		"Advances the temperature to account for a change in time"
-		if (self.actualTemperature == None):
-			self.actualTemperature = self.targetTemperature
-			self.actualTempTime = self.totalBuildTime
-		else:
-			elapsed = self.totalBuildTime - self.actualTempTime
-			if (self.targetTemperature < self.actualTemperature):
-				if self.coolingRate != None:
-					self.actualTemperature = max(self.targetTemperature, self.actualTemperature - self.coolingRate * elapsed)
-			else:
-				if self.heatingRate != None:
-					self.actualTemperature = min(self.targetTemperature, self.actualTemperature + self.heatingRate * elapsed)
-			self.actualTempTime = self.totalBuildTime
-		
-	def setExtruderTemperature( self, splitLine ):
-		"Update the temperature for a non-blocking temperature change"
-		self.updateExtruderTemperature()
-		if len( splitLine ) >= 2:
-			self.targetTemperature = gcodec.getDoubleAfterFirstLetter( splitLine[1] )
-		
-	def waitForExtruderTemperature( self, splitLine ):
-		"Get statistics for a temperature change pause."
-		if self.actualTemperature != None:
-			delta = self.targetTemperature - self.actualTemperature
-			if delta < 0:
-				if self.coolingRate != None:
-					self.totalBuildTime += (-delta) / self.coolingRate
-			else:
-				if self.heatingRate != None:
-					self.totalBuildTime += delta / self.heatingRate
-		self.actualTemperature = self.targetTemperature
-		self.actualTempTime = self.totalBuildTime
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line and add it to the statistics."
 		self.characters += len(line)
 		self.numberOfLines += 1
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
-			self.linearMove( splitLine )
+			self.linearMove(splitLine)
 		elif firstWord == 'G2':
 			self.helicalMove( False, splitLine )
 		elif firstWord == 'G3':
 			self.helicalMove( True, splitLine )
-		elif firstWord == 'G4':
-			self.totalBuildTime += gcodec.getDoubleAfterFirstLetter( splitLine[1] ) / 1000.0
 		elif firstWord == 'M101':
 			self.extruderSet( True )
 		elif firstWord == 'M102':
 			self.extruderSet( False )
 		elif firstWord == 'M103':
 			self.extruderSet( False )
-		elif firstWord == 'M104':
-			self.setExtruderTemperature( splitLine )
 		elif firstWord == 'M108':
-			self.extruderSpeed = gcodec.getDoubleAfterFirstLetter( splitLine[1] )
-		elif firstWord == 'M109':
-			self.setExtruderTemperature( splitLine )
-			self.waitForExtruderTemperature( splitLine )
+			self.extruderSpeed = gcodec.getDoubleAfterFirstLetter(splitLine[1])
 		elif firstWord == '(<layerThickness>':
-			self.layerThickness = float( splitLine[1] )
+			self.layerThickness = float(splitLine[1])
 			self.extrusionDiameter = self.repository.extrusionDiameterOverThickness.value * self.layerThickness
 		elif firstWord == '(<operatingFeedRatePerSecond>':
-			self.operatingFeedRatePerSecond = float( splitLine[1] )
-		elif firstWord == '(<coolingRate>':
-			self.coolingRate = float( splitLine[1] )
-		elif firstWord == '(<heatingRate>':
-			self.heatingRate = float( splitLine[1] )
+			self.operatingFeedRatePerSecond = float(splitLine[1])
 		elif firstWord == '(<perimeterWidth>':
-			self.absolutePerimeterWidth = abs( float( splitLine[1] ) )
+			self.absolutePerimeterWidth = abs( float(splitLine[1]) )
 		elif firstWord == '(<procedureDone>':
-			self.procedures.append( splitLine[1] )
+			self.procedures.append(splitLine[1])
 		elif firstWord == '(<version>':
 			self.version = splitLine[1]
 
@@ -401,7 +351,7 @@ class StatisticSkein:
 def main():
 	"Display the statistics dialog."
 	if len( sys.argv ) > 1:
-		getWindowAnalyzeFile(' '.join( sys.argv[ 1 : ] ) )
+		getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

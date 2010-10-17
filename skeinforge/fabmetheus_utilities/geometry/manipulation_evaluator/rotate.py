@@ -14,26 +14,26 @@ from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import euclidean
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Art of Illusion <http://www.artofillusion.org/>'
 __date__ = "$Date: 2008/02/05 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 globalExecutionOrder = 360
 
 
-def getManipulatedPaths( close, loop, prefix, sideLength, xmlElement ):
+def getManipulatedPaths(close, loop, prefix, sideLength, xmlElement):
 	"Get equated paths."
 	rotatePoints( loop, prefix, xmlElement )
 	return [loop]
 
-def getManipulatedGeometryOutput( geometryOutput, xmlElement ):
+def getManipulatedGeometryOutput(geometryOutput, xmlElement):
 	"Get equated geometryOutput."
-	rotatePoints( matrix.getConnectionVertices( geometryOutput ), 'rotate.', xmlElement )
+	rotatePoints( matrix.getConnectionVertexes(geometryOutput), 'rotate.', xmlElement )
 	return geometryOutput
 
-def manipulateXMLElement(target, xmlElement, xmlProcessor):
+def manipulateXMLElement(target, xmlElement):
 	"Manipulate the xml element."
 	rotateMatrixTetragrid = matrix.getRotateMatrixTetragrid('', xmlElement)
 	if rotateMatrixTetragrid == None:
@@ -42,13 +42,13 @@ def manipulateXMLElement(target, xmlElement, xmlProcessor):
 		return
 	matrix.setAttributeDictionaryToMultipliedTetragrid(rotateMatrixTetragrid, target)
 
-def processXMLElement( xmlElement, xmlProcessor ):
+def processXMLElement(xmlElement):
 	"Process the xml element."
-	solid.processXMLElementByFunction( manipulateXMLElement, xmlElement, xmlProcessor )
+	solid.processXMLElementByFunction( manipulateXMLElement, xmlElement)
 
 def rotatePoints( points, prefix, xmlElement ):
 	"Rotate the points."
-	rotateMatrixTetragrid = matrix.getRotateMatrixTetragrid( prefix, xmlElement )
+	rotateMatrixTetragrid = matrix.getRotateMatrixTetragrid(prefix, xmlElement)
 	if rotateMatrixTetragrid == None:
 		print('Warning, rotateMatrixTetragrid was None in rotate so nothing will be done for:')
 		print(xmlElement)

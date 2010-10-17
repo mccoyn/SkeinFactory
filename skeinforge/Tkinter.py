@@ -448,28 +448,34 @@ class Entry(Widget):
     def selection_adjust(self, index):
         """Adjust the end of the selection near the cursor to INDEX."""
         self.tk.call(self._w, 'selection', 'adjust', index)
-    select_adjust = selection_adjust
+    def select_adjust(self, index):
+        self.selection_adjust(index)
     def selection_clear(self):
         """Clear the selection if it is in this widget."""
         self.tk.call(self._w, 'selection', 'clear')
-    select_clear = selection_clear
+    def select_clear(self, index):
+        self.selection_clear(index)
     def selection_from(self, index):
         """Set the fixed end of a selection to INDEX."""
         self.tk.call(self._w, 'selection', 'from', index)
-    select_from = selection_from
+    def select_from(self, index):
+        self.selection_from(index)
     def selection_present(self):
         """Return whether the widget has the selection."""
         return self.tk.getboolean(
             self.tk.call(self._w, 'selection', 'present'))
-    select_present = selection_present
+    def select_present(self, index):
+        self.selection_present(index)
     def selection_range(self, start, end):
         """Set the selection from START to END (not included)."""
         self.tk.call(self._w, 'selection', 'range', start, end)
-    select_range = selection_range
+    def select_range(self, index):
+        self.selection_range(index)
     def selection_to(self, index):
         """Set the variable end of a selection to INDEX."""
         self.tk.call(self._w, 'selection', 'to', index)
-    select_to = selection_to
+    def select_to(self, index):
+        self.selection_to(index)
     def xview(self, index):
         """Query and change horizontal position of the view."""
         self.tk.call(self._w, 'xview', index)

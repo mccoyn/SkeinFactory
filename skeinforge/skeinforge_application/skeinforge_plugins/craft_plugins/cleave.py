@@ -3,6 +3,13 @@ This page is in the table of contents.
 Cleave is a script to cleave a shape into svg slice layers.
 
 ==Settings==
+===Add Layer Template to SVG===
+Default is on.
+
+When selected, the layer template will be added to the svg output, which adds javascript control boxes.  So 'Add Layer Template to SVG' should be selected when the svg will be viewed in a browser.
+
+When off, no controls will be added, the svg output will only include the fabrication paths.  So 'Add Layer Template to SVG' should be deselected when the svg will be used by other software, like Inkscape.
+
 ===Extra Decimal Places===
 Default is one.
 
@@ -84,10 +91,10 @@ The cleave tool has created the file:
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 try:
-	import psyco
-	psyco.full()
+	"import psyco"
+	"psyco.full()"
 except:
 	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
@@ -106,23 +113,23 @@ import sys
 import time
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = "$Date: 2008/02/05 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, gcodeText = '', repository = None ):
 	"Get cleaved text."
 	if fileName.endswith('.svg'):
-		gcodeText = gcodec.getTextIfEmpty( fileName, gcodeText )
+		gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
 		if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'cleave'):
 			return gcodeText
-	carving = svg_writer.getCarving( fileName )
+	carving = svg_writer.getCarving(fileName)
 	if carving == None:
 		return ''
 	if repository == None:
 		repository = CleaveRepository()
-		settings.getReadRepository( repository )
+		settings.getReadRepository(repository)
 	return CleaveSkein().getCarvedSVG( carving, fileName, repository )
 
 def getNewRepository():
@@ -132,25 +139,25 @@ def getNewRepository():
 def writeOutput( fileName = ''):
 	"Cleave a GNU Triangulated Surface file.  If no fileName is specified, cleave the first GNU Triangulated Surface file in this folder."
 	startTime = time.time()
-	print('File ' + gcodec.getSummarizedFileName( fileName ) + ' is being cleaved.')
+	print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being cleaved.')
 	repository = CleaveRepository()
-	settings.getReadRepository( repository )
+	settings.getReadRepository(repository)
 	cleaveGcode = getCraftedText( fileName, '', repository )
 	if cleaveGcode == '':
 		return
 	suffixFileName = fileName[ : fileName.rfind('.') ] + '_cleave.svg'
-	suffixDirectoryName = os.path.dirname( suffixFileName )
-	suffixReplacedBaseName = os.path.basename( suffixFileName ).replace(' ', '_')
+	suffixDirectoryName = os.path.dirname(suffixFileName)
+	suffixReplacedBaseName = os.path.basename(suffixFileName).replace(' ', '_')
 	suffixFileName = os.path.join( suffixDirectoryName, suffixReplacedBaseName )
 	gcodec.writeFileText( suffixFileName, cleaveGcode )
-	print('The cleaved file is saved as ' + gcodec.getSummarizedFileName( suffixFileName ) )
+	print('The cleaved file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
 	print('It took %s to cleave the file.' % euclidean.getDurationString( time.time() - startTime ) )
 	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
 
-class CleaveRepository( settings.Repository ):
+class CleaveRepository:
 	"A class to handle the cleave settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.cleave.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getTranslatorFileTypeTuples(), 'Open File to be Cleaved', self, '')
@@ -165,16 +172,16 @@ class CleaveRepository( settings.Repository ):
 		self.correctMesh = settings.Radio().getFromRadio( importLatentStringVar, 'Correct Mesh', self, True )
 		self.unprovenMesh = settings.Radio().getFromRadio( importLatentStringVar, 'Unproven Mesh', self, False )
 		self.perimeterWidth = settings.FloatSpin().getFromValue( 0.4, 'Perimeter Width (mm):', self, 4.0, 2.0 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.svgViewer = settings.StringSetting().getFromValue('SVG Viewer:', self, 'webbrowser')
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.executeTitle = 'Cleave'
 
-	def execute( self ):
+	def execute(self):
 		"Cleave button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypes( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class CleaveSkein:
@@ -194,13 +201,14 @@ class CleaveSkein:
 		layerThickness = carving.getCarveLayerThickness()
 		decimalPlacesCarried = max( 0, 1 + repository.extraDecimalPlaces.value - int( math.floor( math.log10( layerThickness ) ) ) )
 		svgWriter = svg_writer.SVGWriter(repository.addLayerTemplateToSVG.value, carving, decimalPlacesCarried, perimeterWidth)
-		return svgWriter.getReplacedSVGTemplate( fileName, 'cleave', svg_writer.getTruncatedRotatedBoundaryLayers( repository, rotatedBoundaryLayers ) )
+		truncatedRotatedBoundaryLayers = svg_writer.getTruncatedRotatedBoundaryLayers(repository, rotatedBoundaryLayers)
+		return svgWriter.getReplacedSVGTemplate( fileName, 'cleave', truncatedRotatedBoundaryLayers, carving.getFabmetheusXML())
 
 
 def main():
 	"Display the cleave dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

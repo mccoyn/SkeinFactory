@@ -12,9 +12,9 @@ from skeinforge_application.skeinforge_plugins.analyze_plugins.analyze_utilities
 from fabmetheus_utilities import settings
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewMouseTool():
@@ -33,7 +33,7 @@ class ZoomIn( MouseToolBase ):
 		scrollPaneCenter = self.window.getScrollPaneCenter() + delta
 		self.window.updateNewDestroyOld( scrollPaneCenter )
 
-	def click( self, event = None ):
+	def click(self, event=None):
 		"Set the window mouse tool to this."
 		self.window.destroyMouseToolRaiseMouseButtons()
 		self.window.mouseTool = self
@@ -45,6 +45,6 @@ class ZoomIn( MouseToolBase ):
 		self.mouseButton = None
 		return self
 
-	def getMultiplier( self ):
+	def getMultiplier(self):
 		"Get the scale multiplier."
 		return 2.0

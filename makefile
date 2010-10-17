@@ -3,6 +3,7 @@ all: skeinfactory/skeinfactory
 clean:
 	rm -rf skeinfactory
 	rm -rf shedskin/build
+	rm -f `find ./skeinforge -name '*.pyc'`
 	
 skeinfactory/skeinfactory: skeinfactory/Makefile
 	cp -ru patch/* skeinfactory

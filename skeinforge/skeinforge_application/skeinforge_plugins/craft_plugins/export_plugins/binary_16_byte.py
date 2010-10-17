@@ -92,7 +92,7 @@ Byte 14 is worth a few extra notes, this byte is used to define which of the axe
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 import __init__
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
@@ -104,9 +104,9 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 # This is true if the output is text and false if it is binary."
@@ -115,15 +115,15 @@ globalIsReplaceable = False
 
 def getIntegerFromCharacterLengthLineOffset( character, offset, splitLine, stepLength ):
 	"Get the integer after the first occurence of the character in the split line."
-	lineFromCharacter = gcodec.getStringFromCharacterSplitLine( character, splitLine )
+	lineFromCharacter = gcodec.getStringFromCharacterSplitLine(character, splitLine)
 	if lineFromCharacter == None:
 		return 0
 	floatValue = ( float( lineFromCharacter ) + offset ) / stepLength
 	return int( round( floatValue ) )
 
-def getIntegerFlagFromCharacterSplitLine( character, splitLine ):
+def getIntegerFlagFromCharacterSplitLine(character, splitLine):
 	"Get the integer flag after the first occurence of the character in the split line."
-	lineFromCharacter = gcodec.getStringFromCharacterSplitLine( character, splitLine )
+	lineFromCharacter = gcodec.getStringFromCharacterSplitLine(character, splitLine)
 	if lineFromCharacter == None:
 		return 0
 	return 1
@@ -145,16 +145,16 @@ def writeOutput( fileName, gcodeText = ''):
 	"Write the exported version of a gcode file."
 	binary16ByteRepository = Binary16ByteRepository()
 	settings.getReadRepository( binary16ByteRepository )
-	gcodeText = gcodec.getGcodeFileText( fileName, gcodeText )
+	gcodeText = gcodec.getGcodeFileText(fileName, gcodeText)
 	skeinOutput = getOutput( gcodeText, binary16ByteRepository )
 	suffixFileName = fileName[ : fileName.rfind('.') ] + '.' + binary16ByteRepository.fileExtension.value
 	gcodec.writeFileText( suffixFileName, skeinOutput )
-	print('The converted file is saved as ' + gcodec.getSummarizedFileName( suffixFileName ) )
+	print('The converted file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
 
 
-class Binary16ByteRepository( settings.Repository ):
+class Binary16ByteRepository:
 	"A class to handle the export settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		#Set the default settings.
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.craft_plugins.export_plugins.binary_16_byte.html', '', self )
@@ -169,19 +169,18 @@ class Binary16ByteRepository( settings.Repository ):
 		self.xStepLength = settings.FloatSpin().getFromValue( 0.0, 'X Step Length (millimeters)', self, 1.0, 0.1 )
 		self.yStepLength = settings.FloatSpin().getFromValue( 0.0, 'Y Step Length (millimeters)', self, 1.0, 0.1 )
 		self.zStepLength = settings.FloatSpin().getFromValue( 0.0, 'Z Step Length (millimeters)', self, 0.2, 0.01 )
-		#Create the archive, title of the execute button, title of the dialog & settings fileName.
 		self.executeTitle = 'Convert to Binary 16 Byte'
 
-	def execute( self ):
+	def execute(self):
 		"Convert to binary 16 byte button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, ['.gcode'], self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class Binary16ByteSkein:
 	"A class to convert gcode into 16 byte binary segments."
-	def __init__( self ):
+	def __init__(self):
 		self.output = cStringIO.StringIO()
 
 	def getCraftedGcode( self, gcodeText, binary16ByteRepository ):
@@ -192,12 +191,12 @@ class Binary16ByteSkein:
 			self.parseLine(line)
 		return self.output.getvalue()
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line."
 		binary16ByteRepository = self.binary16ByteRepository
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		firstWord = gcodec.getFirstWord( splitLine )
-		if len( firstWord ) < 1:
+		firstWord = gcodec.getFirstWord(splitLine)
+		if len(firstWord) < 1:
 			return
 		firstLetter = firstWord[0]
 		if firstLetter == '(':
@@ -217,14 +216,14 @@ class Binary16ByteSkein:
 		flagInteger += 8 * getIntegerFlagFromCharacterSplitLine('I', splitLine )
 		flagInteger += 16 * getIntegerFlagFromCharacterSplitLine('J', splitLine )
 		flagInteger += 32 * getIntegerFlagFromCharacterSplitLine('F', splitLine )
-		packedString = sixteenByteStruct.pack( firstLetter, int( firstWord[ 1 : ] ), xInteger, yInteger, zInteger, iInteger, jInteger, feedRateInteger, flagInteger, '#')
+		packedString = sixteenByteStruct.pack( firstLetter, int( firstWord[1 :] ), xInteger, yInteger, zInteger, iInteger, jInteger, feedRateInteger, flagInteger, '#')
 		self.output.write( packedString )
 
 
 def main():
 	"Display the export dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

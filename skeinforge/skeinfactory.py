@@ -10,7 +10,6 @@ def forwardDeclartions():
 	mockRepository = settings.Repository()
 	settings.addListsToRepository(None, None, mockRepository)
 	settings.cancelRepository(mockRepository)
-	settings.getArchiveText(mockRepository)
 	settings.getDisplayedDialogFromConstructor(mockRepository)
 	settings.getProfileBaseName(mockRepository)
 	settings.getReadRepository(mockRepository)
@@ -39,7 +38,8 @@ def forwardDeclartions():
 	Tkinter.Button.__init__(None, {})
 
 def main():
-	forwardDeclartions()
+	if False:
+		forwardDeclartions()
 	skeinforge.main()
 
 if __name__ == "__main__":

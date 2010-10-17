@@ -38,7 +38,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -48,10 +48,10 @@ from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import gcodec
 from struct import unpack
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def addFacesGivenText( objText, triangleMesh ):
@@ -59,9 +59,9 @@ def addFacesGivenText( objText, triangleMesh ):
 	lines = gcodec.getTextLines( objText )
 	for line in lines:
 		splitLine = line.split()
-		firstWord = gcodec.getFirstWord( splitLine )
+		firstWord = gcodec.getFirstWord(splitLine)
 		if firstWord == 'v':
-			triangleMesh.vertices.append( getVertexGivenLine(line) )
+			triangleMesh.vertexes.append( getVertexGivenLine(line) )
 		elif firstWord == 'f':
 			triangleMesh.faces.append( getFaceGivenLine( line, triangleMesh ) )
 
@@ -75,7 +75,7 @@ def getFaceGivenLine( line, triangleMesh ):
 		vertexStringWithSpaces = vertexString.replace('/', ' ')
 		vertexStringSplit = vertexStringWithSpaces.split()
 		vertexIndex = int( vertexStringSplit[0] ) - 1
-		faceGivenLine.vertexIndexes.append( vertexIndex )
+		faceGivenLine.vertexIndexes.append(vertexIndex)
 	return faceGivenLine
 
 def getCarving( fileName = ''):
@@ -93,4 +93,4 @@ def getCarving( fileName = ''):
 def getVertexGivenLine(line):
 	"Get vertex given obj vertex line."
 	splitLine = line.split()
-	return Vector3( float( splitLine[1] ), float( splitLine[2] ), float( splitLine[3] ) )
+	return Vector3( float(splitLine[1]), float( splitLine[2] ), float( splitLine[3] ) )

@@ -69,9 +69,9 @@ import math
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, text, repository = None ):
@@ -92,7 +92,7 @@ def getNewRepository():
 	"Get the repository constructor."
 	return UnpauseRepository()
 
-def getSelectedPlugin( repository ):
+def getSelectedPlugin(repository):
 	"Get the selected plugin."
 	for plugin in repository.unpausePlugins:
 		if plugin.value:
@@ -101,14 +101,14 @@ def getSelectedPlugin( repository ):
 
 def writeOutput( fileName = ''):
 	"Unpause a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName != '':
 		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'unpause')
 
 
-class UnpauseRepository( settings.Repository ):
+class UnpauseRepository:
 	"A class to handle the unpause settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.craft_plugins.unpause.html', '', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Unpause', self, '')
@@ -118,16 +118,16 @@ class UnpauseRepository( settings.Repository ):
 		self.maximumSpeed = settings.FloatSpin().getFromValue( 1.1, 'Maximum Speed (ratio):', self, 1.9, 1.3 )
 		self.executeTitle = 'Unpause'
 
-	def execute( self ):
+	def execute(self):
 		"Unpause button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class UnpauseSkein:
 	"A class to unpause a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.extruderActive = False
 		self.feedRateMinute = 959.0
@@ -167,10 +167,10 @@ class UnpauseSkein:
 		if self.oldLocation == None:
 			return line
 		self.feedRateMinute = gcodec.getFeedRateMinute( self.feedRateMinute, splitLine )
-		relativeLocation = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		relativeLocation = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		location = self.oldLocation + relativeLocation
 		self.oldLocation = location
-		halfPlaneLineDistance = 0.5 * abs( relativeLocation.dropAxis( 2 ) )
+		halfPlaneLineDistance = 0.5 * abs( relativeLocation.dropAxis(2) )
 		radius = gcodec.getDoubleFromCharacterSplitLine('R', splitLine )
 		if radius == None:
 			relativeCenter = complex( gcodec.getDoubleFromCharacterSplitLine('I', splitLine ), gcodec.getDoubleFromCharacterSplitLine('J', splitLine ) )
@@ -192,27 +192,27 @@ class UnpauseSkein:
 
 	def getUnpausedLinearMovement( self, line, splitLine ):
 		"Get an unpaused linear movement."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		unpausedFeedRateMinute = self.getUnpausedFeedRateMinute( location, splitLine )
 		self.oldLocation = location
 		return self.distanceFeedRate.getLineWithFeedRate( unpausedFeedRateMinute, line, splitLine )
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addLine('(<procedureDone> unpause </procedureDone>)')
 				return
 			self.distanceFeedRate.addLine(line)
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
@@ -225,7 +225,7 @@ class UnpauseSkein:
 def main():
 	"Display the unpause dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

@@ -158,9 +158,9 @@ from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 import os
 import sys
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewRepository():
@@ -171,10 +171,10 @@ def getRankIndex( rulingSeparationWidthMillimeters, screenOrdinate ):
 	"Get rank index."
 	return int( round( screenOrdinate / rulingSeparationWidthMillimeters ) )
 
-def getWindowAnalyzeFile( fileName ):
+def getWindowAnalyzeFile(fileName):
 	"Display a gcode file in a skeinview window."
-	gcodeText = gcodec.getFileText( fileName )
-	return getWindowAnalyzeFileGivenText( fileName, gcodeText )
+	gcodeText = gcodec.getFileText(fileName)
+	return getWindowAnalyzeFileGivenText(fileName, gcodeText)
 
 def getWindowAnalyzeFileGivenText( fileName, gcodeText, repository = None ):
 	"Display a gcode file in a skeinview window given the text."
@@ -202,7 +202,7 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 
 class SkeinviewRepository( tableau.TableauRepository ):
 	"A class to handle the skeinview settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.analyze_plugins.skeinview.html', '', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( [ ('Gcode text files', '*.gcode') ], 'Open File for Skeinview', self, '')
@@ -211,34 +211,34 @@ class SkeinviewRepository( tableau.TableauRepository ):
 		self.addAnimation()
 		self.drawArrows = settings.BooleanSetting().getFromValue('Draw Arrows', self, True )
 		self.goAroundExtruderOffTravel = settings.BooleanSetting().getFromValue('Go Around Extruder Off Travel', self, False )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Layers -', self )
 		self.layer = settings.IntSpinNotOnMenu().getSingleIncrementFromValue( 0, 'Layer (index):', self, 912345678, 0 )
 		self.layerExtraSpan = settings.IntSpinUpdate().getSingleIncrementFromValue( - 3, 'Layer Extra Span (integer):', self, 3, 0 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.line = settings.IntSpinNotOnMenu().getSingleIncrementFromValue( 0, 'Line (index):', self, 912345678, 0 )
 		self.mouseMode = settings.MenuButtonDisplay().getFromName('Mouse Mode:', self )
 		self.displayLine = settings.MenuRadio().getFromMenuButtonDisplay( self.mouseMode, 'Display Line', self, True )
 		self.viewMove = settings.MenuRadio().getFromMenuButtonDisplay( self.mouseMode, 'View Move', self, False )
 		self.numericPointer = settings.BooleanSetting().getFromValue('Numeric Pointer', self, True )
 		self.addScaleScreenSlide()
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Width -', self )
 		self.widthOfExtrusionThread = settings.IntSpinUpdate().getSingleIncrementFromValue( 0, 'Width of Extrusion Thread (pixels):', self, 5, 3 )
 		self.widthOfSelectionThread = settings.IntSpinUpdate().getSingleIncrementFromValue( 0, 'Width of Selection Thread (pixels):', self, 10, 6 )
 		self.widthOfTravelThread = settings.IntSpinUpdate().getSingleIncrementFromValue( 0, 'Width of Travel Thread (pixels):', self, 5, 1 )
 		self.executeTitle = 'Skeinview'
 
-	def execute( self ):
+	def execute(self):
 		"Write button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrGcodeDirectory( self.fileNameInput.value, self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			getWindowAnalyzeFile( fileName )
+			getWindowAnalyzeFile(fileName)
 
 
 class SkeinviewSkein:
 	"A class to write a get a scalable vector graphics text for a gcode skein."
-	def __init__( self ):
+	def __init__(self):
 		self.extrusionNumber = 0
 		self.feedRateMinute = 960.1
 		self.isThereALayerStartWord = False
@@ -251,8 +251,8 @@ class SkeinviewSkein:
 		if self.oldLocation == None:
 			return
 		colorName = 'gray'
-		locationComplex = location.dropAxis( 2 )
-		oldLocationComplex = self.oldLocation.dropAxis( 2 )
+		locationComplex = location.dropAxis(2)
+		oldLocationComplex = self.oldLocation.dropAxis(2)
 		begin = self.getScreenCoordinates( oldLocationComplex )
 		end = self.getScreenCoordinates( locationComplex )
 		if self.extruderActive:
@@ -273,7 +273,7 @@ class SkeinviewSkein:
 		pointComplex = complex( pointComplex.real, self.cornerImaginaryTotal - pointComplex.imag )
 		return self.scale * pointComplex - self.marginCornerLow
 
-	def initializeActiveLocation( self ):
+	def initializeActiveLocation(self):
 		"Set variables to default."
 		self.extruderActive = False
 		self.oldLocation = None
@@ -284,7 +284,7 @@ class SkeinviewSkein:
 			return firstWord == '(<layer>'
 		if firstWord != 'G1' and firstWord != 'G2' and firstWord != 'G3':
 			return False
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		if location.z - self.oldZ > 0.1:
 			self.oldZ = location.z
 			return True
@@ -292,7 +292,7 @@ class SkeinviewSkein:
 
 	def linearCorner( self, splitLine ):
 		"Update the bounding corners."
-		location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		if self.extruderActive or self.repository.goAroundExtruderOffTravel.value:
 			self.cornerHigh = euclidean.getPointMaximum( self.cornerHigh, location )
 			self.cornerLow = euclidean.getPointMinimum( self.cornerLow, location )
@@ -303,14 +303,14 @@ class SkeinviewSkein:
 		if self.skeinPane != None:
 			self.addToPath( line, location )
 
-	def parseCorner( self, line ):
+	def parseCorner(self, line):
 		"Parse a gcode line and use the location to update the bounding corners."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
-			self.linearCorner( splitLine )
+			self.linearCorner(splitLine)
 		elif firstWord == 'M101':
 			self.extruderActive = True
 		elif firstWord == 'M103':
@@ -329,8 +329,8 @@ class SkeinviewSkein:
 		self.parseInitialization()
 		for line in self.lines[self.lineIndex :]:
 			self.parseCorner(line)
-		self.cornerHighComplex = self.cornerHigh.dropAxis( 2 )
-		self.cornerLowComplex = self.cornerLow.dropAxis( 2 )
+		self.cornerHighComplex = self.cornerHigh.dropAxis(2)
+		self.cornerLowComplex = self.cornerLow.dropAxis(2)
 		self.scale = repository.scale.value
 		self.scaleCornerHigh = self.scale * self.cornerHighComplex
 		self.scaleCornerLow = self.scale * self.cornerLowComplex
@@ -345,22 +345,22 @@ class SkeinviewSkein:
 			line = self.lines[ self.lineIndex ]
 			self.parseLine(line)
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == '(</extruderInitialization>)':
 				return
 			elif firstWord == '(<operatingFeedRatePerSecond>':
-				self.feedRateMinute = 60.0 * float( splitLine[1] )
+				self.feedRateMinute = 60.0 * float(splitLine[1])
 		self.lineIndex = 0
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line and add it to the vector output."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if self.isLayerStart( firstWord, splitLine ):
@@ -368,7 +368,7 @@ class SkeinviewSkein:
 			self.skeinPane = []
 			self.skeinPanes.append( self.skeinPane )
 		if firstWord == 'G1':
-			location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+			location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 			self.linearMove( line, location )
 			self.oldLocation = location
 		elif firstWord == 'M101':
@@ -377,7 +377,7 @@ class SkeinviewSkein:
 		elif firstWord == 'M103':
 			self.extruderActive = False
 		if firstWord == 'G2' or firstWord == 'G3':
-			relativeLocation = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+			relativeLocation = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 			relativeLocation.z = 0.0
 			location = self.oldLocation + relativeLocation
 			self.linearMove( line, location )
@@ -444,7 +444,7 @@ class SkeinWindow( tableau.TableauWindow ):
 		"Create a horizontal line for the horizontal ruler."
 		self.verticalRulerCanvas.create_line( begin, yPixel, self.rulingExtent, yPixel, fill = 'black')
 
-	def createRulers( self ):
+	def createRulers(self):
 		"Create the rulers.."
 		self.rulingExtentShort = 0.382 * self.rulingExtent
 		self.rulingExtentTiny = 0.764 * self.rulingExtent
@@ -471,15 +471,15 @@ class SkeinWindow( tableau.TableauWindow ):
 		"Create a vertical line for the horizontal ruler."
 		self.horizontalRulerCanvas.create_line( xPixel, begin, xPixel, self.rulingExtent, fill = 'black')
 
-	def getColoredLines( self ):
+	def getColoredLines(self):
 		"Get the colored lines from the skein pane."
 		return self.skeinPanes[ self.repository.layer.value ]
 
-	def getCopy( self ):
+	def getCopy(self):
 		"Get a copy of this window."
 		return SkeinWindow( self.repository, self.skein )
 
-	def getCopyWithNewSkein( self ):
+	def getCopyWithNewSkein(self):
 		"Get a copy of this window with a new skein."
 		return getWindowGivenTextRepository( self.skein.fileName, self.skein.gcodeText, self.repository )
 
@@ -504,9 +504,9 @@ class SkeinWindow( tableau.TableauWindow ):
 		"Get the drawn selected colored line."
 		return self.getDrawnColoredLine( coloredLine, 'mouse_item', self.repository.widthOfSelectionThread.value )
 
-	def motion( self, event ):
+	def motion(self, event):
 		"The mouse moved."
-		self.mouseTool.motion( event )
+		self.mouseTool.motion(event)
 		x = self.canvas.canvasx( event.x )
 		y = self.canvas.canvasy( event.y )
 		self.horizontalRulerCanvas.delete('pointer')
@@ -516,7 +516,7 @@ class SkeinWindow( tableau.TableauWindow ):
 		self.canvas.delete('pointer')
 		if not self.repository.numericPointer.value:
 			return
-		motionCoordinate = complex( x, y )
+		motionCoordinate = complex(x, y)
 		modelCoordinates = self.skein.getModelCoordinates( motionCoordinate )
 		roundedXText = self.getRoundedRulingText( 3, modelCoordinates.real )
 		yStart = self.canvas.canvasy( 0 )
@@ -527,17 +527,17 @@ class SkeinWindow( tableau.TableauWindow ):
 		self.canvas.create_rectangle( xStart, y - 2, xStart + self.textBoxWidth + 5, y + self.textBoxHeight, fill = self.canvas['background'], tag = 'pointer')
 		self.canvas.create_text( xStart + 5, y, anchor = settings.Tkinter.NW, tag = 'pointer', text = roundedYText )
 
-	#def relayXview( self, *args ):
-	#	"Relay xview changes."
-	#	self.canvas.xview( *args )
-	#	self.horizontalRulerCanvas.xview( *args )
+	def relayXview( self, *args ):
+		"Relay xview changes."
+		self.canvas.xview( *args )
+		self.horizontalRulerCanvas.xview( *args )
 
-	#def relayYview( self, *args ):
-	#	"Relay yview changes."
-	#	self.canvas.yview( *args )
-	#	self.verticalRulerCanvas.yview( *args )
+	def relayYview( self, *args ):
+		"Relay yview changes."
+		self.canvas.yview( *args )
+		self.verticalRulerCanvas.yview( *args )
 
-	def update( self ):
+	def update(self):
 		"Update the window."
 		if len( self.skeinPanes ) < 1:
 			return
@@ -554,7 +554,7 @@ class SkeinWindow( tableau.TableauWindow ):
 def main():
 	"Display the skeinview dialog."
 	if len( sys.argv ) > 1:
-		tableau.startMainLoopFromWindow( getWindowAnalyzeFile(' '.join( sys.argv[ 1 : ] ) ) )
+		tableau.startMainLoopFromWindow( getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

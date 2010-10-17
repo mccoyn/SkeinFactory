@@ -9,6 +9,13 @@ On the Arcol Blog a method of deriving the layer thickness is posted.  That arti
 http://blog.arcol.hu/?p=157
 
 ==Settings==
+===Add Layer Template to SVG===
+Default is on.
+
+When selected, the layer template will be added to the svg output, which adds javascript control boxes.  So 'Add Layer Template to SVG' should be selected when the svg will be viewed in a browser.
+
+When off, no controls will be added, the svg output will only include the fabrication paths.  So 'Add Layer Template to SVG' should be deselected when the svg will be used by other software, like Inkscape.
+
 ===Bridge Thickness Multiplier===
 Default is one.
 
@@ -101,11 +108,11 @@ The carve tool has created the file:
 """
 
 #from __future__ import absolute_import
-#try:
-#	import psyco
-#	psyco.full()
-#except:
-#	pass
+try:
+	"import psyco"
+	"psyco.full()"
+except:
+	pass
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -122,23 +129,23 @@ import sys
 import time
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = "$Date: 2008/02/05 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, gcodeText = '', repository = None ):
 	"Get carved text."
 	if fileName.endswith('.svg'):
-		gcodeText = gcodec.getTextIfEmpty( fileName, gcodeText )
+		gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
 		if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'carve'):
 			return gcodeText
-	carving = svg_writer.getCarving( fileName )
+	carving = svg_writer.getCarving(fileName)
 	if carving == None:
 		return ''
 	if repository == None:
 		repository = CarveRepository()
-		settings.getReadRepository( repository )
+		settings.getReadRepository(repository)
 	return CarveSkein().getCarvedSVG( carving, fileName, repository )
 
 def getNewRepository():
@@ -148,22 +155,22 @@ def getNewRepository():
 def writeOutput( fileName = ''):
 	"Carve a GNU Triangulated Surface file."
 	startTime = time.time()
-	print('File ' + gcodec.getSummarizedFileName( fileName ) + ' is being carved.')
+	print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being carved.')
 	repository = CarveRepository()
-	settings.getReadRepository( repository )
+	settings.getReadRepository(repository)
 	carveGcode = getCraftedText( fileName, '', repository )
 	if carveGcode == '':
 		return
 	suffixFileName = gcodec.getFilePathWithUnderscoredBasename( fileName, '_carve.svg')
 	gcodec.writeFileText( suffixFileName, carveGcode )
-	print('The carved file is saved as ' + gcodec.getSummarizedFileName( suffixFileName ) )
+	print('The carved file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
 	print('It took %s to carve the file.' % euclidean.getDurationString( time.time() - startTime ) )
 	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
 
 class CarveRepository:
 	"A class to handle the carve settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.carve.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getTranslatorFileTypeTuples(), 'Open File for Carve', self, '')
@@ -174,26 +181,26 @@ class CarveRepository:
 		self.importCoarseness = settings.FloatSpin().getFromValue( 0.5, 'Import Coarseness (ratio):', self, 2.0, 1.0 )
 		self.infillDirectionBridge = settings.BooleanSetting().getFromValue('Infill in Direction of Bridges', self, True )
 		self.layerThickness = settings.FloatSpin().getFromValue( 0.1, 'Layer Thickness (mm):', self, 1.0, 0.4 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Layers -', self )
 		self.layersFrom = settings.IntSpin().getFromValue( 0, 'Layers From (index):', self, 20, 0 )
 		self.layersTo = settings.IntSpin().getSingleIncrementFromValue( 0, 'Layers To (index):', self, 912345678, 912345678 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.meshTypeLabel = settings.LabelDisplay().getFromName('Mesh Type: ', self )
 		importLatentStringVar = settings.LatentStringVar()
 		self.correctMesh = settings.Radio().getFromRadio( importLatentStringVar, 'Correct Mesh', self, True )
 		self.unprovenMesh = settings.Radio().getFromRadio( importLatentStringVar, 'Unproven Mesh', self, False )
 		self.perimeterWidthOverThickness = settings.FloatSpin().getFromValue( 1.4, 'Perimeter Width over Thickness (ratio):', self, 2.2, 1.8 )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.svgViewer = settings.StringSetting().getFromValue('SVG Viewer:', self, 'webbrowser')
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.executeTitle = 'Carve'
 
-	def execute( self ):
+	def execute(self):
 		"Carve button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypes( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class CarveSkein:
@@ -218,13 +225,13 @@ class CarveSkein:
 		perimeterWidth = repository.perimeterWidthOverThickness.value * layerThickness
 		svgWriter = svg_writer.SVGWriter(repository.addLayerTemplateToSVG.value, carving, decimalPlacesCarried, perimeterWidth)
 		truncatedRotatedBoundaryLayers = svg_writer.getTruncatedRotatedBoundaryLayers(repository, rotatedBoundaryLayers)
-		return svgWriter.getReplacedSVGTemplate(fileName, 'carve', truncatedRotatedBoundaryLayers)
+		return svgWriter.getReplacedSVGTemplate(fileName, 'carve', truncatedRotatedBoundaryLayers, carving.getFabmetheusXML())
 
 
 def main():
 	"Display the carve dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

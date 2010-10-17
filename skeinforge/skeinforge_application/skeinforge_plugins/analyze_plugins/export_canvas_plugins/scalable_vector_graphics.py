@@ -12,7 +12,7 @@ An export canvas plugin is a script in the export_canvas_plugins folder which ha
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 import __init__
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
@@ -21,9 +21,9 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewRepository():
@@ -38,9 +38,9 @@ def parseLineReplace( firstWordTable, line, output ):
 	gcodec.addLineAndNewlineIfNecessary( line, output )
 
 
-class ScalableVectorGraphicsRepository( settings.Repository ):
+class ScalableVectorGraphicsRepository:
 	"A class to handle the export settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.analyze_plugins.export_canvas_plugins.scalable_vector_graphics.html', '', self )
 		self.fileExtension = settings.StringSetting().getFromValue('File Extension:', self, '')
@@ -59,7 +59,7 @@ class ScalableVectorGraphicsRepository( settings.Repository ):
 		line = '<line x1="%s" y1="%s" x2="%s" y2="%s" stroke="%s" stroke-width="%spx"/>\n' % ( xBegin, yBegin, xEnd, yEnd, color, width )
 		canvasLinesOutput.write( line + '\n')
 
-	def execute( self ):
+	def execute(self):
 		"Export the canvas as an svg file."
 		svgFileName = gcodec.getFilePathWithUnderscoredBasename( self.fileName, self.suffix )
 		boundingBox = self.canvas.bbox( settings.Tkinter.ALL ) # tuple (w, n, e, s)
@@ -108,7 +108,7 @@ class ScalableVectorGraphicsRepository( settings.Repository ):
 			print('Try installing the %s program or look for another one, like Image Magick which can be found at:' % svgViewer )
 			print('http://www.imagemagick.org/script/index.php')
 
-	def getCanvasLinesOutput( self ):
+	def getCanvasLinesOutput(self):
 		"Add the canvas line to the output."
 		canvasLinesOutput = cStringIO.StringIO()
 		objectIDNumbers = self.canvas.find_all()

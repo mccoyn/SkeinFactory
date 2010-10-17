@@ -74,7 +74,7 @@ Screw Holder Bottom_mill.gcode
 
 """
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
@@ -93,14 +93,14 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, gcodeText = '', repository = None ):
 	"Mill the file or gcodeText."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, gcodeText ), repository )
+	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Mill a gcode linear move gcodeText."
@@ -133,7 +133,7 @@ def isPointOfTableInLoop( loop, pointTable ):
 
 def writeOutput( fileName = ''):
 	"Mill a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName == '':
 		return
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'mill')
@@ -141,7 +141,7 @@ def writeOutput( fileName = ''):
 
 class Average:
 	"A class to hold values and get the average."
-	def __init__( self ):
+	def __init__(self):
 		self.reset()
 
 	def addValue( self, value ):
@@ -149,22 +149,22 @@ class Average:
 		self.numberOfValues += 1
 		self.total += value
 
-	def getAverage( self ):
+	def getAverage(self):
 		"Get the average."
 		if self.numberOfValues == 0:
 			print('should never happen, self.numberOfValues in Average is zero')
 			return 0.0
 		return self.total / float( self.numberOfValues )
 
-	def reset( self ):
+	def reset(self):
 		"Set the number of values and the total to the default."
 		self.numberOfValues = 0
 		self.total = 0.0
 
 
-class MillRepository( settings.Repository ):
+class MillRepository:
 	"A class to handle the mill settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.mill.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Mill', self, '')
@@ -179,17 +179,17 @@ class MillRepository( settings.Repository ):
 		self.millWidthOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.8, 'Mill Width over Perimeter Width (ratio):', self, 1.8, 1.0 )
 		self.executeTitle = 'Mill'
 
-	def execute( self ):
+	def execute(self):
 		"Mill button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 
 class MillSkein:
 	"A class to mill a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.aroundPixelTable = {}
 		self.average = Average()
 		self.boundaryLayers = []
@@ -207,14 +207,14 @@ class MillSkein:
 			self.oldLocation = Vector3()
 		self.oldLocation.z = z
 		for loop in loops:
-			self.distanceFeedRate.addGcodeFromThreadZ( loop, z )
+			self.distanceFeedRate.addGcodeFromThreadZ(loop, z)
 			euclidean.addToThreadsFromLoop( self.halfPerimeterWidth, 'loop', loop, self.oldLocation, self )
 
 	def addGcodeFromThreadZ( self, thread, z ):
 		"Add a thread to the output."
 		self.distanceFeedRate.addGcodeFromThreadZ( thread, z )
 
-	def addMillThreads( self ):
+	def addMillThreads(self):
 		"Add the mill htreads to the skein."
 		boundaryLayer = self.boundaryLayers[ self.layerIndex ]
 		endpoints = euclidean.getEndpointsFromSegmentTable( boundaryLayer.segmentTable )
@@ -250,8 +250,7 @@ class MillSkein:
 		boundaryLayer.innerLoops = []
 		boundaryLayer.outerLoops = []
 		millRadius = 0.75 * self.millWidth
-		loops = trianglemesh.getInclusiveLoops( betweenPoints, betweenPoints, millRadius )
-		loops = euclidean.getSimplifiedLoops( loops, millRadius )
+		loops = trianglemesh.getDescendingAreaLoops(betweenPoints, betweenPoints, millRadius)
 		for loop in loops:
 			if isPointOfTableInLoop( loop, innerPointTable ):
 				boundaryLayer.innerLoops.append(loop)
@@ -303,23 +302,23 @@ class MillSkein:
 			verticalSegmentTable[ xIntersectionsTableKey ] = segments
 		return verticalSegmentTable
 
-	def parseBoundaries( self ):
+	def parseBoundaries(self):
 		"Parse the boundaries and add them to the boundary layers."
 		boundaryLoop = None
 		boundaryLayer = None
 		for line in self.lines[self.lineIndex :]:
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == '(</boundaryPerimeter>)':
 				boundaryLoop = None
 			elif firstWord == '(<boundaryPoint>':
-				location = gcodec.getLocationFromSplitLine( None, splitLine )
+				location = gcodec.getLocationFromSplitLine(None, splitLine)
 				if boundaryLoop == None:
 					boundaryLoop = []
 					boundaryLayer.loops.append( boundaryLoop )
-				boundaryLoop.append( location.dropAxis( 2 ) )
+				boundaryLoop.append( location.dropAxis(2) )
 			elif firstWord == '(<layer>':
-				boundaryLayer = euclidean.LoopLayer( float( splitLine[1] ) )
+				boundaryLayer = euclidean.LoopLayer( float(splitLine[1]) )
 				self.boundaryLayers.append( boundaryLayer )
 		if len( self.boundaryLayers ) < 2:
 			return
@@ -343,18 +342,18 @@ class MillSkein:
 		for boundaryLayerIndex in xrange( len( self.boundaryLayers ) ):
 			self.addSegmentTableLoops( boundaryLayerIndex )
 
-	def parseInitialization( self ):
+	def parseInitialization(self):
 		"Parse gcode initialization and store the parameters."
 		for self.lineIndex in xrange( len( self.lines ) ):
 			line = self.lines[ self.lineIndex ]
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-			firstWord = gcodec.getFirstWord( splitLine )
+			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine( firstWord, splitLine )
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addLine('(<procedureDone> mill </procedureDone>)')
 				return
 			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float( splitLine[1] )
+				self.perimeterWidth = float(splitLine[1])
 				self.aroundWidth = 0.1 * self.perimeterWidth
 				self.halfPerimeterWidth = 0.5 * self.perimeterWidth
 				self.millWidth = self.perimeterWidth * self.repository.millWidthOverPerimeterWidth.value
@@ -362,18 +361,18 @@ class MillSkein:
 				self.loopOuterOutset = self.halfPerimeterWidth + self.perimeterWidth * self.repository.loopOuterOutsetOverPerimeterWidth.value
 			self.distanceFeedRate.addLine(line)
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line and add it to the mill skein."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		if len( splitLine ) < 1:
+		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
-			location = gcodec.getLocationFromSplitLine( self.oldLocation, splitLine )
+			location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 			if self.isExtruderActive:
-				self.average.addValue( location.z )
+				self.average.addValue(location.z)
 				if self.oldLocation != None:
-					euclidean.addValueSegmentToPixelTable( self.oldLocation.dropAxis( 2 ), location.dropAxis( 2 ), self.aroundPixelTable, None, self.aroundWidth )
+					euclidean.addValueSegmentToPixelTable( self.oldLocation.dropAxis(2), location.dropAxis(2), self.aroundPixelTable, None, self.aroundWidth )
 			self.oldLocation = location
 		elif firstWord == 'M101':
 			self.isExtruderActive = True
@@ -392,7 +391,7 @@ class MillSkein:
 def main():
 	"Display the mill dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

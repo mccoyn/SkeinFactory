@@ -32,9 +32,9 @@ import __init__
 from fabmetheus_utilities import settings
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewRepository():
@@ -42,9 +42,9 @@ def getNewRepository():
 	return DescriptionRepository()
 
 
-class DescriptionRepository( settings.Repository ):
+class DescriptionRepository:
 	"A class to handle the description settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.meta_plugins.description.html', '', self )
 		description = 'Write your description of the profile here.\n\nSuggested format is a description, followed by a link to the profile post or web page.'

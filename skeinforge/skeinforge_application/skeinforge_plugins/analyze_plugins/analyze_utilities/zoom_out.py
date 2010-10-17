@@ -12,9 +12,9 @@ from skeinforge_application.skeinforge_plugins.analyze_plugins.analyze_utilities
 from fabmetheus_utilities import settings
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewMouseTool():
@@ -24,6 +24,6 @@ def getNewMouseTool():
 
 class ZoomOut( zoom_in.ZoomIn ):
 	"The zoom out mouse tool."
-	def getMultiplier( self ):
+	def getMultiplier(self):
 		"Get the scale multiplier."
 		return 0.5

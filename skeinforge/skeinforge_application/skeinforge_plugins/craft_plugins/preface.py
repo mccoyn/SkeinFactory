@@ -105,9 +105,9 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = "$Date: 2008/28/04 $"
-__license__ = "GPL 3.0"
+__license__ = 'GPL 3.0'
 
 
 def getCraftedText( fileName, text = '', prefaceRepository = None ):
@@ -119,8 +119,8 @@ def getCraftedTextFromText( text, prefaceRepository = None ):
 	if gcodec.isProcedureDoneOrFileIsEmpty( text, 'preface'):
 		return text
 	if prefaceRepository == None:
-		prefaceRepository = settings.getReadRepository( PrefaceRepository() )
-	return PrefaceSkein().getCraftedGcode( prefaceRepository, text )
+		prefaceRepository = settings.getReadRepository(PrefaceRepository())
+	return PrefaceSkein().getCraftedGcode(prefaceRepository, text)
 
 def getNewRepository():
 	"Get the repository constructor."
@@ -128,44 +128,44 @@ def getNewRepository():
 
 def writeOutput( fileName = ''):
 	"Preface the carving of a gcode file.  If no fileName is specified, preface the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified( fileName )
+	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
 	if fileName == '':
 		return
 	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'preface')
 
 
-class PrefaceRepository( settings.Repository ):
+class PrefaceRepository:
 	"A class to handle the preface settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.preface.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Preface', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://www.bitsfrombytes.com/wiki/index.php?title=Skeinforge_Preface')
 		self.meta = settings.StringSetting().getFromValue('Meta:', self, '')
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Name of Alteration Files -', self )
 		self.nameOfEndFile = settings.StringSetting().getFromValue('Name of End File:', self, 'end.gcode')
 		self.nameOfStartFile = settings.StringSetting().getFromValue('Name of Start File:', self, 'start.gcode')
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		self.setPositioningToAbsolute = settings.BooleanSetting().getFromValue('Set Positioning to Absolute', self, True )
 		self.setUnitsToMillimeters = settings.BooleanSetting().getFromValue('Set Units to Millimeters', self, True )
 		self.startAtHome = settings.BooleanSetting().getFromValue('Start at Home', self, False )
-		settings.LabelSeparator().getFromRepository( self )
+		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Turn Extruder Off -', self )
 		self.turnExtruderOffAtShutDown = settings.BooleanSetting().getFromValue('Turn Extruder Off at Shut Down', self, True )
 		self.turnExtruderOffAtStartUp = settings.BooleanSetting().getFromValue('Turn Extruder Off at Start Up', self, True )
 		self.executeTitle = 'Preface'
 
-	def execute( self ):
+	def execute(self):
 		"Preface button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, fabmetheus_interpret.getImportPluginFileNames(), self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class PrefaceSkein:
 	"A class to preface a skein of extrusions."
-	def __init__( self ):
+	def __init__(self):
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.extruderActive = False
 		self.lineIndex = 0
@@ -175,10 +175,10 @@ class PrefaceSkein:
 	def addFromUpperLowerFile( self, fileName ):
 		"Add lines of text from the fileName or the lowercase fileName, if there is no file by the original fileName in the directory."
 		fileText = settings.getFileInAlterationsOrGivenDirectory( os.path.dirname( __file__ ), fileName )
-		fileLines = gcodec.getTextLines( fileText )
+		fileLines = gcodec.getTextLines(fileText)
 		self.distanceFeedRate.addLinesSetAbsoluteDistanceMode( fileLines )
 
-	def addInitializationToOutput( self ):
+	def addInitializationToOutput(self):
 		"Add initialization gcode to the output."
 		self.addFromUpperLowerFile( self.prefaceRepository.nameOfStartFile.value ) # Add a start file if it exists.
 		self.distanceFeedRate.addTagBracketedLine('creation', 'skeinforge') # GCode formatted comment
@@ -220,7 +220,7 @@ class PrefaceSkein:
 			self.distanceFeedRate.addGcodeFromLoop( loop, rotatedBoundaryLayer.z )
 		self.distanceFeedRate.addLine('(</layer>)')
 
-	def addShutdownToOutput( self ):
+	def addShutdownToOutput(self):
 		"Add shutdown gcode to the output."
 		self.distanceFeedRate.addLine('(</extrusion>)') # GCode formatted comment
 		if self.prefaceRepository.turnExtruderOffAtShutDown.value:
@@ -242,7 +242,7 @@ class PrefaceSkein:
 def main():
 	"Display the preface dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

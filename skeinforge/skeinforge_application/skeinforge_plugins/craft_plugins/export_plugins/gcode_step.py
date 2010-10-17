@@ -67,7 +67,7 @@ Defines the Z axis step length.
 """
 
 
-from __future__ import absolute_import
+#from __future__ import absolute_import
 import __init__
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
@@ -79,9 +79,9 @@ import os
 import sys
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 # This is true if the output is text and false if it is binary."
@@ -90,16 +90,16 @@ globalIsReplaceable = True
 
 def getCharacterIntegerString( character, offset, splitLine, stepLength ):
 	"Get a character and integer string."
-	floatValue = getFloatFromCharacterSplitLine( character, splitLine )
+	floatValue = getFloatFromCharacterSplitLine(character, splitLine)
 	if floatValue == None:
 		return None
 	floatValue += offset
 	integerValue = int( round( float( floatValue / stepLength ) ) )
 	return character + str( integerValue )
 
-def getFloatFromCharacterSplitLine( character, splitLine ):
+def getFloatFromCharacterSplitLine(character, splitLine):
 	"Get the float after the first occurence of the character in the split line."
-	lineFromCharacter = gcodec.getStringFromCharacterSplitLine( character, splitLine )
+	lineFromCharacter = gcodec.getStringFromCharacterSplitLine(character, splitLine)
 	if lineFromCharacter == None:
 		return None
 	return float( lineFromCharacter )
@@ -119,18 +119,18 @@ def getNewRepository():
 
 def writeOutput( fileName, gcodeText = ''):
 	"Write the exported version of a gcode file."
-	gcodeText = gcodec.getGcodeFileText( fileName, gcodeText )
+	gcodeText = gcodec.getGcodeFileText(fileName, gcodeText)
 	repository = GcodeStepRepository()
-	settings.getReadRepository( repository )
+	settings.getReadRepository(repository)
 	output = getOutput( gcodeText, repository )
 	suffixFileName = fileName[ : fileName.rfind('.') ] + '_gcode_step.gcode'
 	gcodec.writeFileText( suffixFileName, output )
-	print('The converted file is saved as ' + gcodec.getSummarizedFileName( suffixFileName ) )
+	print('The converted file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
 
 
-class GcodeStepRepository( settings.Repository ):
+class GcodeStepRepository:
 	"A class to handle the export settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		#Set the default settings.
 		settings.addListsToRepository('skeinforge_application.skeinforge_plugins.craft_plugins.export_plugins.gcode_step.html', '', self )
@@ -148,19 +148,18 @@ class GcodeStepRepository( settings.Repository ):
 		self.xStepLength = settings.FloatSpin().getFromValue( 0.0, 'X Step Length (millimeters)', self, 1.0, 0.1 )
 		self.yStepLength = settings.FloatSpin().getFromValue( 0.0, 'Y Step Length (millimeters)', self, 1.0, 0.1 )
 		self.zStepLength = settings.FloatSpin().getFromValue( 0.0, 'Z Step Length (millimeters)', self, 0.2, 0.01 )
-		#Create the archive, title of the execute button, title of the dialog & settings fileName.
 		self.executeTitle = 'Convert to Gcode Step'
 
-	def execute( self ):
+	def execute(self):
 		"Convert to gcode step button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, ['.gcode'], self.fileNameInput.wasCancelled )
 		for fileName in fileNames:
-			writeOutput( fileName )
+			writeOutput(fileName)
 
 
 class GcodeStepSkein:
 	"A class to convert gcode into 16 byte binary segments."
-	def __init__( self ):
+	def __init__(self):
 		self.oldFeedRateString = None
 		self.oldZString = None
 		self.output = cStringIO.StringIO()
@@ -170,7 +169,7 @@ class GcodeStepSkein:
 		characterIntegerString = getCharacterIntegerString( character, offset, splitLine, stepLength )
 		self.addStringToLine( lineStringIO, characterIntegerString )
 
-	def addLine( self, line ):
+	def addLine(self, line):
 		"Add a line of text and a newline to the output."
 		self.output.write( line + '\n')
 
@@ -190,11 +189,11 @@ class GcodeStepSkein:
 			self.parseLine(line)
 		return self.output.getvalue()
 
-	def parseLine( self, line ):
+	def parseLine(self, line):
 		"Parse a gcode line."
 		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
-		firstWord = gcodec.getFirstWord( splitLine )
-		if len( firstWord ) < 1:
+		firstWord = gcodec.getFirstWord(splitLine)
+		if len(firstWord) < 1:
 			return
 		firstLetter = firstWord[0]
 		if firstLetter == '(':
@@ -203,7 +202,7 @@ class GcodeStepSkein:
 			self.addLine(line)
 			return
 		lineStringIO = cStringIO.StringIO()
-		lineStringIO.write( firstWord )
+		lineStringIO.write(firstWord)
 		self.addCharacterInteger('I', lineStringIO, 0.0, splitLine, self.gcodeStepRepository.xStepLength.value )
 		self.addCharacterInteger('J', lineStringIO, 0.0, splitLine, self.gcodeStepRepository.yStepLength.value )
 		self.addCharacterInteger('R', lineStringIO, 0.0, splitLine, self.gcodeStepRepository.radiusStepLength.value )
@@ -225,7 +224,7 @@ class GcodeStepSkein:
 def main():
 	"Display the export dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[ 1 : ] ) )
+		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

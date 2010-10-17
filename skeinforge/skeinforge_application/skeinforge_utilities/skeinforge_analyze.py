@@ -10,13 +10,12 @@ import __init__
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
-import dynamicImports
 import os
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
 def getNewRepository():
@@ -33,11 +32,11 @@ def getPluginsDirectoryPath():
 
 def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 	"Analyze a gcode file."
-	gcodeText = gcodec.getTextIfEmpty( fileName, gcodeText )
+	gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
 	pluginFileNames = getPluginFileNames()
 	for pluginFileName in pluginFileNames:
 		analyzePluginsDirectoryPath = getPluginsDirectoryPath()
-		pluginModule = dynamicImports.getModuleWithDirectoryPath( analyzePluginsDirectoryPath, pluginFileName )
+		pluginModule = gcodec.getModuleWithDirectoryPath( analyzePluginsDirectoryPath, pluginFileName )
 		if pluginModule != None:
 			try:
 				pluginModule.writeOutput( fileName, fileNameSuffix, gcodeText )
@@ -45,9 +44,9 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 				print('Warning, the tool %s could not analyze the output.' % pluginFileName )
 
 
-class AnalyzeRepository( settings.Repository ):
+class AnalyzeRepository(settings.Repository):
 	"A class to handle the analyze settings."
-	def __init__( self ):
+	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		settings.addListsToRepository('skeinforge_application.skeinforge_utilities.skeinforge_analyze.html', '', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( [ ('Gcode text files', '*.gcode') ], 'Open File for Analyze', self, '')
@@ -55,7 +54,7 @@ class AnalyzeRepository( settings.Repository ):
 		settings.getRadioPluginsAddPluginFrame( getPluginsDirectoryPath(), importantFileNames, getPluginFileNames(), self )
 		self.executeTitle = 'Analyze'
 
-	def execute( self ):
+	def execute(self):
 		"Analyze button has been clicked."
 		fileNames = skeinforge_polyfile.getFileOrDirectoryTypesUnmodifiedGcode( self.fileNameInput.value, [], self.fileNameInput.wasCancelled )
 		for fileName in fileNames:

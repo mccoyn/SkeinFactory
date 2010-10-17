@@ -12,19 +12,19 @@ from fabmetheus_utilities.geometry.solids import difference
 from fabmetheus_utilities.geometry.solids import group
 
 
-__author__ = "Enrique Perez (perez_enrique@yahoo.com)"
+__author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
-__date__ = "$Date: 2008/21/04 $"
-__license__ = "GPL 3.0"
+__date__ = '$Date: 2008/21/04 $'
+__license__ = 'GPL 3.0'
 
 
-def convertXMLElement( geometryOutput, xmlElement, xmlProcessor ):
+def convertXMLElement(geometryOutput, xmlElement):
 	"Convert the xml element to an intersection xml element."
-	xmlProcessor.createChildren( geometryOutput, xmlElement )
+	xmlElement.getXMLProcessor().createChildren(geometryOutput['shapes'], xmlElement)
 
-def processXMLElement( xmlElement, xmlProcessor ):
+def processXMLElement(xmlElement):
 	"Process the xml element."
-	group.processShape( Intersection, xmlElement, xmlProcessor )
+	group.processShape( Intersection, xmlElement)
 
 
 class Intersection( difference.Difference ):
