@@ -267,10 +267,6 @@ def compareLayerSequence( first, second ):
 		return - 1
 	return int( first.sequenceIndex > second.sequenceIndex )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return BeholdRepository()
-
 def getWindowAnalyzeFile(fileName):
 	"Behold a gcode file."
 	gcodeText = gcodec.getFileText(fileName)
@@ -292,13 +288,24 @@ def getWindowGivenTextRepository( fileName, gcodeText, repository ):
 	skein.parseGcode( fileName, gcodeText, repository )
 	return SkeinWindow( repository, skein )
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
-	"Write a beholded gcode file for a skeinforge gcode file, if 'Activate Behold' is selected."
-	repository = settings.getReadRepository( BeholdRepository() )
-	if repository.activateBehold.value:
-		gcodeText = gcodec.getTextIfEmpty( fileNameSuffix, gcodeText )
-		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
+def getNewPlugin():
+	return BeholdPlugin()
+
+class BeholdPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'behold'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return BeholdRepository()
+
+	def writeOutput( self, fileName, fileNameSuffix, gcodeText = ''):
+		"Write a beholded gcode file for a skeinforge gcode file, if 'Activate Behold' is selected."
+		repository = settings.getReadRepository( BeholdRepository() )
+		if repository.activateBehold.value:
+			gcodeText = gcodec.getTextIfEmpty( fileNameSuffix, gcodeText )
+			getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 class BeholdRepository( tableau.TableauRepository ):
 	"A class to handle the behold settings."
@@ -876,7 +883,7 @@ def main():
 	if len( sys.argv ) > 1:
 		tableau.startMainLoopFromWindow( getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( BeholdRepository() )
 
 if __name__ == "__main__":
 	main()

@@ -155,10 +155,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', chamberRepository = None ):
-	"Chamber the file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), chamberRepository )
-
 def getCraftedTextFromText( gcodeText, chamberRepository = None ):
 	"Chamber a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'chamber'):
@@ -169,17 +165,27 @@ def getCraftedTextFromText( gcodeText, chamberRepository = None ):
 		return gcodeText
 	return ChamberSkein().getCraftedGcode( gcodeText, chamberRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return ChamberRepository()
+def getNewPlugin():
+	return ChamberPlugin()
 
-def writeOutput( fileName = ''):
-	"Chamber a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'chamber')
+class ChamberPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'chamber'
 
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return ChamberRepository()
+
+	def writeOutput( self, fileName = ''):
+		"Chamber a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'chamber')
+
+	def getCraftedText( self, fileName, text = '', chamberRepository = None ):
+		"Chamber the file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), chamberRepository )
 
 class ChamberRepository:
 	"A class to handle the chamber settings."

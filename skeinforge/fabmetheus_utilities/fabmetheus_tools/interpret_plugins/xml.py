@@ -108,6 +108,7 @@ import __init__
 
 from fabmetheus_utilities.xml_simple_reader import XMLSimpleReader
 from fabmetheus_utilities import gcodec
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 import os
 import sys
 
@@ -117,17 +118,21 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCarving( fileName = ''):
-	"Get the carving for the xml file."
-	xmlText = gcodec.getFileText(fileName)
-	if xmlText == '':
-		return None
-	xmlParser = XMLSimpleReader( fileName, None, xmlText )
-	lowerClassName = xmlParser.getRoot().className.lower()
-	pluginModule = gcodec.getModuleWithDirectoryPath( getPluginsDirectoryPath(), lowerClassName )
-	if pluginModule == None:
-		return None
-	return pluginModule.getCarvingFromParser( xmlParser )
+class XmlPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'xml'
+
+	def getCarving( self, fileName = ''):
+		"Get the carving for the xml file."
+		xmlText = gcodec.getFileText(fileName)
+		if xmlText == '':
+			return None
+		xmlParser = XMLSimpleReader( fileName, None, xmlText )
+		lowerClassName = xmlParser.getRoot().className.lower()
+		pluginModule = gcodec.getModuleWithDirectoryPath( getPluginsDirectoryPath(), lowerClassName )
+		if pluginModule == None:
+			return None
+		return pluginModule.getCarvingFromParser( xmlParser )
 
 def getPluginsDirectoryPath():
 	"Get the plugins directory path."

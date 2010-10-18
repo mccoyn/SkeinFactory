@@ -74,10 +74,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, clipRepository = None ):
-	"Clip a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), clipRepository )
-
 def getCraftedTextFromText( gcodeText, clipRepository = None ):
 	"Clip a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'clip'):
@@ -88,16 +84,26 @@ def getCraftedTextFromText( gcodeText, clipRepository = None ):
 		return gcodeText
 	return ClipSkein().getCraftedGcode( clipRepository, gcodeText )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return ClipRepository()
+def getNewPlugin():
+	return ClipPlugin()
 
-def writeOutput( fileName = ''):
-	"Clip a gcode linear move file.  Chain clip the gcode if it is not already clipped.  If no fileName is specified, clip the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'clip')
+class ClipPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'clip'
 
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return ClipRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Clip a gcode linear move file.  Chain clip the gcode if it is not already clipped.  If no fileName is specified, clip the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'clip')
+
+	def getCraftedText( self, fileName, text, clipRepository = None ):
+		"Clip a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), clipRepository )
 
 class ClipRepository:
 	"A class to handle the clip settings."
@@ -361,7 +367,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( ClipRepository() )
 
 if __name__ == "__main__":
 	main()

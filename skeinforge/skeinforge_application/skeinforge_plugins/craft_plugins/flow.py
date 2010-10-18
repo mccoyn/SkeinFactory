@@ -64,10 +64,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', flowRepository = None ):
-	"Flow the file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), flowRepository )
-
 def getCraftedTextFromText( gcodeText, flowRepository = None ):
 	"Flow a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'flow'):
@@ -78,16 +74,27 @@ def getCraftedTextFromText( gcodeText, flowRepository = None ):
 		return gcodeText
 	return FlowSkein().getCraftedGcode( gcodeText, flowRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return FlowRepository()
 
-def writeOutput( fileName = ''):
-	"Flow a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'flow')
+def getNewPlugin():
+	return FlowPlugin()
 
+class FlowPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'flow'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return FlowRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Flow a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'flow')
+
+	def getCraftedText( self, fileName, text = '', flowRepository = None ):
+		"Flow the file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), flowRepository )
 
 class FlowRepository:
 	"A class to handle the flow settings."
@@ -159,7 +166,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( FlowRepository() )
 
 if __name__ == "__main__":
 	main()

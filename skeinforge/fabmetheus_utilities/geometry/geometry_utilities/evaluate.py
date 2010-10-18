@@ -969,41 +969,41 @@ class Evaluator:
 		'Execute the function.'
 		pass
 
-	def executeKey(self, evaluators, keys, evaluatorIndex, nextEvaluator):
-		'Execute the key index.'
-		if self.value.__class__ == str:
-			self.executeString(evaluators, keys, evaluatorIndex, nextEvaluator)
-			return
-		if self.value.__class__ == list:
-			self.executeList(evaluators, keys, evaluatorIndex, nextEvaluator)
-			return
-		if self.value.__class__ == dict:
-			self.executeDictionary(self.value, evaluators, keys, evaluatorIndex, nextEvaluator)
-			return
-		getAccessibleDictionaryFunction = getattr(self.value, '_getAccessibleDictionary', None)
-		if getAccessibleDictionaryFunction != None:
-			self.executeDictionary(getAccessibleDictionaryFunction(), evaluators, keys, evaluatorIndex, nextEvaluator)
-			return
-		if self.value.__class__.__name__ != 'XMLElement':
-			return
-		del evaluators[evaluatorIndex]
-		enumeratorKeys = euclidean.getEnumeratorKeys(self.value.attributeDictionary, keys)
-		if enumeratorKeys.__class__ == list:
-			nextEvaluator.value = []
-			for enumeratorKey in enumeratorKeys:
-				if enumeratorKey in self.value.attributeDictionary:
-					nextEvaluator.value.append(getEvaluatedExpressionValue(self.value.attributeDictionary[enumeratorKey], self.value))
-				else:
-					print('Warning, key in executeKey in Evaluator in evaluate is not in for:')
-					print(enumeratorKey)
-					print(self.value.attributeDictionary)
-			return
-		if enumeratorKeys in self.value.attributeDictionary:
-			nextEvaluator.value = getEvaluatedExpressionValue(self.value.attributeDictionary[enumeratorKeys], self.value)
-		else:
-			print('Warning, key in executeKey in Evaluator in evaluate is not in for:')
-			print(enumeratorKeys)
-			print(self.value.attributeDictionary)
+	#def executeKey(self, evaluators, keys, evaluatorIndex, nextEvaluator):
+	#	'Execute the key index.'
+	#	if self.value.__class__ == str:
+	#		self.executeString(evaluators, keys, evaluatorIndex, nextEvaluator)
+	#		return
+	#	if self.value.__class__ == list:
+	#		self.executeList(evaluators, keys, evaluatorIndex, nextEvaluator)
+	#		return
+	#	if self.value.__class__ == dict:
+	#		self.executeDictionary(self.value, evaluators, keys, evaluatorIndex, nextEvaluator)
+	#		return
+	#	getAccessibleDictionaryFunction = getattr(self.value, '_getAccessibleDictionary', None)
+	#	if getAccessibleDictionaryFunction != None:
+	#		self.executeDictionary(getAccessibleDictionaryFunction(), evaluators, keys, evaluatorIndex, nextEvaluator)
+	#		return
+	#	if self.value.__class__.__name__ != 'XMLElement':
+	#		return
+	#	del evaluators[evaluatorIndex]
+	#	enumeratorKeys = euclidean.getEnumeratorKeys(self.value.attributeDictionary, keys)
+	#	if enumeratorKeys.__class__ == list:
+	#		nextEvaluator.value = []
+	#		for enumeratorKey in enumeratorKeys:
+	#			if enumeratorKey in self.value.attributeDictionary:
+	#				nextEvaluator.value.append(getEvaluatedExpressionValue(self.value.attributeDictionary[enumeratorKey], self.value))
+	#			else:
+	#				print('Warning, key in executeKey in Evaluator in evaluate is not in for:')
+	#				print(enumeratorKey)
+	#				print(self.value.attributeDictionary)
+	#		return
+	#	if enumeratorKeys in self.value.attributeDictionary:
+	#		nextEvaluator.value = getEvaluatedExpressionValue(self.value.attributeDictionary[enumeratorKeys], self.value)
+	#	else:
+	#		print('Warning, key in executeKey in Evaluator in evaluate is not in for:')
+	#		print(enumeratorKeys)
+	#		print(self.value.attributeDictionary)
 
 	def executeLeftOperation(self, evaluators, evaluatorIndex, operationLevel):
 		'Execute operator which acts from the left.'
@@ -1220,42 +1220,42 @@ class EvaluatorAnd(EvaluatorAddition):
 		return self.getBooleanFromValuePair(leftValue, rightValue)
 
 
-class EvaluatorAttribute(Evaluator):
-	'Class to handle an attribute.'
-	def executeFunction(self, evaluators, evaluatorIndex, nextEvaluator):
-		'Execute the function.'
-		if self.value == None:
-			print('Warning, executeFunction in EvaluatorAttribute in evaluate can not get a self.value for:')
-			print(evaluatorIndex)
-			print(evaluators)
-			print(self)
-			return
-		nextEvaluator.value = self.value(*nextEvaluator.arguments)
-		del evaluators[evaluatorIndex]
+#class EvaluatorAttribute(Evaluator):
+#	'Class to handle an attribute.'
+#	def executeFunction(self, evaluators, evaluatorIndex, nextEvaluator):
+#		'Execute the function.'
+#		if self.value == None:
+#			print('Warning, executeFunction in EvaluatorAttribute in evaluate can not get a self.value for:')
+#			print(evaluatorIndex)
+#			print(evaluators)
+#			print(self)
+#			return
+#		nextEvaluator.value = self.value(*nextEvaluator.arguments)
+#		del evaluators[evaluatorIndex]
 
-	def executeRightOperation( self, evaluators, evaluatorIndex ):
-		'Execute operator which acts from the right.'
-		attributeName = self.word[1 :]
-		previousIndex = evaluatorIndex - 1
-		previousEvaluator = evaluators[previousIndex]
-		if previousEvaluator.value.__class__ == dict:
-			from fabmetheus_utilities.geometry.geometry_utilities.evaluate_enumerables import dictionary_attribute
-			self.value = dictionary_attribute._getAccessibleAttribute(attributeName, previousEvaluator.value)
-		elif previousEvaluator.value.__class__ == list:
-			from fabmetheus_utilities.geometry.geometry_utilities.evaluate_enumerables import list_attribute
-			self.value = list_attribute._getAccessibleAttribute(attributeName, previousEvaluator.value)
-		elif previousEvaluator.value.__class__ == str:
-			from fabmetheus_utilities.geometry.geometry_utilities.evaluate_enumerables import string_attribute
-			self.value = string_attribute._getAccessibleAttribute(attributeName, previousEvaluator.value)
-		else:
-			self.value = getattr(previousEvaluator.value, '_getAccessibleAttribute', None)(attributeName)
-		if self.value == None:
-			print('Warning, EvaluatorAttribute in evaluate can not get a getAccessibleAttributeFunction for:')
-			print(attributeName)
-			print(previousEvaluator.value)
-			print(self)
-			return
-		del evaluators[previousIndex]
+#	def executeRightOperation( self, evaluators, evaluatorIndex ):
+#		'Execute operator which acts from the right.'
+#		attributeName = self.word[1 :]
+#		previousIndex = evaluatorIndex - 1
+#		previousEvaluator = evaluators[previousIndex]
+#		if previousEvaluator.value.__class__ == dict:
+#			from fabmetheus_utilities.geometry.geometry_utilities.evaluate_enumerables import dictionary_attribute
+#			self.value = dictionary_attribute._getAccessibleAttribute(attributeName, previousEvaluator.value)
+#		elif previousEvaluator.value.__class__ == list:
+#			from fabmetheus_utilities.geometry.geometry_utilities.evaluate_enumerables import list_attribute
+#			self.value = list_attribute._getAccessibleAttribute(attributeName, previousEvaluator.value)
+#		elif previousEvaluator.value.__class__ == str:
+#			from fabmetheus_utilities.geometry.geometry_utilities.evaluate_enumerables import string_attribute
+#			self.value = string_attribute._getAccessibleAttribute(attributeName, previousEvaluator.value)
+#		else:
+#			self.value = getattr(previousEvaluator.value, '_getAccessibleAttribute', None)(attributeName)
+#		if self.value == None:
+#			print('Warning, EvaluatorAttribute in evaluate can not get a getAccessibleAttributeFunction for:')
+#			print(attributeName)
+#			print(previousEvaluator.value)
+#			print(self)
+#			return
+#		del evaluators[previousIndex]
 
 
 class EvaluatorBracketCurly(Evaluator):
@@ -1393,49 +1393,49 @@ class EvaluatorDivision(EvaluatorAddition):
 		return leftValue / rightValue
 
 
-class EvaluatorElement(Evaluator):
-	'Element evaluator class.'
-	def __init__(self, word, xmlElement):
-		'Set value to none.'
-		self.value = None
-		self.word = word
-		self.xmlElement = xmlElement
+#class EvaluatorElement(Evaluator):
+#	'Element evaluator class.'
+#	def __init__(self, word, xmlElement):
+#		'Set value to none.'
+#		self.value = None
+#		self.word = word
+#		self.xmlElement = xmlElement
 
-	def executeCenterOperation(self, evaluators, evaluatorIndex):
-		'Execute operator which acts on the center.'
-		dotIndex = self.word.find('.')
-		if dotIndex < 0:
-			print('Warning, EvaluatorElement in evaluate can not find the dot for:')
-			print(functionName)
-			print(self)
-			return
-		attributeName = self.word[dotIndex + 1 :]
-		moduleName = self.word[: dotIndex]
-		if moduleName in globalModuleFunctionsDictionary:
-			self.value = globalModuleFunctionsDictionary[moduleName](attributeName, self.xmlElement)
-			return
-		pluginModule = None
-		if moduleName in globalElementNameSet:
-			pluginModule = gcodec.getModuleWithPath(archive.getElementsPath(moduleName))
-		if pluginModule == None:
-			print('Warning, EvaluatorElement in evaluate can not get a pluginModule for:')
-			print(moduleName)
-			print(self)
-			return
-		getAccessibleAttributeFunction = pluginModule._getAccessibleAttribute
-		globalModuleFunctionsDictionary[moduleName] = getAccessibleAttributeFunction
-		self.value = getAccessibleAttributeFunction(attributeName, self.xmlElement)
+#	def executeCenterOperation(self, evaluators, evaluatorIndex):
+#		'Execute operator which acts on the center.'
+#		dotIndex = self.word.find('.')
+#		if dotIndex < 0:
+#			print('Warning, EvaluatorElement in evaluate can not find the dot for:')
+#			print(functionName)
+#			print(self)
+#			return
+#		attributeName = self.word[dotIndex + 1 :]
+#		moduleName = self.word[: dotIndex]
+#		if moduleName in globalModuleFunctionsDictionary:
+#			self.value = globalModuleFunctionsDictionary[moduleName](attributeName, self.xmlElement)
+#			return
+#		pluginModule = None
+#		if moduleName in globalElementNameSet:
+#			pluginModule = gcodec.getModuleWithPath(archive.getElementsPath(moduleName))
+#		if pluginModule == None:
+#			print('Warning, EvaluatorElement in evaluate can not get a pluginModule for:')
+#			print(moduleName)
+#			print(self)
+#			return
+#		getAccessibleAttributeFunction = pluginModule._getAccessibleAttribute
+#		globalModuleFunctionsDictionary[moduleName] = getAccessibleAttributeFunction
+#		self.value = getAccessibleAttributeFunction(attributeName, self.xmlElement)
 
-	def executeFunction(self, evaluators, evaluatorIndex, nextEvaluator):
-		'Execute the function.'
-		if self.value == None:
-			print('Warning, executeFunction in EvaluatorElement in evaluate can not get a self.value for:')
-			print(evaluatorIndex)
-			print(evaluators)
-			print(self)
-			return
-		nextEvaluator.value = self.value(*nextEvaluator.arguments)
-		del evaluators[evaluatorIndex]
+#	def executeFunction(self, evaluators, evaluatorIndex, nextEvaluator):
+#		'Execute the function.'
+#		if self.value == None:
+#			print('Warning, executeFunction in EvaluatorElement in evaluate can not get a self.value for:')
+#			print(evaluatorIndex)
+#			print(evaluators)
+#			print(self)
+#			return
+#		nextEvaluator.value = self.value(*nextEvaluator.arguments)
+#		del evaluators[evaluatorIndex]
 
 
 class EvaluatorFalse(Evaluator):
@@ -1504,36 +1504,36 @@ class EvaluatorFunction(Evaluator):
 			print(nextEvaluator.arguments)
 
 
-class EvaluatorFundamental(EvaluatorAttribute):
-	'Fundamental evaluator class.'
-	def executeCenterOperation(self, evaluators, evaluatorIndex):
-		'Execute operator which acts on the center.'
-		dotIndex = self.word.find('.')
-		if dotIndex < 0:
-			print('Warning, EvaluatorFundamental in evaluate can not find the dot for:')
-			print(functionName)
-			print(self)
-			return
-		attributeName = self.word[dotIndex + 1 :]
-		moduleName = self.word[: dotIndex]
-		if moduleName in globalModuleFunctionsDictionary:
-			self.value = globalModuleFunctionsDictionary[moduleName](attributeName)
-			return
-		pluginModule = None
-		if moduleName in globalFundamentalNameSet:
-			pluginModule = gcodec.getModuleWithPath(archive.getFundamentalsPath(moduleName))
-		else:
-			underscoredName = '_' + moduleName
-			if underscoredName in globalFundamentalNameSet:
-				pluginModule = gcodec.getModuleWithPath(archive.getFundamentalsPath(underscoredName))
-		if pluginModule == None:
-			print('Warning, EvaluatorFundamental in evaluate can not get a pluginModule for:')
-			print(moduleName)
-			print(self)
-			return
-		getAccessibleAttributeFunction = pluginModule._getAccessibleAttribute
-		globalModuleFunctionsDictionary[moduleName] = getAccessibleAttributeFunction
-		self.value = getAccessibleAttributeFunction(attributeName)
+#class EvaluatorFundamental(EvaluatorAttribute):
+#	'Fundamental evaluator class.'
+#	def executeCenterOperation(self, evaluators, evaluatorIndex):
+#		'Execute operator which acts on the center.'
+#		dotIndex = self.word.find('.')
+#		if dotIndex < 0:
+#			print('Warning, EvaluatorFundamental in evaluate can not find the dot for:')
+#			print(functionName)
+#			print(self)
+#			return
+#		attributeName = self.word[dotIndex + 1 :]
+#		moduleName = self.word[: dotIndex]
+#		if moduleName in globalModuleFunctionsDictionary:
+#			self.value = globalModuleFunctionsDictionary[moduleName](attributeName)
+#			return
+#		pluginModule = None
+#		if moduleName in globalFundamentalNameSet:
+#			pluginModule = gcodec.getModuleWithPath(archive.getFundamentalsPath(moduleName))
+#		else:
+#			underscoredName = '_' + moduleName
+#			if underscoredName in globalFundamentalNameSet:
+#				pluginModule = gcodec.getModuleWithPath(archive.getFundamentalsPath(underscoredName))
+#		if pluginModule == None:
+#			print('Warning, EvaluatorFundamental in evaluate can not get a pluginModule for:')
+#			print(moduleName)
+#			print(self)
+#			return
+#		getAccessibleAttributeFunction = pluginModule._getAccessibleAttribute
+#		globalModuleFunctionsDictionary[moduleName] = getAccessibleAttributeFunction
+#		self.value = getAccessibleAttributeFunction(attributeName)
 
 
 class EvaluatorGreaterEqual( EvaluatorEqual ):
@@ -1789,11 +1789,11 @@ globalDictionaryOperatorBegin = {
 	'<=' : EvaluatorLessEqual,
 	'!=' : EvaluatorNotEqual,
 	'**' : EvaluatorPower }
-globalModuleEvaluatorDictionary = {}
-globalFundamentalNameSet = set(gcodec.getPluginFileNamesFromDirectoryPath(archive.getFundamentalsPath()))
-addPrefixDictionary(globalModuleEvaluatorDictionary, globalFundamentalNameSet, EvaluatorFundamental)
-globalElementNameSet = set(gcodec.getPluginFileNamesFromDirectoryPath(archive.getElementsPath()))
-addPrefixDictionary(globalModuleEvaluatorDictionary, globalElementNameSet, EvaluatorElement)
+#globalModuleEvaluatorDictionary = {}
+#globalFundamentalNameSet = set(gcodec.getPluginFileNamesFromDirectoryPath(archive.getFundamentalsPath()))
+#addPrefixDictionary(globalModuleEvaluatorDictionary, globalFundamentalNameSet, EvaluatorFundamental)
+#globalElementNameSet = set(gcodec.getPluginFileNamesFromDirectoryPath(archive.getElementsPath()))
+#addPrefixDictionary(globalModuleEvaluatorDictionary, globalElementNameSet, EvaluatorElement)
 globalSplitDictionaryOperator = {
 	'+' : EvaluatorAddition,
 	'{' : EvaluatorBracketCurly,

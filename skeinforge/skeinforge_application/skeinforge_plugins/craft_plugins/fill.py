@@ -399,10 +399,6 @@ def getAdditionalLength( path, point, pointIndex ):
 		return abs( point - path[-1] )
 	return abs( point - path[ pointIndex - 1 ] ) + abs( point - path[ pointIndex ] ) - abs( path[ pointIndex ] - path[ pointIndex - 1 ] )
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Fill the inset file or gcode text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Fill the inset gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'fill'):
@@ -472,10 +468,6 @@ def getPlusMinusSign(number):
 	if number >= 0.0:
 		return 1.0
 	return - 1.0
-
-def getNewRepository():
-	"Get the repository constructor."
-	return FillRepository()
 
 def getWithLeastLength( path, point ):
 	"Insert a point into a path, at the index at which the path would be shortest."
@@ -763,12 +755,27 @@ def setIsOutside( yCloseToCenterPath, yIntersectionPaths ):
 				return
 	yCloseToCenterPath.isOutside = True
 
-def writeOutput( fileName = ''):
-	"Fill an inset gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'fill')
 
+def getNewPlugin():
+	return FillPlugin()
+
+class FillPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'fill'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return FillRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Fill an inset gcode file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'fill')
+
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Fill the inset file or gcode text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 class FillRepository:
 	"A class to handle the fill settings."
@@ -1393,7 +1400,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( FillRepository() )
 
 if __name__ == "__main__":
 	main()

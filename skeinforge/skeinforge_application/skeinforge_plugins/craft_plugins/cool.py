@@ -111,10 +111,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, coolRepository = None ):
-	"Cool a gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), coolRepository )
-
 def getCraftedTextFromText( gcodeText, coolRepository = None ):
 	"Cool a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'cool'):
@@ -125,16 +121,27 @@ def getCraftedTextFromText( gcodeText, coolRepository = None ):
 		return gcodeText
 	return CoolSkein().getCraftedGcode( gcodeText, coolRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return CoolRepository()
 
-def writeOutput( fileName = ''):
-	"Cool a gcode linear move file.  Chain cool the gcode if it is not already cooled. If no fileName is specified, cool the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'cool')
+def getNewPlugin():
+	return CoolPlugin()
 
+class CoolPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'cool'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CoolRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Cool a gcode linear move file.  Chain cool the gcode if it is not already cooled. If no fileName is specified, cool the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'cool')
+
+	def getCraftedText( self, fileName, text, coolRepository = None ):
+		"Cool a gcode linear move text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), coolRepository )
 
 class CoolRepository:
 	"A class to handle the cool settings."
@@ -363,7 +370,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CoolRepository() )
 
 if __name__ == "__main__":
 	main()

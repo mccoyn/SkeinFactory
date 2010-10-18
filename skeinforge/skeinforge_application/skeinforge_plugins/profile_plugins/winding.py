@@ -37,20 +37,26 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftSequence():
-	"Get the winding craft sequence."
-	return 'cleave,preface,coil,flow,feed,home,lash,fillet,limit,dimension,unpause,export'.split(',')
+def getNewPlugin():
+	return WindingPlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return WindingRepository()
+class WindingPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'winding'
 
+	def getCraftSequence(self):
+		"Get the winding craft sequence."
+		return 'cleave,preface,coil,flow,feed,home,lash,fillet,limit,dimension,unpause,export'.split(',')
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return WindingRepository()
 
 class WindingRepository:
 	"A class to handle the winding settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
-		skeinforge_profile.addListsSetCraftProfile( getCraftSequence(), 'free_wire', self, 'skeinforge_plugins.profile_plugins.winding.html')
+		skeinforge_profile.addListsSetCraftProfile( WindingPlugin().getCraftSequence(), 'free_wire', self, 'skeinforge_plugins.profile_plugins.winding.html')
 
 
 def main():

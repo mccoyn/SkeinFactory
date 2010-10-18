@@ -166,10 +166,6 @@ def addSegmentOutline( isThick, outlines, pointBegin, pointEnd, width ):
 		outline.append( outsideBeginCenterDown )
 	outlines.append( euclidean.getPointsRoundZAxis( normalizedSegment, outline ) )
 
-def getCraftedText( fileName, text = '', repository = None ):
-	"Inset the preface file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Inset the preface gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'inset'):
@@ -185,10 +181,6 @@ def getIsIntersectingWithinList( loop, loopList ):
 		if euclidean.getNumberOfIntersectionsToLeft( otherLoop, leftPoint ) % 2 == 1:
 			return True
 	return euclidean.isLoopIntersectingLoops( loop, loopList )
-
-def getNewRepository():
-	"Get the repository constructor."
-	return InsetRepository()
 
 def getSegmentsFromLoopListsPoints( loopLists, pointBegin, pointEnd ):
 	"Get endpoint segments from the beginning and end of a line segment."
@@ -242,12 +234,27 @@ def isIntersectingWithinLists( loop, loopLists ):
 			return True
 	return False
 
-def writeOutput( fileName = ''):
-	"Inset the carving of a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'inset')
 
+def getNewPlugin():
+	return InsetPlugin()
+
+class InsetPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'inset'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return InsetRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Inset the carving of a gcode file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'inset')
+
+	def getCraftedText( self, fileName, text = '', repository = None ):
+		"Inset the preface file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class InsetRepository:
 	"A class to handle the inset settings."
@@ -435,7 +442,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( InsetRepository() )
 
 if __name__ == "__main__":
 	main()

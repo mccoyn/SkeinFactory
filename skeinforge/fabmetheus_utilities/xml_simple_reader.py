@@ -63,12 +63,12 @@ class XMLElement:
 		"Get the string representation of this XML element."
 		return '%s\n%s\n%s' % ( self.className, self.attributeDictionary, self.text )
 
-	def _getAccessibleAttribute(self, attributeName):
-		"Get the accessible attribute."
-		global globalAccessibleAttributeSet
-		if attributeName in globalAccessibleAttributeSet:
-			return getattr(self, attributeName, None)
-		return None
+	#def _getAccessibleAttribute(self, attributeName):
+	#	"Get the accessible attribute."
+	#	global globalAccessibleAttributeSet
+	#	if attributeName in globalAccessibleAttributeSet:
+	#		return getattr(self, attributeName, None)
+	#	return None
 
 	def addAttribute( self, beforeQuote, withinQuote ):
 		"Add the attribute to the dictionary."

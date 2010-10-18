@@ -61,10 +61,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return CommentRepository()
-
 def getWindowAnalyzeFile(fileName):
 	"Comment a gcode file."
 	gcodeText = gcodec.getFileText(fileName)
@@ -76,14 +72,25 @@ def getWindowAnalyzeFileGivenText(fileName, gcodeText):
 	skein.parseGcode(gcodeText)
 	gcodec.writeFileMessageEnd('_comment.gcode', fileName, skein.output.getvalue(), 'The commented file is saved as ')
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
-	"Write a commented gcode file for a skeinforge gcode file, if 'Write Commented File for Skeinforge Chain' is selected."
-	repository = settings.getReadRepository( CommentRepository() )
-	if gcodeText == '':
-		gcodeText = gcodec.getFileText( fileNameSuffix )
-	if repository.activateComment.value:
-		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText )
 
+def getNewPlugin():
+	return CommentPlugin()
+
+class CommentPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'comment'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CommentRepository()
+
+	def writeOutput( self, fileName, fileNameSuffix, gcodeText = ''):
+		"Write a commented gcode file for a skeinforge gcode file, if 'Write Commented File for Skeinforge Chain' is selected."
+		repository = settings.getReadRepository( CommentRepository() )
+		if gcodeText == '':
+			gcodeText = gcodec.getFileText( fileNameSuffix )
+		if repository.activateComment.value:
+			getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText )
 
 class CommentRepository:
 	"A class to handle the comment settings."
@@ -177,7 +184,7 @@ def main():
 	if len( sys.argv ) > 1:
 		getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CommentRepository() )
 
 if __name__ == "__main__":
 	main()

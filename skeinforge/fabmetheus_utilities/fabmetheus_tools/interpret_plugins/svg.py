@@ -34,6 +34,7 @@ from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import svg_writer
 from fabmetheus_utilities import xml_simple_writer
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 import math
 
 
@@ -43,11 +44,15 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCarving( fileName = ''):
-	"Get the triangle mesh for the gts file."
-	carving = SVGCarving()
-	carving.parseSVG( fileName, gcodec.getFileText(fileName) )
-	return carving
+class SvgPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'svg'
+
+	def getCarving( self, fileName = ''):
+		"Get the triangle mesh for the gts file."
+		carving = SVGCarving()
+		carving.parseSVG( fileName, gcodec.getFileText(fileName) )
+		return carving
 
 
 class SVGCarving:

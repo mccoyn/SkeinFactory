@@ -56,7 +56,8 @@ class Vector3Index:
 		"Get the magnitude of the Vector3."
 		return math.sqrt( self.x * self.x + self.y * self.y + self.z * self.z )
 
-	magnitude = __abs__
+	def magnitude(self):
+		return self.__abs__()
 
 	def __add__(self, other):
 		"Get the sum of this Vector3 and other one."
@@ -66,9 +67,11 @@ class Vector3Index:
 		"Get the copy of this Vector3."
 		return Vector3Index( self.index, self.x, self.y, self.z )
 
-	__pos__ = __copy__
+	def __pos__(self):
+		return self.__copy__()
 
-	copy = __copy__
+	def copy(self):
+		return self.__copy__()
 
 	def __div__(self, other):
 		"Get a new Vector3 by dividing each component of this one."
@@ -86,12 +89,12 @@ class Vector3Index:
 		"Get a new Vector3 by floor dividing each component of this one."
 		return Vector3Index( self.index, self.x // other, self.y // other, self.z // other )
 
-	def _getAccessibleAttribute(self, attributeName):
-		"Get the accessible attribute."
-		global globalAccessibleAttributeSet
-		if attributeName in globalAccessibleAttributeSet:
-			return getattr(self, attributeName, None)
-		return None
+	#def _getAccessibleAttribute(self, attributeName):
+	#	"Get the accessible attribute."
+	#	global globalAccessibleAttributeSet
+	#	if attributeName in globalAccessibleAttributeSet:
+	#		return getattr(self, attributeName, None)
+	#	return None
 
 	def __hash__(self):
 		"Determine whether this vector is identical to other one."

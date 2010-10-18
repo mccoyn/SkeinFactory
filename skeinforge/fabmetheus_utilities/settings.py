@@ -14,6 +14,8 @@ import cStringIO
 import math
 import os
 import shutil
+import traceback
+import sys
 #import webbrowser
 #try:
 import Tkinter
@@ -35,14 +37,6 @@ globalProfileSaveListenerListTable = {}
 globalCloseListTables = [ globalRepositoryDialogListTable, globalProfileSaveListenerListTable ]
 globalSpreadsheetSeparator = '\t'
 
-
-class Repository:
-	"A mock class."
-	def __init__(self):
-		"Set the default settings, execute title & settings fileName."
-
-	def execute(self):
-		"button has been clicked."
 
 def addAcceleratorCommand( acceleratorBinding, commandFunction, master, menu, text ):
 	"Add accelerator command."
@@ -149,6 +143,7 @@ def getDisplayedDialogFromConstructor(repository):
 		getReadRepository(repository)
 		return RepositoryDialog( repository, Tkinter.Tk() )
 	except:
+		traceback.print_exc(file=sys.stdout)
 		print('this should never happen, getDisplayedDialogFromConstructor in settings could not open')
 		print(repository)
 		return None
@@ -727,7 +722,7 @@ class FileHelpMenuBar:
 		self.menuBar = Tkinter.Menu( root )
 		self.root = root
 		root.config( menu = self.menuBar )
-		self.fileMenu = Tkinter.Menu( self.menuBar, {tearoff : 0} )
+		self.fileMenu = Tkinter.Menu( self.menuBar, {'tearoff' : 0} )
 		self.menuBar.add_cascade( label = "File", menu = self.fileMenu, underline = 0 )
 		self.underlineLetters.append('f')
 
@@ -1858,3 +1853,24 @@ class RepositoryDialog:
 			if setting.name == 'WindowPosition':
 				setting.setWindowPosition()
 				return
+				
+class Plugin:
+	"This is the base class for all plugins."
+	def __init__(self):
+		""
+
+	def getPluginName(self):
+		return ''
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return settings.Repository()
+
+
+class Repository:
+	"A mock class."
+	def __init__(self):
+		"Set the default settings, execute title & settings fileName."
+
+	def execute(self):
+		"button has been clicked."

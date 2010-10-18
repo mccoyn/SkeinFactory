@@ -84,10 +84,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', feedRepository = None ):
-	"Feed the file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), feedRepository )
-
 def getCraftedTextFromText( gcodeText, feedRepository = None ):
 	"Feed a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'feed'):
@@ -98,16 +94,27 @@ def getCraftedTextFromText( gcodeText, feedRepository = None ):
 		return gcodeText
 	return FeedSkein().getCraftedGcode( gcodeText, feedRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return FeedRepository()
 
-def writeOutput( fileName = ''):
-	"Feed a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'feed')
+def getNewPlugin():
+	return FeedPlugin()
 
+class FeedPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'feed'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return FeedRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Feed a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'feed')
+
+	def getCraftedText( self, fileName, text = '', feedRepository = None ):
+		"Feed the file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), feedRepository )
 
 class FeedRepository:
 	"A class to handle the feed settings."
@@ -201,7 +208,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( FeedRepository() )
 
 if __name__ == "__main__":
 	main()

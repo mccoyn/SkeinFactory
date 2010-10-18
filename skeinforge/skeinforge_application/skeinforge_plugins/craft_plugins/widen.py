@@ -74,10 +74,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', repository = None ):
-	"Widen the preface file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Widen the preface gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'widen'):
@@ -109,10 +105,6 @@ def getIsPointInsideALoop(loops, point):
 			return True
 	return False
 
-def getNewRepository():
-	"Get the repository constructor."
-	return WidenRepository()
-
 def getWidenedLoop( loop, loopList, outsetLoop, radius ):
 	"Get the widened loop."
 	intersectingWithinLoops = getIntersectingWithinLoops( loop, loopList, outsetLoop )
@@ -123,12 +115,27 @@ def getWidenedLoop( loop, loopList, outsetLoop, radius ):
 		return loop
 	return euclidean.getLargestLoop( loopsUnified )
 
-def writeOutput( fileName = ''):
-	"Widen the carving of a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'widen')
 
+def getNewPlugin():
+	return WidenPlugin()
+
+class WidenPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'widen'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return WidenRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Widen the carving of a gcode file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'widen')
+
+	def getCraftedText( self, fileName, text = '', repository = None ):
+		"Widen the preface file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class WidenRepository:
 	"A class to handle the widen settings."
@@ -230,7 +237,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( WidenRepository() )
 
 if __name__ == "__main__":
 	main()

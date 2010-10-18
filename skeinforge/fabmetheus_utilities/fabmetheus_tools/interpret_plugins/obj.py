@@ -46,6 +46,7 @@ from fabmetheus_utilities.geometry.geometry_tools import face
 from fabmetheus_utilities.geometry.solids import trianglemesh
 from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import gcodec
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 from struct import unpack
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
@@ -78,17 +79,21 @@ def getFaceGivenLine( line, triangleMesh ):
 		faceGivenLine.vertexIndexes.append(vertexIndex)
 	return faceGivenLine
 
-def getCarving( fileName = ''):
-	"Get the triangle mesh for the obj file."
-	if fileName == '':
-		return None
-	objText = gcodec.getFileText( fileName, 'rb')
-	if objText == '':
-		return None
-	triangleMesh = trianglemesh.TriangleMesh()
-	addFacesGivenText( objText, triangleMesh )
-	triangleMesh.setEdgesForAllFaces()
-	return triangleMesh
+class ObjPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'obj'
+
+	def getCarving( self, fileName = ''):
+		"Get the triangle mesh for the obj file."
+		if fileName == '':
+			return None
+		objText = gcodec.getFileText( fileName, 'rb')
+		if objText == '':
+			return None
+		triangleMesh = trianglemesh.TriangleMesh()
+		addFacesGivenText( objText, triangleMesh )
+		triangleMesh.setEdgesForAllFaces()
+		return triangleMesh
 
 def getVertexGivenLine(line):
 	"Get vertex given obj vertex line."

@@ -92,10 +92,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', multiplyRepository = None ):
-	"Multiply the fill file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), multiplyRepository )
-
 def getCraftedTextFromText( gcodeText, multiplyRepository = None ):
 	"Multiply the fill text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'multiply'):
@@ -106,16 +102,27 @@ def getCraftedTextFromText( gcodeText, multiplyRepository = None ):
 		return gcodeText
 	return MultiplySkein().getCraftedGcode( gcodeText, multiplyRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return MultiplyRepository()
 
-def writeOutput( fileName = ''):
-	"Multiply a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'multiply')
+def getNewPlugin():
+	return MultiplyPlugin()
 
+class MultiplyPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'multiply'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return MultiplyRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Multiply a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'multiply')
+
+	def getCraftedText( self, fileName, text = '', multiplyRepository = None ):
+		"Multiply the fill file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), multiplyRepository )
 
 class MultiplyRepository:
 	"A class to handle the multiply settings."
@@ -278,7 +285,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( MultiplyRepository() )
 
 if __name__ == "__main__":
 	main()

@@ -41,6 +41,7 @@ from fabmetheus_utilities.geometry.geometry_tools import face
 from fabmetheus_utilities.geometry.solids import trianglemesh
 from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import gcodec
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http://www.artofillusion.org/>'
@@ -88,6 +89,10 @@ def getFromGNUTriangulatedSurfaceText( gnuTriangulatedSurfaceText, triangleMesh 
 		triangleMesh.faces.append( face.Face().getFromEdgeIndexes( edgeIndexes, triangleMesh.edges, faceIndex ) )
 	return triangleMesh
 
-def getCarving(fileName):
-	"Get the carving for the gts file."
-	return getFromGNUTriangulatedSurfaceText( gcodec.getFileText(fileName), trianglemesh.TriangleMesh() )
+class GtsPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'gts'
+
+	def getCarving( self, fileName = ''):
+		"Get the carving for the gts file."
+		return getFromGNUTriangulatedSurfaceText( gcodec.getFileText(fileName), trianglemesh.TriangleMesh() )

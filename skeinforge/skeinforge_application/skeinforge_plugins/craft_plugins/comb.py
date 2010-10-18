@@ -75,10 +75,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, combRepository = None ):
-	"Comb a gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), combRepository )
-
 def getCraftedTextFromText( gcodeText, combRepository = None ):
 	"Comb a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'comb'):
@@ -112,10 +108,6 @@ def getInsideness(path, loop):
 			oldPoint = point
 	return incrementRatio * numberOfPointsInside
 
-def getNewRepository():
-	"Get the repository constructor."
-	return CombRepository()
-
 def getPathsByIntersectedLoop( begin, end, loop ):
 	"Get both paths along the loop from the point nearest to the begin to the point nearest to the end."
 	nearestBeginDistanceIndex = euclidean.getNearestDistanceIndex( begin, loop )
@@ -133,12 +125,27 @@ def getPathsByIntersectedLoop( begin, end, loop ):
 	widdershinsPath.append( nearestEnd )
 	return [ clockwisePath, widdershinsPath ]
 
-def writeOutput( fileName = ''):
-	"Comb a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'comb')
 
+def getNewPlugin():
+	return CombPlugin()
+
+class CombPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'comb'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CombRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Comb a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'comb')
+
+	def getCraftedText( self, fileName, text, combRepository = None ):
+		"Comb a gcode linear move text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), combRepository )
 
 class CombRepository:
 	"A class to handle the comb settings."
@@ -427,7 +434,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CombRepository() )
 
 if __name__ == "__main__":
 	main()

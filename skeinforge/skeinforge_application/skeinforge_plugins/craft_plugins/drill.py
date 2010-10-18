@@ -68,10 +68,6 @@ __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
-def getCraftedText( fileName, text, repository = None ):
-	"Drill a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Drill a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'drill'):
@@ -81,10 +77,6 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 	if not repository.activateDrill.value:
 		return gcodeText
 	return DrillSkein().getCraftedGcode( gcodeText, repository )
-
-def getNewRepository():
-	"Get the repository constructor."
-	return DrillRepository()
 
 def getPolygonCenter( polygon ):
 	"Get the centroid of a polygon."
@@ -98,12 +90,6 @@ def getPolygonCenter( polygon ):
 		pointSum += complex( pointBegin.real + pointEnd.real, pointBegin.imag + pointEnd.imag ) * area
 	return pointSum / 3.0 / areaSum
 
-def writeOutput( fileName = ''):
-	"Drill a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'drill')
-
 
 class ThreadLayer:
 	"A layer of loops and paths."
@@ -116,6 +102,27 @@ class ThreadLayer:
 		"Get the string representation of this thread layer."
 		return '%s, %s' % ( self.z, self.points )
 
+
+def getNewPlugin():
+	return DrillPlugin()
+
+class DrillPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'drill'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return DrillRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Drill a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'drill')
+
+def getCraftedText( self, fileName, text, repository = None ):
+	"Drill a gcode linear move file or text."
+	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class DrillRepository:
 	"A class to handle the drill settings."
@@ -272,7 +279,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( DrillRepository() )
 
 if __name__ == "__main__":
 	main()

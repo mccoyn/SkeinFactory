@@ -74,10 +74,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, repository = None ):
-	"Unpause a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Unpause a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'unpause'):
@@ -88,10 +84,6 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 		return gcodeText
 	return UnpauseSkein().getCraftedGcode( gcodeText, repository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return UnpauseRepository()
-
 def getSelectedPlugin(repository):
 	"Get the selected plugin."
 	for plugin in repository.unpausePlugins:
@@ -99,12 +91,27 @@ def getSelectedPlugin(repository):
 			return plugin
 	return None
 
-def writeOutput( fileName = ''):
-	"Unpause a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'unpause')
 
+def getNewPlugin():
+	return UnpausePlugin()
+
+class UnpausePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'unpause'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return UnpauseRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Unpause a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'unpause')
+
+	def getCraftedText( self, fileName, text, repository = None ):
+		"Unpause a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class UnpauseRepository:
 	"A class to handle the unpause settings."
@@ -227,7 +234,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( UnpauseRepository() )
 
 if __name__ == "__main__":
 	main()

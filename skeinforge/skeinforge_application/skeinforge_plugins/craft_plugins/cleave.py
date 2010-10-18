@@ -118,42 +118,48 @@ __date__ = "$Date: 2008/02/05 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Get cleaved text."
-	if fileName.endswith('.svg'):
-		gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
-		if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'cleave'):
-			return gcodeText
-	carving = svg_writer.getCarving(fileName)
-	if carving == None:
-		return ''
-	if repository == None:
+def getNewPlugin():
+	return CleavePlugin()
+
+class CleavePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'cleave'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CleaveRepository()
+
+	def writeOutput( self, fileName = ''):
+		"Cleave a GNU Triangulated Surface file.  If no fileName is specified, cleave the first GNU Triangulated Surface file in this folder."
+		startTime = time.time()
+		print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being cleaved.')
 		repository = CleaveRepository()
 		settings.getReadRepository(repository)
-	return CleaveSkein().getCarvedSVG( carving, fileName, repository )
+		cleaveGcode = self.getCraftedText( fileName, '', repository )
+		if cleaveGcode == '':
+			return
+		suffixFileName = fileName[ : fileName.rfind('.') ] + '_cleave.svg'
+		suffixDirectoryName = os.path.dirname(suffixFileName)
+		suffixReplacedBaseName = os.path.basename(suffixFileName).replace(' ', '_')
+		suffixFileName = os.path.join( suffixDirectoryName, suffixReplacedBaseName )
+		gcodec.writeFileText( suffixFileName, cleaveGcode )
+		print('The cleaved file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
+		print('It took %s to cleave the file.' % euclidean.getDurationString( time.time() - startTime ) )
+		settings.openSVGPage( suffixFileName, repository.svgViewer.value )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return CleaveRepository()
-
-def writeOutput( fileName = ''):
-	"Cleave a GNU Triangulated Surface file.  If no fileName is specified, cleave the first GNU Triangulated Surface file in this folder."
-	startTime = time.time()
-	print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being cleaved.')
-	repository = CleaveRepository()
-	settings.getReadRepository(repository)
-	cleaveGcode = getCraftedText( fileName, '', repository )
-	if cleaveGcode == '':
-		return
-	suffixFileName = fileName[ : fileName.rfind('.') ] + '_cleave.svg'
-	suffixDirectoryName = os.path.dirname(suffixFileName)
-	suffixReplacedBaseName = os.path.basename(suffixFileName).replace(' ', '_')
-	suffixFileName = os.path.join( suffixDirectoryName, suffixReplacedBaseName )
-	gcodec.writeFileText( suffixFileName, cleaveGcode )
-	print('The cleaved file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
-	print('It took %s to cleave the file.' % euclidean.getDurationString( time.time() - startTime ) )
-	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
-
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Get cleaved text."
+		if fileName.endswith('.svg'):
+			gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
+			if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'cleave'):
+				return gcodeText
+		carving = svg_writer.getCarving(fileName)
+		if carving == None:
+			return ''
+		if repository == None:
+			repository = CleaveRepository()
+			settings.getReadRepository(repository)
+		return CleaveSkein().getCarvedSVG( carving, fileName, repository )
 
 class CleaveRepository:
 	"A class to handle the cleave settings."
@@ -210,7 +216,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CleaveRepository() )
 
 if __name__ == "__main__":
 	main()

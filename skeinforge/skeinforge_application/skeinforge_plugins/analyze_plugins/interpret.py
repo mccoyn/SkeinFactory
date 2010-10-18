@@ -32,15 +32,22 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return fabmetheus_interpret.InterpretRepository()
+def getNewPlugin():
+	return InterpretPlugin()
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
-	"Write file interpretation, if activate interpret is selected."
-	repository = settings.getReadRepository( getNewRepository() )
-	if repository.activateInterpret.value:
-		fabmetheus_interpret.getWindowAnalyzeFile(fileName)
+class InterpretPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'interpret'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return fabmetheus_interpret.InterpretRepository()
+
+	def writeOutput( self, fileName, fileNameSuffix, gcodeText = ''):
+		"Write file interpretation, if activate interpret is selected."
+		repository = settings.getReadRepository( self.getNewRepository() )
+		if repository.activateInterpret.value:
+			fabmetheus_interpret.getWindowAnalyzeFile(fileName)
 
 
 def main():
@@ -48,7 +55,7 @@ def main():
 	if len( sys.argv ) > 1:
 		fabmetheus_interpret.getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( fabmetheus_interpret.InterpretRepository() )
 
 if __name__ == "__main__":
 	main()

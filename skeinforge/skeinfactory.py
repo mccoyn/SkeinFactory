@@ -2,8 +2,11 @@
 
 import __init__
 
+from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application import skeinforge
+import skeinforge_plugins
+import Tkinter
 
 def forwardDeclartions():
 	"Force some functions to be dynamic"
@@ -35,11 +38,14 @@ def forwardDeclartions():
 	settings.WindowPosition().getFromValue(mockRepository, '')
 	settings.RepositoryDialog(mockRepository, None).addButtons(mockRepository, None)
 	settings.RepositoryDialog.__init__(RepositoryDialog(), mockRepository, None)
+	gcodec.Plugins.add(settings.Plugin())
 	Tkinter.Button.__init__(None, {})
 
 def main():
 	if False:
 		forwardDeclartions()
+
+	skeinforge_plugins.add_all()
 	skeinforge.main()
 
 if __name__ == "__main__":

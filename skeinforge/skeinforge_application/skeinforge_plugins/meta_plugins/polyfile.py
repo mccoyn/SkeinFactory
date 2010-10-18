@@ -38,6 +38,7 @@ This returns true if 'Execute All Unmodified Files in a Directory' is chosen and
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
+from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 
 
@@ -46,14 +47,21 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return skeinforge_polyfile.PolyfileRepository()
+def getNewPlugin():
+	return PolyfilePlugin()
+
+class PolyfilePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'polyfile'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return skeinforge_polyfile.PolyfileRepository()
 
 
 def main():
 	"Display the file or directory dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor( skeinforge_polyfile.PolyfileRepository() )
 
 if __name__ == "__main__":
 	main()

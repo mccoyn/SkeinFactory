@@ -37,6 +37,7 @@ from fabmetheus_utilities.geometry.geometry_tools import face
 from fabmetheus_utilities.geometry.solids import trianglemesh
 from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import gcodec
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 from struct import unpack
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
@@ -44,6 +45,28 @@ __credits__ = 'Nophead <http://hydraraptor.blogspot.com/>\nArt of Illusion <http
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
+class StlPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'stl'
+
+	def getCarving( self, fileName = ''):
+		"Get the triangle mesh for the stl file."
+		if fileName == '':
+			return None
+		stlData = gcodec.getFileText( fileName, 'rb')
+		if stlData == '':
+			return None
+		triangleMesh = trianglemesh.TriangleMesh()
+		vertexIndexTable = {}
+		numberOfVertexStrings = stlData.count('vertex')
+		requiredVertexStringsForText = max( 2, len( stlData ) / 8000 )
+		if numberOfVertexStrings > requiredVertexStringsForText:
+			addFacesGivenText( stlData, triangleMesh, vertexIndexTable )
+		else:
+			#	A binary stl should never start with the word "solid".  Because this error is common the file is been parsed as binary regardless.
+			addFacesGivenBinary( stlData, triangleMesh, vertexIndexTable )
+		triangleMesh.setEdgesForAllFaces()
+		return triangleMesh
 
 def addFacesGivenBinary( stlData, triangleMesh, vertexIndexTable ):
 	"Add faces given stl binary."
@@ -69,25 +92,6 @@ def addFacesGivenVertexes( triangleMesh, vertexIndexTable, vertexes ):
 	"Add faces given stl text."
 	for vertexIndex in xrange( 0, len(vertexes), 3 ):
 		triangleMesh.faces.append( getFaceGivenLines( triangleMesh, vertexIndex, vertexIndexTable, vertexes ) )
-
-def getCarving( fileName = ''):
-	"Get the triangle mesh for the stl file."
-	if fileName == '':
-		return None
-	stlData = gcodec.getFileText( fileName, 'rb')
-	if stlData == '':
-		return None
-	triangleMesh = trianglemesh.TriangleMesh()
-	vertexIndexTable = {}
-	numberOfVertexStrings = stlData.count('vertex')
-	requiredVertexStringsForText = max( 2, len( stlData ) / 8000 )
-	if numberOfVertexStrings > requiredVertexStringsForText:
-		addFacesGivenText( stlData, triangleMesh, vertexIndexTable )
-	else:
-#	A binary stl should never start with the word "solid".  Because this error is common the file is been parsed as binary regardless.
-		addFacesGivenBinary( stlData, triangleMesh, vertexIndexTable )
-	triangleMesh.setEdgesForAllFaces()
-	return triangleMesh
 
 def getFaceGivenLines( triangleMesh, vertexStartIndex, vertexIndexTable, vertexes ):
 	"Add face given line index and lines."

@@ -35,6 +35,7 @@ from fabmetheus_utilities.vector3 import Vector3
 from fabmetheus_utilities import euclidean
 from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import svg_writer
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 from struct import unpack
 import math
 import sys
@@ -46,11 +47,15 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCarving( fileName = ''):
-	"Get the triangle mesh for the slc file."
-	carving = SLCCarving()
-	carving.readFile(fileName)
-	return carving
+class SlcPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'slc'
+
+	def getCarving( self, fileName = ''):
+		"Get the triangle mesh for the slc file."
+		carving = SLCCarving()
+		carving.readFile(fileName)
+		return carving
 
 def getLittleEndianFloatGivenFile( file ):
 	"Get little endian float given a file."

@@ -110,10 +110,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', prefaceRepository = None ):
-	"Preface and convert an svg file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), prefaceRepository )
-
 def getCraftedTextFromText( text, prefaceRepository = None ):
 	"Preface and convert an svg text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( text, 'preface'):
@@ -122,17 +118,28 @@ def getCraftedTextFromText( text, prefaceRepository = None ):
 		prefaceRepository = settings.getReadRepository(PrefaceRepository())
 	return PrefaceSkein().getCraftedGcode(prefaceRepository, text)
 
-def getNewRepository():
-	"Get the repository constructor."
-	return PrefaceRepository()
 
-def writeOutput( fileName = ''):
-	"Preface the carving of a gcode file.  If no fileName is specified, preface the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'preface')
+def getNewPlugin():
+	return PrefacePlugin()
 
+class PrefacePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'preface'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return PrefaceRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Preface the carving of a gcode file.  If no fileName is specified, preface the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'preface')
+
+	def getCraftedText( self, fileName, text = '', prefaceRepository = None ):
+		"Preface and convert an svg file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), prefaceRepository )
 
 class PrefaceRepository:
 	"A class to handle the preface settings."
@@ -244,7 +251,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( PrefaceRepository() )
 
 if __name__ == "__main__":
 	main()

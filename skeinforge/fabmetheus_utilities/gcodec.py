@@ -184,7 +184,7 @@ def getModuleWithDirectoryPath(directoryPath, fileName):
 	originalSystemPath = sys.path[:]
 	try:
 		sys.path.insert(0, directoryPath)
-		folderPluginsModule = __import__(fileName)
+		folderPluginsModule = Plugins.get(fileName)
 		sys.path = originalSystemPath
 		return folderPluginsModule
 	except:
@@ -728,3 +728,19 @@ class DistanceFeedRate:
 			self.maximumZFeedRatePerSecond = self.maximumZDrillFeedRatePerSecond
 		elif firstWord == 'maximumZTravelFeedRatePerSecond':
 			self.maximumZTravelFeedRatePerSecond = float(splitLine[1])
+			
+class Plugins:
+	'Contains a list of all plugins.  This replaces the dynamic loading done in python.'
+	plugins = {}
+
+	@staticmethod
+	def add(plugin):
+		pluginName = plugin.getPluginName()
+		if pluginName in Plugins.plugins:
+			traceback.print_stack(file=sys.stdout)		
+			print '"%s" is already loaded.' % pluginName
+		Plugins.plugins[pluginName] = plugin
+		
+	@staticmethod
+	def get(fileName):
+		return Plugins.plugins[fileName]

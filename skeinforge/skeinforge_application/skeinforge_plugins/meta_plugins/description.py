@@ -37,10 +37,16 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return DescriptionRepository()
+def getNewPlugin():
+	return DescriptionPlugin()
 
+class DescriptionPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'description'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return DescriptionRepository()
 
 class DescriptionRepository:
 	"A class to handle the description settings."
@@ -53,7 +59,7 @@ class DescriptionRepository:
 
 def main():
 	"Display the file or directory dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor( DescriptionRepository() )
 
 if __name__ == "__main__":
 	main()

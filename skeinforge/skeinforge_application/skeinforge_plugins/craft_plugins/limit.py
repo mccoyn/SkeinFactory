@@ -72,10 +72,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Limit a gcode file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Limit a gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'limit'):
@@ -86,16 +82,27 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 		return gcodeText
 	return LimitSkein().getCraftedGcode( gcodeText, repository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return LimitRepository()
 
-def writeOutput( fileName = ''):
-	"Limit a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'limit')
+def getNewPlugin():
+	return LimitPlugin()
 
+class LimitPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'limit'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return LimitRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Limit a gcode file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'limit')
+
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Limit a gcode file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 class LimitRepository:
 	"A class to handle the limit settings."
@@ -170,7 +177,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( LimitRepository() )
 
 if __name__ == "__main__":
 	main()

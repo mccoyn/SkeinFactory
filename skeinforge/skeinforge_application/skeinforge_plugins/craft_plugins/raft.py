@@ -243,10 +243,6 @@ __license__ = 'GPL 3.0'
 
 #maybe later wide support
 #raft outline temperature http://hydraraptor.blogspot.com/2008/09/screw-top-pot.html
-def getCraftedText( fileName, text = '', repository = None ):
-	"Raft the file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Raft a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'raft'):
@@ -297,22 +293,33 @@ def getExtendedLineSegment( extensionDistance, lineSegment, loopXIntersections )
 		setExtendedPoint( lineSegment[1], pointEnd, loopXIntersection )
 	return lineSegment
 
-def getNewRepository():
-	"Get the repository constructor."
-	return RaftRepository()
-
 def setExtendedPoint( lineSegmentEnd, pointOriginal, x ):
 	"Set the point in the extended line segment."
 	if x > min( lineSegmentEnd.point.real, pointOriginal.real ) and x < max( lineSegmentEnd.point.real, pointOriginal.real ):
 		lineSegmentEnd.point = complex( x, pointOriginal.imag )
 
-def writeOutput( fileName = ''):
-	"Raft a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'raft')
 
+def getNewPlugin():
+	return RaftPlugin()
+
+class RaftPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'raft'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return RaftRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Raft a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'raft')
+
+	def getCraftedText( self, fileName, text = '', repository = None ):
+		"Raft the file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class RaftRepository:
 	"A class to handle the raft settings."
@@ -1075,7 +1082,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( RaftRepository() )
 
 if __name__ == "__main__":
 	main()

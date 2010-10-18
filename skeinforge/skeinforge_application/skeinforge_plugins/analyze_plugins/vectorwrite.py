@@ -78,10 +78,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return VectorwriteRepository()
-
 def getWindowAnalyzeFile(fileName):
 	"Write scalable vector graphics for a gcode file."
 	gcodeText = gcodec.getFileText(fileName)
@@ -105,14 +101,6 @@ def getWindowAnalyzeFileGivenText( fileName, gcodeText, repository = None ):
 	print('The vectorwrite file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
 	print('It took %s to vectorwrite the file.' % euclidean.getDurationString( time.time() - startTime ) )
 	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
-
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
-	"Write scalable vector graphics for a skeinforge gcode file, if activate vectorwrite is selected."
-	repository = settings.getReadRepository( VectorwriteRepository() )
-	if not repository.activateVectorwrite.value:
-		return
-	gcodeText = gcodec.getTextIfEmpty( fileNameSuffix, gcodeText )
-	getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 
 class SVGWriterVectorwrite( svg_writer.SVGWriter ):
@@ -157,6 +145,25 @@ class ThreadLayer:
 		"Get the string representation of this loop layer."
 		return '%s, %s' % ( self.innerLoops, self.innerPerimeters, self.outerLoops, self.outerPerimeters, self.paths, self.z )
 
+
+def getNewPlugin():
+	return VectorwritePlugin()
+
+class VectorwritePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'vectorwrite'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return VectorwriteRepository()
+
+	def writeOutput( self, fileName, fileNameSuffix, gcodeText = ''):
+		"Write scalable vector graphics for a skeinforge gcode file, if activate vectorwrite is selected."
+		repository = settings.getReadRepository( VectorwriteRepository() )
+		if not repository.activateVectorwrite.value:
+			return
+		gcodeText = gcodec.getTextIfEmpty( fileNameSuffix, gcodeText )
+		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 class VectorwriteRepository:
 	"A class to handle the vectorwrite settings."
@@ -312,7 +319,7 @@ def main():
 	if len( sys.argv ) > 1:
 		getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( VectorwriteRepository() )
 
 if __name__ == "__main__":
 	main()

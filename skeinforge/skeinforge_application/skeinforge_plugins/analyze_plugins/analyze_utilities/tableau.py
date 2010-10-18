@@ -595,13 +595,13 @@ class TableauWindow:
 		"Update the skein, and deiconify a new window and destroy the old."
 		self.updateNewDestroyOld( self.getScrollPaneCenter() )
 
-	def relayXview( self, *args ):
+	def relayXview( self, args ):
 		"Relay xview changes."
-		self.canvas.xview( *args )
+		self.canvas.xview( args )
 
-	def relayYview( self, *args ):
+	def relayYview( self, args ):
 		"Relay yview changes."
-		self.canvas.yview( *args )
+		self.canvas.yview( args )
 
 	def resetPeriodicButtonsText(self):
 		"Reset the text of the periodic buttons."

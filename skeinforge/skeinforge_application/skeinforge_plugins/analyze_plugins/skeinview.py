@@ -163,10 +163,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return SkeinviewRepository()
-
 def getRankIndex( rulingSeparationWidthMillimeters, screenOrdinate ):
 	"Get rank index."
 	return int( round( screenOrdinate / rulingSeparationWidthMillimeters ) )
@@ -192,13 +188,23 @@ def getWindowGivenTextRepository( fileName, gcodeText, repository ):
 	skein.parseGcode( fileName, gcodeText, repository )
 	return SkeinWindow( repository, skein )
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
-	"Display a skeinviewed gcode file for a skeinforge gcode file, if 'Activate Skeinview' is selected."
-	repository = settings.getReadRepository( SkeinviewRepository() )
-	if repository.activateSkeinview.value:
-		gcodeText = gcodec.getTextIfEmpty( fileNameSuffix, gcodeText )
-		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
+def getNewPlugin():
+	return SkeinviewPlugin()
 
+class SkeinviewPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'skeinview'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return SkeinviewRepository()
+
+	def writeOutput( self, fileName, fileNameSuffix, gcodeText = ''):
+		"Display a skeinviewed gcode file for a skeinforge gcode file, if 'Activate Skeinview' is selected."
+		repository = settings.getReadRepository( SkeinviewRepository() )
+		if repository.activateSkeinview.value:
+			gcodeText = gcodec.getTextIfEmpty( fileNameSuffix, gcodeText )
+			getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 class SkeinviewRepository( tableau.TableauRepository ):
 	"A class to handle the skeinview settings."
@@ -527,15 +533,15 @@ class SkeinWindow( tableau.TableauWindow ):
 		self.canvas.create_rectangle( xStart, y - 2, xStart + self.textBoxWidth + 5, y + self.textBoxHeight, fill = self.canvas['background'], tag = 'pointer')
 		self.canvas.create_text( xStart + 5, y, anchor = settings.Tkinter.NW, tag = 'pointer', text = roundedYText )
 
-	def relayXview( self, *args ):
+	def relayXview( self, args ):
 		"Relay xview changes."
-		self.canvas.xview( *args )
-		self.horizontalRulerCanvas.xview( *args )
+		self.canvas.xview( args )
+		self.horizontalRulerCanvas.xview( args )
 
-	def relayYview( self, *args ):
+	def relayYview( self, args ):
 		"Relay yview changes."
-		self.canvas.yview( *args )
-		self.verticalRulerCanvas.yview( *args )
+		self.canvas.yview( args )
+		self.verticalRulerCanvas.yview( args )
 
 	def update(self):
 		"Update the window."
@@ -556,7 +562,7 @@ def main():
 	if len( sys.argv ) > 1:
 		tableau.startMainLoopFromWindow( getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( SkeinviewRepository() )
 
 if __name__ == "__main__":
 	main()

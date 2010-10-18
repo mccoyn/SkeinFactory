@@ -61,13 +61,20 @@ def addToProfileMenu( menu ):
 	for pluginFileName in pluginFileNames:
 		addSubmenus( craftTypeName, menu, pluginFileName, os.path.join( directoryPath, pluginFileName ), profileRadioVar )
 
-def addToMenu( master, menu, repository, window ):
-	"Add a tool plugin menu."
-	ProfileMenuSaveListener( menu, window )
+def getNewPlugin():
+	return ProfilePlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return skeinforge_profile.ProfileRepository()
+class ProfilePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'profile'
+
+	def addToMenu( self, master, menu, repository, window ):
+		"Add a tool plugin menu."
+		ProfileMenuSaveListener( menu, window )
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return skeinforge_profile.ProfileRepository()
 
 
 class ProfileMenuRadio:

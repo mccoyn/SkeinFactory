@@ -70,10 +70,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', whittleRepository = None ):
-	"Whittle the preface file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), whittleRepository )
-
 def getCraftedTextFromText( gcodeText, whittleRepository = None ):
 	"Whittle the preface gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'whittle'):
@@ -84,17 +80,28 @@ def getCraftedTextFromText( gcodeText, whittleRepository = None ):
 		return gcodeText
 	return WhittleSkein().getCraftedGcode( whittleRepository, gcodeText )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return WhittleRepository()
 
-def writeOutput( fileName = ''):
-	"Whittle the carving of a gcode file.  If no fileName is specified, whittle the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'whittle')
+def getNewPlugin():
+	return WhittlePlugin()
 
+class WhittlePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'whittle'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return WhittleRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Whittle the carving of a gcode file.  If no fileName is specified, whittle the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'whittle')
+
+	def getCraftedText( self, fileName, text = '', whittleRepository = None ):
+		"Whittle the preface file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), whittleRepository )
 
 class WhittleRepository:
 	"A class to handle the whittle settings."
@@ -193,7 +200,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( WhittleRepository() )
 
 if __name__ == "__main__":
 	main()

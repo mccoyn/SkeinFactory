@@ -73,10 +73,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', liftRepository = None ):
-	"Lift the preface file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), liftRepository )
-
 def getCraftedTextFromText( gcodeText, liftRepository = None ):
 	"Lift the preface gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'lift'):
@@ -87,16 +83,27 @@ def getCraftedTextFromText( gcodeText, liftRepository = None ):
 		return gcodeText
 	return LiftSkein().getCraftedGcode( liftRepository, gcodeText )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return LiftRepository()
 
-def writeOutput( fileName = ''):
-	"Lift the carving of a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'lift')
+def getNewPlugin():
+	return LiftPlugin()
 
+class LiftPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'lift'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return LiftRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Lift the carving of a gcode file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'lift')
+
+	def getCraftedText( self, fileName, text = '', liftRepository = None ):
+		"Lift the preface file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), liftRepository )
 
 class LiftRepository:
 	"A class to handle the lift settings."
@@ -214,7 +221,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( LiftRepository() )
 
 if __name__ == "__main__":
 	main()

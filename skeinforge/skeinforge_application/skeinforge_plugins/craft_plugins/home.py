@@ -69,10 +69,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, homeRepository = None ):
-	"Home a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), homeRepository )
-
 def getCraftedTextFromText( gcodeText, homeRepository = None ):
 	"Home a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'home'):
@@ -83,16 +79,27 @@ def getCraftedTextFromText( gcodeText, homeRepository = None ):
 		return gcodeText
 	return HomeSkein().getCraftedGcode( gcodeText, homeRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return HomeRepository()
 
-def writeOutput( fileName = ''):
-	"Home a gcode linear move file.  Chain home the gcode if it is not already homed. If no fileName is specified, home the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'home')
+def getNewPlugin():
+	return HomePlugin()
 
+class HomePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'home'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return HomeRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Home a gcode linear move file.  Chain home the gcode if it is not already homed. If no fileName is specified, home the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'home')
+
+	def getCraftedText( self, fileName, text, homeRepository = None ):
+		"Home a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), homeRepository )
 
 class HomeRepository:
 	"A class to handle the home settings."
@@ -210,7 +217,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( HomeRepository() )
 
 if __name__ == "__main__":
 	main()

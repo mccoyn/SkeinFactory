@@ -73,10 +73,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, hopRepository = None ):
-	"Hop a gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), hopRepository )
-
 def getCraftedTextFromText( gcodeText, hopRepository = None ):
 	"Hop a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'hop'):
@@ -87,16 +83,27 @@ def getCraftedTextFromText( gcodeText, hopRepository = None ):
 		return gcodeText
 	return HopSkein().getCraftedGcode( gcodeText, hopRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return HopRepository()
 
-def writeOutput( fileName = ''):
-	"Hop a gcode linear move file.  Chain hop the gcode if it is not already hopped. If no fileName is specified, hop the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'hop')
+def getNewPlugin():
+	return HopPlugin()
 
+class HopPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'hop'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return HopRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Hop a gcode linear move file.  Chain hop the gcode if it is not already hopped. If no fileName is specified, hop the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'hop')
+
+	def getCraftedText( self, fileName, text, hopRepository = None ):
+		"Hop a gcode linear move text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), hopRepository )
 
 class HopRepository:
 	"A class to handle the hop settings."
@@ -225,7 +232,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( HopRepository() )
 
 if __name__ == "__main__":
 	main()

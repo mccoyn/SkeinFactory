@@ -94,10 +94,6 @@ __license__ = 'GPL 3.0'
 
 
 #maybe speed up feedRate option
-def getCraftedText( fileName, gcodeText, stretchRepository = None ):
-	"Stretch a gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), stretchRepository )
-
 def getCraftedTextFromText( gcodeText, stretchRepository = None ):
 	"Stretch a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'stretch'):
@@ -107,16 +103,6 @@ def getCraftedTextFromText( gcodeText, stretchRepository = None ):
 	if not stretchRepository.activateStretch.value:
 		return gcodeText
 	return StretchSkein().getCraftedGcode( gcodeText, stretchRepository )
-
-def getNewRepository():
-	"Get the repository constructor."
-	return StretchRepository()
-
-def writeOutput( fileName = ''):
-	"Stretch a gcode linear move file.  Chain stretch the gcode if it is not already stretched.  If no fileName is specified, stretch the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'stretch')
 
 
 class LineIteratorBackward:
@@ -136,13 +122,13 @@ class LineIteratorBackward:
 			if firstWord == 'M103':
 				return lineIndex - 2
 		print('This should never happen in stretch, no deactivate command was found for this thread.')
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 	def getNext(self):
 		"Get next line going backward or raise exception."
 		while self.lineIndex > 3:
 			if self.lineIndex == self.firstLineIndex:
-				raise StopIteration, "You've reached the end of the line."
+				raise StopIteration
 			if self.firstLineIndex == None:
 				self.firstLineIndex = self.lineIndex
 			nextLineIndex = self.lineIndex - 1
@@ -153,18 +139,18 @@ class LineIteratorBackward:
 				if self.isLoop:
 					nextLineIndex = self.getIndexBeforeNextDeactivate()
 				else:
-					raise StopIteration, "You've reached the end of the line."
+					raise StopIteration
 			if firstWord == 'G1':
 				if self.isBeforeExtrusion():
 					if self.isLoop:
 						nextLineIndex = self.getIndexBeforeNextDeactivate()
 					else:
-						raise StopIteration, "You've reached the end of the line."
+						raise StopIteration
 				else:
 					self.lineIndex = nextLineIndex
 					return line
 			self.lineIndex = nextLineIndex
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 	def isBeforeExtrusion(self):
 		"Determine if index is two or more before activate command."
@@ -200,13 +186,13 @@ class LineIteratorForward:
 			if firstWord == 'M101':
 				return lineIndex + 1
 		print('This should never happen in stretch, no activate command was found for this thread.')
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
 	def getNext(self):
 		"Get next line or raise exception."
 		while self.lineIndex < len( self.lines ):
 			if self.lineIndex == self.firstLineIndex:
-				raise StopIteration, "You've reached the end of the line."
+				raise StopIteration
 			if self.firstLineIndex == None:
 				self.firstLineIndex = self.lineIndex
 			nextLineIndex = self.lineIndex + 1
@@ -217,12 +203,33 @@ class LineIteratorForward:
 				if self.isLoop:
 					nextLineIndex = self.getIndexJustAfterActivate()
 				else:
-					raise StopIteration, "You've reached the end of the line."
+					raise StopIteration
 			self.lineIndex = nextLineIndex
 			if firstWord == 'G1':
 				return line
-		raise StopIteration, "You've reached the end of the line."
+		raise StopIteration
 
+
+def getNewPlugin():
+	return StretchPlugin()
+
+class StretchPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'stretch'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return StretchRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Stretch a gcode linear move file.  Chain stretch the gcode if it is not already stretched.  If no fileName is specified, stretch the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'stretch')
+
+	def getCraftedText( self, fileName, gcodeText, stretchRepository = None ):
+		"Stretch a gcode linear move text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), stretchRepository )
 
 class StretchRepository:
 	"A class to handle the stretch settings."
@@ -428,7 +435,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( StretchRepository() )
 
 if __name__ == "__main__":
 	main()

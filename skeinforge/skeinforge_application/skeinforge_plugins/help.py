@@ -53,26 +53,33 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def addToMenu( master, menu, repository, window ):
-	"Add a tool plugin menu."
-	path = settings.getPathInFabmetheusFromFileNameHelp( repository.fileNameHelp )
-	capitalizedBasename = os.path.basename(path).capitalize()
-	helpRepository = settings.getReadRepository( skeinforge_help.HelpRepository() )
-	if repository.openWikiManualHelpPage != None and helpRepository.wikiManualPrimary.value:
-		menu.add_command( label = 'Local ' + capitalizedBasename, command = repository.openLocalHelpPage )
-	else:
-		settings.addAcceleratorCommand('<F1>', repository.openLocalHelpPage, master, menu, 'Local ' + capitalizedBasename )
-	if repository.openWikiManualHelpPage != None:
-		if helpRepository.wikiManualPrimary.value:
-			settings.addAcceleratorCommand('<F1>', repository.openWikiManualHelpPage, master, menu, 'Wiki Manual ' + capitalizedBasename )
-		else:
-			menu.add_command( label = 'Wiki Manual ' + capitalizedBasename, command = repository.openWikiManualHelpPage )
-	menu.add_separator()
-	settings.addMenuEntitiesToMenu( menu, helpRepository.menuEntities )
+def getNewPlugin():
+	return HelpPlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return skeinforge_help.HelpRepository()
+class HelpPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'help'
+
+	def addToMenu( self, master, menu, repository, window ):
+		"Add a tool plugin menu."
+		path = settings.getPathInFabmetheusFromFileNameHelp( repository.fileNameHelp )
+		capitalizedBasename = os.path.basename(path).capitalize()
+		helpRepository = settings.getReadRepository( skeinforge_help.HelpRepository() )
+		if repository.openWikiManualHelpPage != None and helpRepository.wikiManualPrimary.value:
+			menu.add_command( label = 'Local ' + capitalizedBasename, command = repository.openLocalHelpPage )
+		else:
+			settings.addAcceleratorCommand('<F1>', repository.openLocalHelpPage, master, menu, 'Local ' + capitalizedBasename )
+		if repository.openWikiManualHelpPage != None:
+			if helpRepository.wikiManualPrimary.value:
+				settings.addAcceleratorCommand('<F1>', repository.openWikiManualHelpPage, master, menu, 'Wiki Manual ' + capitalizedBasename )
+			else:
+				menu.add_command( label = 'Wiki Manual ' + capitalizedBasename, command = repository.openWikiManualHelpPage )
+		menu.add_separator()
+		settings.addMenuEntitiesToMenu( menu, helpRepository.menuEntities )
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return skeinforge_help.HelpRepository()
 
 def main():
 	"Display the help dialog."

@@ -82,10 +82,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getNewRepository():
-	"Get the repository constructor."
-	return StatisticRepository()
-
 def getWindowAnalyzeFile(fileName):
 	"Write statistics for a gcode file."
 	return getWindowAnalyzeFileGivenText( fileName, gcodec.getFileText(fileName) )
@@ -104,14 +100,25 @@ def getWindowAnalyzeFileGivenText( fileName, gcodeText, repository = None ):
 	if repository.saveStatistics.value:
 		gcodec.writeFileMessageEnd('.txt', fileName, statisticGcode, 'The statistics file is saved as ')
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
-	"Write statistics for a skeinforge gcode file, if 'Write Statistics File for Skeinforge Chain' is selected."
-	repository = settings.getReadRepository( StatisticRepository() )
-	if gcodeText == '':
-		gcodeText = gcodec.getFileText( fileNameSuffix )
-	if repository.activateStatistic.value:
-		getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
+def getNewPlugin():
+	return StatisticPlugin()
+
+class StatisticPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'statistic'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return StatisticRepository()
+
+	def writeOutput( self, fileName, fileNameSuffix, gcodeText = ''):
+		"Write statistics for a skeinforge gcode file, if 'Write Statistics File for Skeinforge Chain' is selected."
+		repository = settings.getReadRepository( StatisticRepository() )
+		if gcodeText == '':
+			gcodeText = gcodec.getFileText( fileNameSuffix )
+		if repository.activateStatistic.value:
+			getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 class StatisticRepository:
 	"A class to handle the statistics settings."
@@ -353,7 +360,7 @@ def main():
 	if len( sys.argv ) > 1:
 		getWindowAnalyzeFile(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( StatisticRepository() )
 
 if __name__ == "__main__":
 	main()

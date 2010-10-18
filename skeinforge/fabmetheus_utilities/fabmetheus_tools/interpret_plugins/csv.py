@@ -32,6 +32,7 @@ import __init__
 
 from fabmetheus_utilities import xml_simple_reader
 from fabmetheus_utilities import gcodec
+from fabmetheus_utilities.fabmetheus_tools import interpret_plugin
 import sys
 
 
@@ -41,17 +42,22 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCarving( fileName = ''):
-	"Get the carving for the csv file."
-	csvText = gcodec.getFileText(fileName)
-	if csvText == '':
-		return None
-	csvParser = CSVSimpleParser( fileName, None, csvText )
-	lowerClassName = csvParser.getRoot().className.lower()
-	pluginModule = gcodec.getModuleWithDirectoryPath( getPluginsDirectoryPath(), lowerClassName )
-	if pluginModule == None:
-		return None
-	return pluginModule.getCarvingFromParser( csvParser )
+
+class CSVPlugin(interpret_plugin.InterpretPlugin):
+	def getPluginName(self):
+		return 'csv'
+
+	def getCarving( self, fileName = ''):
+		"Get the carving for the csv file."
+		csvText = gcodec.getFileText(fileName)
+		if csvText == '':
+			return None
+		csvParser = CSVSimpleParser( fileName, None, csvText )
+		lowerClassName = csvParser.getRoot().className.lower()
+		pluginModule = gcodec.getModuleWithDirectoryPath( getPluginsDirectoryPath(), lowerClassName )
+		if pluginModule == None:
+			return None
+		return pluginModule.getCarvingFromParser( csvParser )
 
 def getLineDictionary(line):
 	"Get the line dictionary."

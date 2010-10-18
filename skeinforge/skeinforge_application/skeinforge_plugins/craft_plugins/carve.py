@@ -134,39 +134,45 @@ __date__ = "$Date: 2008/02/05 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Get carved text."
-	if fileName.endswith('.svg'):
-		gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
-		if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'carve'):
-			return gcodeText
-	carving = svg_writer.getCarving(fileName)
-	if carving == None:
-		return ''
-	if repository == None:
+def getNewPlugin():
+	return CarvePlugin()
+
+class CarvePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'carve'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CarveRepository()
+
+	def writeOutput( self, fileName = ''):
+		"Carve a GNU Triangulated Surface file."
+		startTime = time.time()
+		print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being carved.')
 		repository = CarveRepository()
 		settings.getReadRepository(repository)
-	return CarveSkein().getCarvedSVG( carving, fileName, repository )
-
-def getNewRepository():
-	"Get the repository constructor."
-	return CarveRepository()
-
-def writeOutput( fileName = ''):
-	"Carve a GNU Triangulated Surface file."
-	startTime = time.time()
-	print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being carved.')
-	repository = CarveRepository()
-	settings.getReadRepository(repository)
-	carveGcode = getCraftedText( fileName, '', repository )
-	if carveGcode == '':
-		return
-	suffixFileName = gcodec.getFilePathWithUnderscoredBasename( fileName, '_carve.svg')
-	gcodec.writeFileText( suffixFileName, carveGcode )
-	print('The carved file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
-	print('It took %s to carve the file.' % euclidean.getDurationString( time.time() - startTime ) )
-	settings.openSVGPage( suffixFileName, repository.svgViewer.value )
-
+		carveGcode = self.getCraftedText( fileName, '', repository )
+		if carveGcode == '':
+			return
+		suffixFileName = gcodec.getFilePathWithUnderscoredBasename( fileName, '_carve.svg')
+		gcodec.writeFileText( suffixFileName, carveGcode )
+		print('The carved file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
+		print('It took %s to carve the file.' % euclidean.getDurationString( time.time() - startTime ) )
+		settings.openSVGPage( suffixFileName, repository.svgViewer.value )
+	
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Get carved text."
+		if fileName.endswith('.svg'):
+			gcodeText = gcodec.getTextIfEmpty(fileName, gcodeText)
+			if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'carve'):
+				return gcodeText
+		carving = svg_writer.getCarving(fileName)
+		if carving == None:
+			return ''
+		if repository == None:
+			repository = CarveRepository()
+			settings.getReadRepository(repository)
+		return CarveSkein().getCarvedSVG( carving, fileName, repository )
 
 class CarveRepository:
 	"A class to handle the carve settings."
@@ -231,9 +237,9 @@ class CarveSkein:
 def main():
 	"Display the carve dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[1 :] ) )
+		CarvePlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CarveRepository() )
 
 if __name__ == "__main__":
 	main()

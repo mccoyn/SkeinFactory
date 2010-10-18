@@ -11,6 +11,8 @@ from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 import os
+import sys
+import traceback
 
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
@@ -41,6 +43,7 @@ def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
 			try:
 				pluginModule.writeOutput( fileName, fileNameSuffix, gcodeText )
 			except:
+				traceback.print_exc(file=sys.stdout)
 				print('Warning, the tool %s could not analyze the output.' % pluginFileName )
 
 

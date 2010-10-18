@@ -49,13 +49,20 @@ def addToCraftMenu( menu ):
 		else:
 			settings.ToolDialog().addPluginToMenu( menu, pluginPath )
 
-def addToMenu( master, menu, repository, window ):
-	"Add a tool plugin menu."
-	CraftMenuSaveListener( menu, window )
+def getNewPlugin():
+	return CraftPlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return skeinforge_craft.CraftRepository()
+class CraftPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'craft'
+
+	def addToMenu( self, master, menu, repository, window ):
+		"Add a tool plugin menu."
+		CraftMenuSaveListener( menu, window )
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return skeinforge_craft.CraftRepository()
 
 def writeOutput( fileName = ''):
 	"Craft a gcode file."
@@ -121,7 +128,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CraftPlugin.getNewRepository() )
 
 if __name__ == "__main__":
 	main()

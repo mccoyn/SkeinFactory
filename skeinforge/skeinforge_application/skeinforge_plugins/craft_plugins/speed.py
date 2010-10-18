@@ -130,10 +130,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', repository = None ):
-	"Speed the file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Speed a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'speed'):
@@ -144,16 +140,27 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 		return gcodeText
 	return SpeedSkein().getCraftedGcode( gcodeText, repository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return SpeedRepository()
 
-def writeOutput( fileName = ''):
-	"Speed a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'speed')
+def getNewPlugin():
+	return SpeedPlugin()
 
+class SpeedPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'speed'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return SpeedRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Speed a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'speed')
+
+	def getCraftedText( self, fileName, text = '', repository = None ):
+		"Speed the file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class SpeedRepository:
 	"A class to handle the speed settings."
@@ -317,7 +324,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( SpeedRepository() )
 
 if __name__ == "__main__":
 	main()

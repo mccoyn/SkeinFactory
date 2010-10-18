@@ -37,7 +37,7 @@ random.seed(42)
 from shared import *
 import graph, cpp
 
-DEBUG = False
+DEBUG = True
 
 def class_copy(cl, dcpa):
     for var in cl.vars.values(): # XXX
@@ -142,6 +142,7 @@ def propagate():
 
     # --- iterative dataflow analysis
     while worklist:
+        worklistLen = len(worklist)
         a = worklist.pop(0)
         a.in_list = 0
 
@@ -174,6 +175,9 @@ def propagate():
                     b = getgx().checkcallfunc.pop()
                     for callfunc in b.callfuncs:
                         cpa(getgx().cnode[callfunc, b.dcpa, b.cpa], worklist)
+
+        worklistLen = len(worklist) - worklistLen
+        if DEBUG and worklistLen > 10000: print 'propagate: %d(%d), %s' % (worklistLen, len(worklist), a)
 
 # --- determine cartesian product of possible function and argument types
 def possible_functions(node):

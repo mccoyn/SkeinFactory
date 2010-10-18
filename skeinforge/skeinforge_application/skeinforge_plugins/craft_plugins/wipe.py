@@ -119,10 +119,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, wipeRepository = None ):
-	"Wipe a gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), wipeRepository )
-
 def getCraftedTextFromText( gcodeText, wipeRepository = None ):
 	"Wipe a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'wipe'):
@@ -133,16 +129,27 @@ def getCraftedTextFromText( gcodeText, wipeRepository = None ):
 		return gcodeText
 	return WipeSkein().getCraftedGcode( gcodeText, wipeRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return WipeRepository()
 
-def writeOutput( fileName = ''):
-	"Wipe a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'wipe')
+def getNewPlugin():
+	return WipePlugin()
 
+class WipePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'wipe'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return WipeRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Wipe a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'wipe')
+
+	def getCraftedText( self, fileName, text, wipeRepository = None ):
+		"Wipe a gcode linear move text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), wipeRepository )
 
 class WipeRepository:
 	"A class to handle the wipe settings."
@@ -280,7 +287,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( WipeRepository() )
 
 if __name__ == "__main__":
 	main()

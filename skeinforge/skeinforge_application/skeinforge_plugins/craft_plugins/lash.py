@@ -76,10 +76,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, lashRepository = None ):
-	"Get a lashed gcode linear move text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), lashRepository )
-
 def getCraftedTextFromText( gcodeText, lashRepository = None ):
 	"Get a lashed gcode linear move text from text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'lash'):
@@ -90,16 +86,27 @@ def getCraftedTextFromText( gcodeText, lashRepository = None ):
 		return gcodeText
 	return LashSkein().getCraftedGcode( gcodeText, lashRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return LashRepository()
 
-def writeOutput( fileName = ''):
-	"Lash a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'lash')
+def getNewPlugin():
+	return LashPlugin()
 
+class LashPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'lash'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return LashRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Lash a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'lash')
+
+	def getCraftedText( self, fileName, text, lashRepository = None ):
+		"Get a lashed gcode linear move text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), lashRepository )
 
 class LashRepository:
 	"A class to handle the lash settings."
@@ -185,7 +192,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( LashRepository() )
 
 if __name__ == "__main__":
 	main()

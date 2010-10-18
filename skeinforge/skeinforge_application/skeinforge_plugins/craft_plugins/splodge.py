@@ -95,10 +95,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, splodgeRepository = None ):
-	"Splodge a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), splodgeRepository )
-
 def getCraftedTextFromText( gcodeText, splodgeRepository = None ):
 	"Splodge a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'splodge'):
@@ -109,16 +105,27 @@ def getCraftedTextFromText( gcodeText, splodgeRepository = None ):
 		return gcodeText
 	return SplodgeSkein().getCraftedGcode( gcodeText, splodgeRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return SplodgeRepository()
 
-def writeOutput( fileName = ''):
-	"Splodge a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'splodge')
+def getNewPlugin():
+	return SplodgePlugin()
 
+class SplodgePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'splodge'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return SplodgeRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Splodge a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'splodge')
+
+	def getCraftedText( self, fileName, text, splodgeRepository = None ):
+		"Splodge a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), splodgeRepository )
 
 class SplodgeRepository:
 	"A class to handle the splodge settings."
@@ -342,7 +349,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( SplodgeRepository() )
 
 if __name__ == "__main__":
 	main()

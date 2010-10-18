@@ -36,21 +36,26 @@ __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
+def getNewPlugin():
+	return ExtrusionPlugin()
 
-def getCraftSequence():
-	"Get the extrusion craft sequence."
-	return 'carve,preface,widen,inset,fill,multiply,speed,temperature,raft,chamber,tower,jitter,clip,stretch,comb,cool,hop,wipe,oozebane,splodge,home,lash,fillet,limit,dimension,unpause,export'.split(',')
+class ExtrusionPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'extrusion'
 
-def getNewRepository():
-	"Get the repository constructor."
-	return ExtrusionRepository()
-
-
-class ExtrusionRepository:
+	def getCraftSequence(self):
+		"Get the extrusion craft sequence."
+		return 'carve,preface,widen,inset,fill,multiply,speed,temperature,raft,chamber,tower,jitter,clip,stretch,comb,cool,hop,wipe,oozebane,splodge,home,lash,fillet,limit,dimension,unpause,export'.split(',')
+	
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return ExtrusionRepository()
+	
+class ExtrusionRepository (settings.Repository):
 	"A class to handle the export settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
-		skeinforge_profile.addListsSetCraftProfile( getCraftSequence(), 'ABS', self, 'skeinforge_plugins.profile_plugins.extrusion.html')
+		skeinforge_profile.addListsSetCraftProfile( ExtrusionPlugin().getCraftSequence(), 'ABS', self, 'skeinforge_plugins.profile_plugins.extrusion.html')
 
 
 def main():

@@ -123,10 +123,6 @@ def getDistanceGcode( exportText ):
 			oldLocation = location
 	return exportText
 
-def getNewRepository():
-	"Get the repository constructor."
-	return ExportRepository()
-
 def getReplaced( exportText ):
 	"Get text with strings replaced according to replace.csv file."
 	replaceText = settings.getFileInAlterationsOrGivenDirectory( os.path.dirname( __file__ ), 'Replace.csv')
@@ -146,46 +142,57 @@ def getSelectedPluginModule( plugins ):
 			return gcodec.getModuleWithDirectoryPath( plugin.directoryPath, plugin.name )
 	return None
 
-def writeOutput( fileName = ''):
-	"Export a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	exportRepository = ExportRepository()
-	settings.getReadRepository( exportRepository )
-	startTime = time.time()
-	print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being chain exported.')
-	suffixFileName = fileName[ : fileName.rfind('.') ] + '_export.' + exportRepository.fileExtension.value
-	gcodeText = gcodec.getGcodeFileText( fileName, '')
-	procedures = skeinforge_craft.getProcedures('export', gcodeText )
-	gcodeText = skeinforge_craft.getChainTextFromProcedures( fileName, procedures[ : - 1 ], gcodeText )
-	if gcodeText == '':
-		return
-	skeinforge_analyze.writeOutput( fileName, suffixFileName, gcodeText )
-	if exportRepository.savePenultimateGcode.value:
-		penultimateFileName = fileName[ : fileName.rfind('.') ] + '_penultimate.gcode'
-		gcodec.writeFileText( penultimateFileName, gcodeText )
-		print('The penultimate file is saved as ' + gcodec.getSummarizedFileName( penultimateFileName ) )
-	exportChainGcode = getCraftedTextFromText( gcodeText, exportRepository )
-	replaceableExportChainGcode = None
-	selectedPluginModule = getSelectedPluginModule( exportRepository.exportPlugins )
-	if selectedPluginModule == None:
-		replaceableExportChainGcode = exportChainGcode
-	else:
-		if selectedPluginModule.globalIsReplaceable:
-			replaceableExportChainGcode = selectedPluginModule.getOutput( exportChainGcode )
-		else:
-			selectedPluginModule.writeOutput( suffixFileName, exportChainGcode )
-	if replaceableExportChainGcode != None:
-		replaceableExportChainGcode = getReplaced( replaceableExportChainGcode )
-		gcodec.writeFileText( suffixFileName, replaceableExportChainGcode )
-		print('The exported file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
-	if exportRepository.alsoSendOutputTo.value != '':
-		if replaceableExportChainGcode == None:
-			replaceableExportChainGcode = selectedPluginModule.getOutput( exportChainGcode )
-		exec('print >> ' + exportRepository.alsoSendOutputTo.value + ', replaceableExportChainGcode')
-	print('It took %s to export the file.' % euclidean.getDurationString( time.time() - startTime ) )
 
+def getNewPlugin():
+	return ExportPlugin()
+
+class ExportPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'export'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return ExportRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Export a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		exportRepository = ExportRepository()
+		settings.getReadRepository( exportRepository )
+		startTime = time.time()
+		print('File ' + gcodec.getSummarizedFileName(fileName) + ' is being chain exported.')
+		suffixFileName = fileName[ : fileName.rfind('.') ] + '_export.' + exportRepository.fileExtension.value
+		gcodeText = gcodec.getGcodeFileText( fileName, '')
+		procedures = skeinforge_craft.getProcedures('export', gcodeText )
+		gcodeText = skeinforge_craft.getChainTextFromProcedures( fileName, procedures[ : - 1 ], gcodeText )
+		if gcodeText == '':
+			return
+		skeinforge_analyze.writeOutput( fileName, suffixFileName, gcodeText )
+		if exportRepository.savePenultimateGcode.value:
+			penultimateFileName = fileName[ : fileName.rfind('.') ] + '_penultimate.gcode'
+			gcodec.writeFileText( penultimateFileName, gcodeText )
+			print('The penultimate file is saved as ' + gcodec.getSummarizedFileName( penultimateFileName ) )
+		exportChainGcode = getCraftedTextFromText( gcodeText, exportRepository )
+		replaceableExportChainGcode = None
+		selectedPluginModule = getSelectedPluginModule( exportRepository.exportPlugins )
+		if selectedPluginModule == None:
+			replaceableExportChainGcode = exportChainGcode
+		else:
+			if selectedPluginModule.globalIsReplaceable:
+				replaceableExportChainGcode = selectedPluginModule.getOutput( exportChainGcode )
+			else:
+				selectedPluginModule.writeOutput( suffixFileName, exportChainGcode )
+		if replaceableExportChainGcode != None:
+			replaceableExportChainGcode = getReplaced( replaceableExportChainGcode )
+			gcodec.writeFileText( suffixFileName, replaceableExportChainGcode )
+			print('The exported file is saved as ' + gcodec.getSummarizedFileName(suffixFileName) )
+		if exportRepository.alsoSendOutputTo.value != '':
+			if replaceableExportChainGcode == None:
+				replaceableExportChainGcode = selectedPluginModule.getOutput( exportChainGcode )
+			exec('print >> ' + exportRepository.alsoSendOutputTo.value + ', replaceableExportChainGcode')
+		print('It took %s to export the file.' % euclidean.getDurationString( time.time() - startTime ) )
 
 class ExportRepository:
 	"A class to handle the export settings."
@@ -290,7 +297,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( ExportRepository() )
 
 if __name__ == "__main__":
 	main()

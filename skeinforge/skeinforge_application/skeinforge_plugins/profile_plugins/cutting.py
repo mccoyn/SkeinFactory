@@ -37,20 +37,26 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftSequence():
-	"Get the cutting craft sequence."
-	return 'chop,preface,outset,multiply,whittle,drill,lift,flow,feed,home,lash,fillet,limit,dimension,unpause,export'.split(',')
+def getNewPlugin():
+	return CuttingPlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return CuttingRepository()
+class CuttingPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'cutting'
 
+	def getCraftSequence(self):
+		"Get the cutting craft sequence."
+		return 'chop,preface,outset,multiply,whittle,drill,lift,flow,feed,home,lash,fillet,limit,dimension,unpause,export'.split(',')
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CuttingRepository()
 
 class CuttingRepository:
 	"A class to handle the cutting settings."
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
-		skeinforge_profile.addListsSetCraftProfile( getCraftSequence(), 'end_mill', self, 'skeinforge_plugins.profile_plugins.cutting.html')
+		skeinforge_profile.addListsSetCraftProfile( CuttingPlugin().getCraftSequence(), 'end_mill', self, 'skeinforge_plugins.profile_plugins.cutting.html')
 
 
 def main():

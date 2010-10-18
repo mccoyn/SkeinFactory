@@ -17,13 +17,20 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def addToMenu( master, menu, repository, window ):
-	"Add a tool plugin menu."
-	settings.addPluginsParentToMenu( skeinforge_meta.getPluginsDirectoryPath(), menu, __file__, skeinforge_meta.getPluginFileNames() )
+def getNewPlugin():
+	return MetaPlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return skeinforge_meta.MetaRepository()
+class MetaPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'meta'
+
+	def addToMenu( self, master, menu, repository, window ):
+		"Add a tool plugin menu."
+		settings.addPluginsParentToMenu( skeinforge_meta.getPluginsDirectoryPath(), menu, __file__, skeinforge_meta.getPluginFileNames() )
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return skeinforge_meta.MetaRepository()
 
 
 def main():

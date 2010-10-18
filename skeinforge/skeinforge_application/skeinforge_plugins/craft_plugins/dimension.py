@@ -100,10 +100,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Dimension a gcode file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Dimension a gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'dimension'):
@@ -114,16 +110,27 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 		return gcodeText
 	return DimensionSkein().getCraftedGcode( gcodeText, repository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return DimensionRepository()
 
-def writeOutput( fileName = ''):
-	"Dimension a gcode file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'dimension')
+def getNewPlugin():
+	return DimensionPlugin()
 
+class DimensionPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'dimension'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return DimensionRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Dimension a gcode file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'dimension')
+
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Dimension a gcode file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 class DimensionRepository:
 	"A class to handle the dimension settings."
@@ -284,7 +291,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( DimensionRepository() )
 
 if __name__ == "__main__":
 	main()

@@ -28,6 +28,7 @@ from fabmetheus_utilities import gcodec
 from fabmetheus_utilities import settings
 from skeinforge_application.skeinforge_utilities import skeinforge_polyfile
 from skeinforge_application.skeinforge_utilities import skeinforge_profile
+from fabmetheus_utilities.fabmetheus_tools.interpret_plugins import stl
 import os
 import time
 
@@ -36,6 +37,7 @@ __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
+interpret_plugins = []
 
 def getCarving(fileName):
 	"Get carving."
@@ -68,17 +70,21 @@ def getGNUTranslatorFilesUnmodified():
 def getImportPluginFileNames():
 	"Get interpret plugin fileNames."
 	return gcodec.getPluginFileNamesFromDirectoryPath( getPluginsDirectoryPath() )
+	
+def buildPluginLibrary():
+	global interpret_plugins
+	if len(interpret_plugins) <= 0:
+		interpret_plugins = []
+		interpret_plugins.append(stl.StlPlugin())
 
 def getInterpretPlugin(fileName):
 	"Get the interpret plugin for the file."
-	importPluginFileNames = getImportPluginFileNames()
-	for importPluginFileName in importPluginFileNames:
-		fileTypeDot = '.' + importPluginFileName
+	buildPluginLibrary()
+	for importPlugin in interpret_plugins:
+		fileTypeDot = '.' + importPlugin.getPluginName()
 		if fileName[ - len(fileTypeDot) : ].lower() == fileTypeDot:
-			importPluginsDirectoryPath = getPluginsDirectoryPath()
-			pluginModule = gcodec.getModuleWithDirectoryPath( importPluginsDirectoryPath, importPluginFileName )
-			if pluginModule != None:
-				return pluginModule
+			return importPlugin
+
 	print('Could not find plugin to handle ' + fileName )
 	return None
 

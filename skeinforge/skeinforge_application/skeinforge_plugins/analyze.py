@@ -30,14 +30,20 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def addToMenu( master, menu, repository, window ):
-	"Add a tool plugin menu."
-	settings.addPluginsParentToMenu( skeinforge_analyze.getPluginsDirectoryPath(), menu, __file__, skeinforge_analyze.getPluginFileNames() )
+def getNewPlugin():
+	return AnalyzePlugin()
 
-def getNewRepository():
-	"Get the repository constructor."
-	return skeinforge_analyze.AnalyzeRepository()
+class AnalyzePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'analyze'
 
+	def addToMenu( self, master, menu, repository, window ):
+		"Add a tool plugin menu."
+		settings.addPluginsParentToMenu( skeinforge_analyze.getPluginsDirectoryPath(), menu, __file__, skeinforge_analyze.getPluginFileNames() )
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return skeinforge_analyze.AnalyzeRepository()
 
 def main():
 	"Display the analyze dialog."

@@ -105,10 +105,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, oozebaneRepository = None ):
-	"Oozebane a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), oozebaneRepository )
-
 def getCraftedTextFromText( gcodeText, oozebaneRepository = None ):
 	"Oozebane a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'oozebane'):
@@ -119,16 +115,27 @@ def getCraftedTextFromText( gcodeText, oozebaneRepository = None ):
 		return gcodeText
 	return OozebaneSkein().getCraftedGcode( gcodeText, oozebaneRepository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return OozebaneRepository()
 
-def writeOutput( fileName = ''):
-	"Oozebane a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'oozebane')
+def getNewPlugin():
+	return OozebanePlugin()
 
+class OozebanePlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'oozebane'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return OozebaneRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Oozebane a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'oozebane')
+
+	def getCraftedText( self, fileName, text, oozebaneRepository = None ):
+		"Oozebane a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), oozebaneRepository )
 
 class OozebaneRepository:
 	"A class to handle the oozebane settings."
@@ -595,7 +602,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( OozebaneRepository() )
 
 if __name__ == "__main__":
 	main()

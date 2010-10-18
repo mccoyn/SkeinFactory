@@ -65,10 +65,6 @@ __date__ = "$Date: 2008/28/04 $"
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text = '', repository = None ):
-	"Outset the preface file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Outset the preface gcode text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'outset'):
@@ -79,16 +75,27 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 		return gcodeText
 	return OutsetSkein().getCraftedGcode( gcodeText, repository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return OutsetRepository()
 
-def writeOutput( fileName = ''):
-	"Outset the carving of a gcode file.  If no fileName is specified, outset the first unmodified gcode file in this folder."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'outset')
+def getNewPlugin():
+	return OutsetPlugin()
 
+class OutsetPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'outset'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return OutsetRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Outset the carving of a gcode file.  If no fileName is specified, outset the first unmodified gcode file in this folder."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'outset')
+
+	def getCraftedText( self, fileName, text = '', repository = None ):
+		"Outset the preface file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), repository )
 
 class OutsetRepository:
 	"A class to handle the outset settings."
@@ -182,7 +189,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( OutsetRepository() )
 
 if __name__ == "__main__":
 	main()

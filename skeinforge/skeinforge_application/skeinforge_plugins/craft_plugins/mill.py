@@ -98,10 +98,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Mill the file or gcodeText."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Mill a gcode linear move gcodeText."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'mill'):
@@ -111,10 +107,6 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 	if not repository.activateMill.value:
 		return gcodeText
 	return MillSkein().getCraftedGcode( gcodeText, repository )
-
-def getNewRepository():
-	"Get the repository constructor."
-	return MillRepository()
 
 def getPointsFromSegmentTable( segmentTable ):
 	"Get the points from the segment table."
@@ -130,13 +122,6 @@ def isPointOfTableInLoop( loop, pointTable ):
 		if point in pointTable:
 			return True
 	return False
-
-def writeOutput( fileName = ''):
-	"Mill a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'mill')
 
 
 class Average:
@@ -161,6 +146,28 @@ class Average:
 		self.numberOfValues = 0
 		self.total = 0.0
 
+
+def getNewPlugin():
+	return MillPlugin()
+
+class MillPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'mill'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return MillRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Mill a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'mill')
+
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Mill the file or gcodeText."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 class MillRepository:
 	"A class to handle the mill settings."
@@ -393,7 +400,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( MillRepository() )
 
 if __name__ == "__main__":
 	main()

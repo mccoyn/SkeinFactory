@@ -79,10 +79,6 @@ __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
-def getCraftedText( fileName, text, towerRepository = None ):
-	"Tower a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), towerRepository )
-
 def getCraftedTextFromText( gcodeText, towerRepository = None ):
 	"Tower a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'tower'):
@@ -92,16 +88,6 @@ def getCraftedTextFromText( gcodeText, towerRepository = None ):
 	if not towerRepository.activateTower.value:
 		return gcodeText
 	return TowerSkein().getCraftedGcode( gcodeText, towerRepository )
-
-def getNewRepository():
-	"Get the repository constructor."
-	return TowerRepository()
-
-def writeOutput( fileName = ''):
-	"Tower a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'tower')
 
 
 class Island:
@@ -136,6 +122,27 @@ class ThreadLayer:
 		"Get the string representation of this thread layer."
 		return '%s' % self.islands
 
+
+def getNewPlugin():
+	return TowerPlugin()
+
+class TowerPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'tower'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return TowerRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Tower a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'tower')
+
+	def getCraftedText( self, fileName, text, towerRepository = None ):
+		"Tower a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), towerRepository )
 
 class TowerRepository:
 	"A class to handle the tower settings."
@@ -396,7 +403,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( TowerRepository() )
 
 if __name__ == "__main__":
 	main()

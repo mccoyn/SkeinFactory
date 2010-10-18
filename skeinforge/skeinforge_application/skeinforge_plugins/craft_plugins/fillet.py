@@ -99,10 +99,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, text, filletRepository = None ):
-	"Fillet a gcode linear move file or text."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), filletRepository )
-
 def getCraftedTextFromText( gcodeText, filletRepository = None ):
 	"Fillet a gcode linear move text."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'fillet'):
@@ -120,16 +116,6 @@ def getCraftedTextFromText( gcodeText, filletRepository = None ):
 	elif filletRepository.bevel.value:
 		return BevelSkein().getCraftedGcode( filletRepository, gcodeText )
 	return gcodeText
-
-def getNewRepository():
-	"Get the repository constructor."
-	return FilletRepository()
-
-def writeOutput( fileName = ''):
-	"Fillet a gcode linear move file. Depending on the settings, either arcPoint, arcRadius, arcSegment, bevel or do nothing."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName != '':
-		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'fillet')
 
 
 class BevelSkein:
@@ -376,6 +362,27 @@ class ArcRadiusSkein( ArcPointSkein ):
 		return ' R' + ( self.distanceFeedRate.getRounded(radius) )
 
 
+def getNewPlugin():
+	return FilletPlugin()
+
+class FilletPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'fillet'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return FilletRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Fillet a gcode linear move file. Depending on the settings, either arcPoint, arcRadius, arcSegment, bevel or do nothing."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName != '':
+			skeinforge_craft.writeChainTextWithNounMessage( fileName, 'fillet')
+
+	def getCraftedText( self, fileName, text, filletRepository = None ):
+		"Fillet a gcode linear move file or text."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty( fileName, text ), filletRepository )
+
 class FilletRepository:
 	"A class to handle the fillet settings."
 	def __init__(self):
@@ -408,7 +415,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( FilletRepository() )
 
 if __name__ == "__main__":
 	main()

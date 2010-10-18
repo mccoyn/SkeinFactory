@@ -70,10 +70,6 @@ __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GPL 3.0'
 
 
-def getCraftedText( fileName, gcodeText = '', repository = None ):
-	"Coil the file or gcodeText."
-	return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
-
 def getCraftedTextFromText( gcodeText, repository = None ):
 	"Coil a gcode linear move gcodeText."
 	if gcodec.isProcedureDoneOrFileIsEmpty( gcodeText, 'coil'):
@@ -84,17 +80,28 @@ def getCraftedTextFromText( gcodeText, repository = None ):
 		return gcodeText
 	return CoilSkein().getCraftedGcode( gcodeText, repository )
 
-def getNewRepository():
-	"Get the repository constructor."
-	return CoilRepository()
 
-def writeOutput( fileName = ''):
-	"Coil a gcode linear move file."
-	fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
-	if fileName == '':
-		return
-	skeinforge_craft.writeChainTextWithNounMessage( fileName, 'coil')
+def getNewPlugin():
+	return CoilPlugin()
 
+class CoilPlugin (settings.Plugin):
+	def getPluginName(self):
+		return 'coil'
+
+	def getNewRepository(self):
+		"Get the repository constructor."
+		return CoilRepository()
+		
+	def writeOutput( self, fileName = ''):
+		"Coil a gcode linear move file."
+		fileName = fabmetheus_interpret.getFirstTranslatorFileNameUnmodified(fileName)
+		if fileName == '':
+			return
+		skeinforge_craft.writeChainTextWithNounMessage( fileName, 'coil')
+
+	def getCraftedText( self, fileName, gcodeText = '', repository = None ):
+		"Coil the file or gcodeText."
+		return getCraftedTextFromText( gcodec.getTextIfEmpty(fileName, gcodeText), repository )
 
 class CoilRepository:
 	"A class to handle the coil settings."
@@ -268,7 +275,7 @@ def main():
 	if len( sys.argv ) > 1:
 		writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CoilRepository() )
 
 if __name__ == "__main__":
 	main()
