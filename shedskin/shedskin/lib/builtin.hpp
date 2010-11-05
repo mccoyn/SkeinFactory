@@ -315,7 +315,7 @@ public:
 class str : public pyseq<str *> {
 public:
     __GC_STRING unit;
-    int hash;
+    long hash;
 
     str();
     str(const char *s);
@@ -628,12 +628,20 @@ public:
     void resize(int minused);
 };
 
+struct print_options {
+    int endoffile;
+    char lastchar;
+    int space;
+    print_options() {
+        lastchar = '\n';
+        space = 0;
+    }
+};
+
 class file : public pyiter<str *> {
 public:
     FILE *f;
-    int endoffile;
-    char print_lastchar;
-    int print_space;
+    print_options print_opt;
 
     str *name;
     str *mode;
@@ -895,7 +903,6 @@ file *open(str *name, str *flags = 0);
 str *raw_input(str *msg = 0);
 
 void print(int n, file *f, str *end, str *sep, ...);
-void print2(int comma, int n,  ...);
 void print2(file *f, int comma, int n, ...);
 
 __ss_bool isinstance(pyobj *, class_ *);
@@ -1144,6 +1151,8 @@ extern __ss_bool True;
 extern __ss_bool False;
 
 extern list<str *> *__join_cache;
+
+extern file *__ss_stdin, *__ss_stdout, *__ss_stderr;
 
 /* set */
 
@@ -1428,6 +1437,14 @@ static void __throw_stop_iteration() {
     throw new StopIteration();
 }
 
+#define FAST_FOR(i, l, u, s, t1, t2) \
+    if(s==0) \
+        __throw_range_step_zero(); \
+    for(__ ## t1 = l, __ ## t2 = u; ; __ ## t1 += s) { \
+        if (s >= 0) { if (__ ## t1 >= __ ## t2) break; } \
+        else { if (__ ## t1 <= __ ## t2) break; } \
+        i=__ ## t1; \
+
 #define FOR_IN_NEW(e, iter, temp, i, t) \
     __ ## temp = iter; \
     __ ## i = -1; \
@@ -1437,18 +1454,6 @@ static void __throw_stop_iteration() {
         __ ## i ++; \
         e = __ ## temp->for_in_next(__ ## t);
 
-#define FAST_FOR(i, l, u, s, t1, t2) \
-    if(s==0) \
-        __throw_range_step_zero(); \
-    for(__ ## t1 = l, __ ## t2 = u; __ ## t1 < __ ## t2; __ ## t1 += s) { \
-        i=__ ## t1; \
-
-#define FAST_FOR_NEG(i, l, u, s, t1, t2) \
-    if(s==0) \
-        __throw_range_step_zero(); \
-    for(__ ## t1 = l, __ ## t2 = u; __ ## t1 > __ ## t2; __ ## t1 += s) { \
-        i=__ ## t1; \
-
 #define FOR_IN_ZIP(a,b, k,l, t,u, n,m) \
     __ ## m = __SS_MIN(k->units.size(), l->units.size()); \
     __ ## t = k; \
@@ -1456,6 +1461,11 @@ static void __throw_stop_iteration() {
     for(__ ## n = 0; __ ## n < __ ## m; __ ## n ++) { \
         a = (__ ## t)->units[__ ## n]; \
         b = (__ ## u)->units[__ ## n];
+
+#define FOR_IN_ENUM(i, m, temp, n) \
+    __ ## temp = m; \
+    for(__ ## n = 0; (unsigned int)__ ## n < (__ ## temp)->units.size(); __ ## n ++) { \
+        i = (__ ## temp)->units[__ ## n]; \
 
 #define FOR_IN_T2(i, m, obj, n) \
     __ ## obj = m; \
@@ -2264,8 +2274,8 @@ using insert() in resize() is dangerous (SF bug #1456209).
 */
 template <class K, class V> void dict<K,V>::insert_clean(K key, V value, long hash)
 {
-	register size_t i;
-	register size_t perturb;
+	int i;
+	unsigned int perturb;
 	register dictentry<K,V> *entry;
 
 	i = hash & mask;
@@ -3259,8 +3269,8 @@ using insert() in resize() is dangerous (SF bug #1456209).
 */
 template <class T> void set<T>::insert_clean(T key, long hash)
 {
-	register size_t i;
-	register size_t perturb;
+	int i;
+	unsigned int perturb;
 	register setentry<T> *entry;
 
 	i = hash & mask;
@@ -4710,6 +4720,9 @@ template<class T> T ___box(T t) { return t; } /* XXX */
 int_ *___box(__ss_int);
 #endif
 int_ *___box(int);
+int_ *___box(unsigned int); /* XXX */
+int_ *___box(unsigned long);
+int_ *___box(unsigned long long);
 bool_ *___box(__ss_bool);
 float_ *___box(double);
 
@@ -4779,6 +4792,10 @@ template<class T> complex::complex(T t) {
     real = __float(t);
     imag = 0;
 }
+
+#ifdef __SS_BIND
+PyObject *__ss__newobj__(PyObject *, PyObject *args, PyObject *kwargs);
+#endif
 
 } // namespace __shedskin__
 #endif

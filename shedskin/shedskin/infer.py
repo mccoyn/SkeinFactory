@@ -29,6 +29,8 @@ iterative_dataflow_analysis():
     -otherwise, restore the constraint graph to its original state and restart
     -all the while maintaining types for each allocation point in getgx().alloc_info
 
+update: we now analyze programs incrementally, adding several functions and redoing the full analysis each time. this seems to greatly help the CPA from exploding early on. 
+
 '''
 
 import gc, random
@@ -37,7 +39,8 @@ random.seed(42)
 from shared import *
 import graph, cpp
 
-DEBUG = True
+DEBUG = False
+INCREMENTAL = True
 
 def class_copy(cl, dcpa):
     for var in cl.vars.values(): # XXX
@@ -61,7 +64,7 @@ def class_copy(cl, dcpa):
 
 # --- use dcpa=0,cpa=0 mold created by module visitor to duplicate function
 def func_copy(func, dcpa, cpa, worklist=None, cart=None):
-    #print 'funccopy', self, cart, dcpa, cpa
+    #print 'funccopy', func, cart, dcpa, cpa
 
     # --- copy local end points of each constraint
     for (a,b) in func.constraints:
@@ -145,6 +148,9 @@ def propagate():
         worklistLen = len(worklist)
         a = worklist.pop(0)
         a.in_list = 0
+        
+        #if repr(a.thing) == "(function (class list, 'sort'), 'elem')":
+        #	continue;
 
         if not a.mv.module.builtin and a.changed: # XXX general mechanism for seeding/changes -> cpa
             for callfunc in a.callfuncs:
@@ -184,10 +190,10 @@ def possible_functions(node):
     expr = node.thing
 
     # --- determine possible target functions
-    objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(expr)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(expr, node)
     funcs = []
 
-    if is_anon_func(expr, node):
+    if anon_func:
         # anonymous call
         types = getgx().cnode[expr.node, node.dcpa, node.cpa].types()
         types = [t for t in types if isinstance(t[0], function)] # XXX XXX analyse per t, sometimes class, sometimes function..
@@ -217,7 +223,7 @@ def possible_functions(node):
 
 def possible_argtypes(node, funcs, worklist):
     expr = node.thing
-    objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(expr)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(expr)
     if funcs:
         func = funcs[0][0] # XXX
 
@@ -246,8 +252,7 @@ def possible_argtypes(node, funcs, worklist):
         if (arg, node.dcpa, node.cpa) in getgx().cnode:
             argtypes.append(getgx().cnode[arg,node.dcpa,node.cpa].types())
         else:
-            if inode(arg) is not None:
-                argtypes.append(inode(arg).types()) # XXX def arg?
+            argtypes.append(inode(arg).types()) # XXX def arg?
 
     # store arg count for wrappers to builtin refs
     if funcs and (func.lambdawrapper or node.thing in getgx().lambdawrapper):
@@ -330,11 +335,17 @@ def redirect(c, dcpa, func, callfunc, ident, callnode):
 # --- cartesian product algorithm; adds interprocedural constraints
 def cpa(callnode, worklist):
     cp = cartesian_product(callnode, worklist)
-    objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(callnode.thing)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(callnode.thing)
 
     # --- iterate over argument type combinations
     for c in cp:
         (func, dcpa, objtype), c = c[0], c[1:]
+        if INCREMENTAL and not func.mv.module.builtin and func not in getgx().added_funcs_set and not func.ident in ['__getattr__', '__setattr__']:
+            if getgx().added_funcs == 5:
+                continue
+            getgx().added_funcs += 1
+            getgx().added_funcs_set.add(func)
+            if DEBUG: print 'adding', func
 
         if objtype: objtype = (objtype,)
         else: objtype = ()
@@ -389,7 +400,6 @@ def connect_getsetattr(func, callnode, callfunc, dcpa, worklist):
 
 def create_template(func, dcpa, c, worklist):
     # --- unseen cartesian product: create new template
-
     if not dcpa in func.cp: func.cp[dcpa] = {}
     func.cp[dcpa][c] = cpa = len(func.cp[dcpa]) # XXX +1
 
@@ -400,7 +410,7 @@ def create_template(func, dcpa, c, worklist):
     func_copy(func, dcpa, cpa, worklist, c)
 
 def actuals_formals(expr, func, node, dcpa, cpa, types, worklist):
-    objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(expr)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(expr)
 
     if expr.star_args: # XXX only in lib/
         formals = func.formals
@@ -618,34 +628,60 @@ def ifa_split_class(cl, dcpa, things, split):
     cl.splits[cl.newdcpa] = dcpa
     cl.newdcpa += 1
 
+def update_progressbar(perc):
+    print '\r%s%d%%' % (int(perc*32)*'*', 100*perc),
+    sys.stdout.flush()
+
 # --- cartesian product algorithm (cpa) & iterative flow analysis (ifa)
 def iterative_dataflow_analysis():
     print '[iterative type analysis..]'
     backup = backup_network()
 
+    getgx().orig_types = {}
+    for n, t in getgx().types.iteritems():
+        getgx().orig_types[n] = t
+
     while True:
         getgx().iterations += 1
+        getgx().total_iterations += 1
         if getgx().iterations > 30:
             print '\n*WARNING* reached maximum number of iterations'
             break
 
         # --- propagate using cartesian product algorithm
         getgx().new_alloc_info = {}
-        #print 'table'
-        #print '\n'.join([repr(e)+': '+repr(l) for e,l in getgx().alloc_info.items()])
+#        print 'table'
+#        print '\n'.join([repr(e)+': '+repr(l) for e,l in getgx().alloc_info.items()])
         #print 'propagate'
         propagate()
         getgx().alloc_info = getgx().new_alloc_info
 
         # --- ifa: detect conflicting assignments to instance variables, and split contours to resolve these
         if DEBUG: print '\n*** iteration ***'
-        else: sys.stdout.write('*'); sys.stdout.flush()
+        else:
+            if INCREMENTAL:
+                allfuncs = len([f for f in getgx().allfuncs if not f.mv.module.builtin and not f.ident in ['__iadd__', '__imul__', '__str__']])
+                perc = 1.0 
+                if allfuncs:
+                    perc = min(len(getgx().added_funcs_set) / float(allfuncs), 1.0)
+                update_progressbar(perc)
+            else:
+                sys.stdout.write('*')
+                sys.stdout.flush()
+ 
         split = ifa()
         if DEBUG and split: print 'IFA splits', [(s[0], s[1], s[3]) for s in split]
 
         if not split: # nothing has changed
-            print '\niterations:', getgx().iterations, 'templates:', getgx().templates
-            return
+            if INCREMENTAL and getgx().added_funcs:
+                getgx().added_funcs = 0
+                getgx().iterations = 0
+            else:
+                if INCREMENTAL: 
+                    update_progressbar(1.0)
+                if DEBUG: print '\niterations:', getgx().total_iterations, 'templates:', getgx().templates
+                else: print
+                return
 
         # --- update alloc info table for split contours
         for cl, dcpa, nodes, newnr in split:
@@ -665,9 +701,10 @@ def iterative_dataflow_analysis():
 
         # --- clean out constructor node types in functions, possibly to be seeded again
         for node in beforetypes:
-            if isinstance(parent_func(node.thing), function):
+            func = parent_func(node.thing)
+            if isinstance(func, function):
                 if node.constructor and isinstance(node.thing, (List,Dict,Tuple,ListComp,CallFunc)):
-                    beforetypes[node] = set()
+                     beforetypes[node] = set()
 
         # --- create new class types, and seed global nodes
         for cl, dcpa, nodes, newnr in split:
@@ -700,7 +737,8 @@ def ifa_seed_template(func, cart, dcpa, cpa, worklist):
                 alloc_node = getgx().cnode[node.thing, dcpa, cpa]
 
                 if alloc_id in getgx().alloc_info:
-                    pass # print 'specified', func.ident, cart, alloc_node, alloc_node.callfuncs, getgx().alloc_info[alloc_id]
+                    pass
+#                    print 'specified' # print 'specified', func.ident, cart, alloc_node, alloc_node.callfuncs, getgx().alloc_info[alloc_id]
                 # --- contour is newly split: copy allocation type for 'mother' contour; modify alloc_info
                 else:
                     mother_alloc_id = alloc_id
@@ -718,9 +756,9 @@ def ifa_seed_template(func, cart, dcpa, cpa, worklist):
                     if mother_alloc_id in getgx().alloc_info:
                         getgx().alloc_info[alloc_id] = getgx().alloc_info[mother_alloc_id]
                         #print 'mothered', alloc_node, getgx().alloc_info[mother_alloc_id]
-                    elif getgx().types[node]: # empty constructors that do not flow to assignments have no type
+                    elif getgx().orig_types[node]: # empty constructors that do not flow to assignments have no type
                         #print 'no mother', func.ident, cart, mother_alloc_id, alloc_node, getgx().types[node]
-                        getgx().alloc_info[alloc_id] = list(getgx().types[node])[0]
+                        getgx().alloc_info[alloc_id] = list(getgx().orig_types[node])[0]
                     else:
                         #print 'oh boy'
                         for (id, c, thing) in getgx().alloc_info: # XXX vhy?
@@ -871,6 +909,8 @@ def analyze(source, testing=False):
     # --- cartesian product algorithm & iterative flow analysis
     iterative_dataflow_analysis()
 
+    print '[generating c++ code..]' # XXX 
+
     for cl in getgx().allclasses:
         for name in cl.vars:
             if name in cl.parent.vars and not name.startswith('__'):
@@ -890,19 +930,14 @@ def analyze(source, testing=False):
     cpp.upgrade_variables()
     getgx().merged_all = merged(getgx().types)
     getgx().merged_inh = merged(getgx().types, inheritance=True)
-
     cpp.analyze_virtuals()
-
-    # --- check some sources of confusion # XXX can we remove this
-    confusion_misc()
-
     getgx().merge_dcpa = merged(getgx().types, dcpa=True)
     getgx().merged_all = merged(getgx().types) #, inheritance=True) # XXX
 
     # --- determine which classes need an __init__ method
     for node, types in getgx().merged_all.items():
         if isinstance(node, CallFunc):
-            objexpr, ident, _ , method_call, _, _ = analyze_callfunc(node)
+            objexpr, ident, _ , method_call, _, _, _ = analyze_callfunc(node)
             if method_call and ident == '__init__':
                 for t in getgx().merged_all[objexpr]:
                     t[0].has_init = True
@@ -932,7 +967,7 @@ def analyze(source, testing=False):
 
     getgx().merged_inh = merged(getgx().types, inheritance=True) # XXX why X times
 
-    # error for dynamic expression (XXX before codegen)
+    # error for dynamic expression
     for node in getgx().merged_all:
         if isinstance(node, Node) and not isinstance(node, AssAttr) and not inode(node).mv.module.builtin:
             cpp.typesetreprnew(node, inode(node).parent)

@@ -24,6 +24,8 @@ list<pyobj *> *__print_cache;
 
 char __str_cache[4000];
 
+file *__ss_stdin, *__ss_stdout, *__ss_stderr;
+
 #ifdef __SS_BIND
 dict<void *, void *> *__ss_proxy;
 #endif
@@ -69,11 +71,18 @@ void __init() {
     __print_cache = new list<pyobj *>();
     __mod5_cache = new list<str *>();
 
-   for(int i=0; i<1000; i++) {
-       __str_cache[4*i] = '0' + (i % 10);
-       __str_cache[4*i+1] = '0' + ((i/10) % 10);
-       __str_cache[4*i+2] = '0' + ((i/100) % 10);
-   }
+    for(int i=0; i<1000; i++) {
+        __str_cache[4*i] = '0' + (i % 10);
+        __str_cache[4*i+1] = '0' + ((i/10) % 10);
+        __str_cache[4*i+2] = '0' + ((i/100) % 10);
+    }
+
+    __ss_stdin = new file(stdin);
+    __ss_stdin->name = new str("<stdin>");
+    __ss_stdout = new file(stdout);
+    __ss_stdout->name = new str("<stdout>");
+    __ss_stderr = new file(stderr);
+    __ss_stderr->name = new str("<stderr>");
 }
 
 /* int_ methods */
@@ -255,19 +264,19 @@ str *complex::__repr__() {
 
 /* str methods */
 
-str::str() : hash(0) {
+str::str() : hash(-1) {
     __class__ = cl_str_;
 }
 
-str::str(const char *s) : unit(s), hash(0) {
+str::str(const char *s) : unit(s), hash(-1) {
     __class__ = cl_str_;
 }
 
-str::str(__GC_STRING s) : unit(s), hash(0) {
+str::str(__GC_STRING s) : unit(s), hash(-1) {
     __class__ = cl_str_;
 }
 
-str::str(const char *s, int size) : unit(s, size), hash(0) { /* '\0' delimiter in C */
+str::str(const char *s, int size) : unit(s, size), hash(-1) { /* '\0' delimiter in C */
     __class__ = cl_str_;
 }
 
@@ -748,66 +757,85 @@ str *str::__imul__(__ss_int n) {
     return __mul__(n);
 }
 
-/* ======================================================================== */
-
-/* (C) Paul Hsieh. http://www.azillionmonkeys.com/qed/{hash,weblicense}.html */
-
-#define get16bits(d) (*((const unsigned short int *) (d)))
-
-static inline unsigned int SuperFastHash (const char * data, int len) {
-    unsigned int hash = 0, tmp;
-    int rem;
-
-    if (len <= 0 || data == NULL) return 0;
-
-    rem = len & 3;
-    len >>= 2;
-
-    /* Main loop */
-    for (;len > 0; len--) {
-        hash  += get16bits (data);
-        tmp    = (get16bits (data+2) << 11) ^ hash;
-        hash   = (hash << 16) ^ tmp;
-        data  += 2*sizeof (unsigned short int);
-        hash  += hash >> 11;
-    }
-
-    /* Handle end cases */
-    switch (rem) {
-        case 3: hash += get16bits (data);
-                hash ^= hash << 16;
-                hash ^= data[sizeof (unsigned short int)] << 18;
-                hash += hash >> 11;
-                break;
-        case 2: hash += get16bits (data);
-                hash ^= hash << 11;
-                hash += hash >> 17;
-                break;
-        case 1: hash += *data;
-                hash ^= hash << 10;
-                hash += hash >> 1;
-    }
-
-    /* Force "avalanching" of final 127 bits */
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-
-    return hash;
-}
-
-/* ======================================================================== */
-
 int str::__hash__() {
-    if(hash)
+    if(hash != -1)
         return hash;
-    hash = SuperFastHash(unit.c_str(), unit.size());
-    return hash;
+    long x;
+    const unsigned char *data = (unsigned char *)unit.data();
+    int len = __len__();
+#ifdef __SS_FASTHASH
+//-----------------------------------------------------------------------------
+// MurmurHash2, by Austin Appleby
+// http://sites.google.com/site/murmurhash/
 
-    //return __gnu_cxx::hash<char *>()(unit.c_str());
+// All code is released to the public domain. 
+// For business purposes, Murmurhash is under the MIT license. 
+
+// Note - This code makes a few assumptions about how your machine behaves -
+
+// 1. We can read a 4-byte value from any address without crashing
+// 2. sizeof(int) == 4
+
+// And it has a few limitations -
+
+// 1. It will not work incrementally.
+// 2. It will not produce the same results on little-endian and big-endian
+//    machines.
+
+// 'm' and 'r' are mixing constants generated offline.
+// They're not really 'magic', they just happen to work well.
+    unsigned int seed = 12345678; /* XXX */
+	const unsigned int m = 0x5bd1e995;
+	const int r = 24;
+
+	// Initialize the hash to a 'random' value
+
+	x = seed ^ len;
+
+	// Mix 4 bytes at a time into the hash
+
+	while(len >= 4)
+	{
+		unsigned int k = *(unsigned int *)data;
+
+		k *= m; 
+		k ^= k >> r; 
+		k *= m; 
+		
+		x *= m; 
+		x ^= k;
+
+		data += 4;
+		len -= 4;
+	}
+	
+	// Handle the last few bytes of the input array
+
+	switch(len)
+	{
+        case 3: x ^= data[2] << 16;
+        case 2: x ^= data[1] << 8;
+        case 1: x ^= data[0];
+                x *= m;
+	};
+
+	// Do a few final mixes of the hash to ensure the last few
+	// bytes are well-incorporated.
+
+	x ^= x >> 13;
+	x *= m;
+	x ^= x >> 15;
+#else
+    /* modified from CPython */
+    x = *data << 7;
+    while (--len >= 0)
+        x = (1000003*x) ^ *data++;
+    x ^= __len__();
+    if (x == -1)
+        x = -2;
+#endif
+    hash = x;
+    return x; 
 }
 
 str *str::__add__(str *b) {
@@ -1097,15 +1125,15 @@ __ss_bool class_::__eq__(pyobj *c) {
 /* file methods */
 
 file::file() {
-    endoffile = print_space = 0;
-    print_lastchar = '\n';
+    print_opt.endoffile = print_opt.space = 0;
+    print_opt.lastchar = '\n';
     universal_mode = false;
 }
 
 file::file(FILE *g) {
     f = g;
-    endoffile = print_space = 0;
-    print_lastchar = '\n';
+    print_opt.endoffile = print_opt.space = 0;
+    print_opt.lastchar = '\n';
     universal_mode = false;
 }
 
@@ -1127,8 +1155,8 @@ file::file(str *name, str *flags) {
     this->mode = flags;
     if (!f)
         throw new IOError(__modct(new str("No such file or directory: '%s'"), 1, name));
-    endoffile = print_space = 0;
-    print_lastchar = '\n';
+    print_opt.endoffile = print_opt.space = 0;
+    print_opt.lastchar = '\n';
 }
 
 file *open(str *name, str *flags) {
@@ -1184,7 +1212,7 @@ void file::__check_closed() {
 void *file::seek(__ss_int i, __ss_int w) {
     __check_closed();
     fseek(f, i, w);
-    endoffile = 0; /* XXX add check */
+    print_opt.endoffile = 0; /* XXX add check */
     return NULL;
 }
 
@@ -1208,7 +1236,7 @@ str *file::readline(int n) {
     while((n==-1) || (i < n)) {
         int c = getchar();
         if(c == EOF) {
-            endoffile = 1;
+            print_opt.endoffile = 1;
             break;
         }
         r->unit += c;
@@ -1228,7 +1256,7 @@ str *file::read(int n) {
     while((n==-1) || (i < n)) {
         int c = getchar();
         if(c == EOF) {
-            endoffile = 1;
+            print_opt.endoffile = 1;
             break;
         }
         r->unit += c;
@@ -1241,9 +1269,9 @@ str *file::read(int n) {
 list<str *> *file::readlines() {
     __check_closed();
     list<str *> *lines = new list<str *>();
-    while(!endoffile) {
+    while(!print_opt.endoffile) {
         str *line = readline();
-        if(endoffile && !len(line))
+        if(print_opt.endoffile && !len(line))
             break;
         lines->append(line);
     }
@@ -1867,7 +1895,7 @@ str *__mod4(str *fmts, list<pyobj *> *vals) {
     while((j = __fmtpos(fmt)) != -1) {
         pyobj *p, *a1, *a2;
 
-        int asterisks = count(fmt->unit.begin(), fmt->unit.begin()+j, '*');
+        int asterisks = std::count(fmt->unit.begin(), fmt->unit.begin()+j, '*');
         a1 = a2 = NULL;
         if(asterisks==1) {
             a1 = modgetitem(vals, i++);
@@ -2026,6 +2054,15 @@ int_ *___box(__ss_int i) {
 int_ *___box(int i) {
     return new int_(i);
 }
+int_ *___box(unsigned int i) {
+    return new int_(i);
+}
+int_ *___box(unsigned long i) {
+    return new int_(i);
+}
+int_ *___box(unsigned long long i) {
+    return new int_(i);
+}
 bool_ *___box(__ss_bool b) {
     return new bool_(b);
 }
@@ -2034,9 +2071,6 @@ float_ *___box(double d) {
 }
 
 /* print .., */
-
-char print_lastchar = '\n';
-int print_space = 0;
 
 void __ss_exit(int code) {
     throw new SystemExit(code);
@@ -2048,11 +2082,11 @@ void __start(void (*initfunc)()) {
         initfunc();
     } catch (SystemExit *s) {
         if(s->message)
-            print2(0, 1, s->message);
+            print2(NULL, 0, 1, s->message);
         code = s->code;
     }
-    if(print_lastchar != '\n')
-        std::cout << '\n';
+    if(__ss_stdout->print_opt.lastchar != '\n')
+        __ss_stdout->write(nl);
     std::exit(code);
 }
 
@@ -2074,50 +2108,30 @@ void print(int n, file *f, str *end, str *sep, ...) {
         printf("%s%s", s->unit.c_str(), end->unit.c_str());
 }
 
-void print2(int comma, int n, ...) {
-     __print_cache->units.resize(0);
-     va_list args;
-     va_start(args, n);
-     for(int i=0; i<n; i++)
-         __print_cache->append(va_arg(args, pyobj *));
-     va_end(args);
-     str *s = __mod5(__print_cache, sp);
-     if(len(s)) {
-         if(print_space && (!isspace(print_lastchar) || print_lastchar==' ') && s->unit[0] != '\n')
-             printf(" ");
-         printf("%s", s->unit.c_str());
-         print_lastchar = s->unit[len(s)-1];
-     }
-     else if (comma)
-         print_lastchar = ' ';
-     if(!comma) {
-         printf("\n");
-         print_lastchar = '\n';
-     }
-     print_space = comma;
-}
-
 void print2(file *f, int comma, int n, ...) {
-     __print_cache->units.resize(0);
-     va_list args;
-     va_start(args, n);
-     for(int i=0; i<n; i++)
-         __print_cache->append(va_arg(args, pyobj *));
-     va_end(args);
-     str *s = __mod5(__print_cache, sp);
-     if(len(s)) {
-         if(f->print_space && (!isspace(f->print_lastchar) || f->print_lastchar==' ') && s->unit[0] != '\n')
-             f->putchar(' ');
-         f->write(s);
-         f->print_lastchar = s->unit[len(s)-1];
-     }
-     else if (comma)
-         f->print_lastchar = ' ';
-     if(!comma) {
-         f->write(nl);
-         f->print_lastchar = '\n';
-     }
-     f->print_space = comma;
+    __print_cache->units.resize(0);
+    va_list args;
+    va_start(args, n);
+    for(int i=0; i<n; i++)
+        __print_cache->append(va_arg(args, pyobj *));
+    va_end(args);
+    if (!f)
+        f = __ss_stdout;
+    print_options *p_opt = &f->print_opt;
+    str *s = __mod5(__print_cache, sp);
+    if(len(s)) {
+        if(p_opt->space && (!isspace(p_opt->lastchar) || p_opt->lastchar==' ') && s->unit[0] != '\n') 
+            f->write(sp); /* space */
+        f->write(s);
+        p_opt->lastchar = s->unit[len(s)-1];
+    }
+    else if (comma)
+        p_opt->lastchar = ' ';
+    if(!comma) {
+        f->write(nl); /* newline */
+        p_opt->lastchar = '\n';
+    }
+    p_opt->space = comma;
 }
 
 /* str, file iteration */
@@ -2143,10 +2157,10 @@ __iter<str *> *file::__iter__() {
 }
 
 str *file::next() {
-    if(endoffile)
+    if(print_opt.endoffile)
         throw new StopIteration();
     str *line = readline();
-    if(endoffile && !len(line))
+    if(print_opt.endoffile && !len(line))
         throw new StopIteration();
     return line;
 }
@@ -2272,5 +2286,13 @@ __ss_bool pyobj::__nonzero__() { return __mbool(__len__() != 0); }
 /* object */
 
 object::object() { this->__class__ = cl_object; }
+
+#ifdef __SS_BIND
+PyObject *__ss__newobj__(PyObject *, PyObject *args, PyObject *kwargs) {
+    PyObject *cls = PyTuple_GetItem(args, 0);
+    PyObject *__new__ = PyObject_GetAttrString(cls, "__new__");
+    return PyObject_Call(__new__, args, kwargs);
+}
+#endif
 
 } // namespace __shedskin__

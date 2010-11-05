@@ -266,11 +266,14 @@ class generateVisitor(ASTVisitor):
                     self.visitFunction(func.node, declare=True)
         print >>self.out
 
+        if getgx().extension_module:
+            extmod.pyinit_func(self)
+
         for n in self.module.mod_path:
             print >>self.out, '} // module namespace'
 
-        if getgx().extension_module and self.module == getgx().main_module:
-            extmod.convert_methods2(self, self.module.classes.values())
+        if getgx().extension_module:
+            extmod.convert_methods2(self)
 
         print >>self.out, '#endif'
 
@@ -390,11 +393,10 @@ class generateVisitor(ASTVisitor):
         print >>self.out
 
         # --- c++ main/extension module setup
+        if getgx().extension_module:
+            extmod.do_extmod(self)
         if self.module == getgx().main_module:
-            if getgx().extension_module:
-                extmod.do_extmod(self)
-            else:
-                self.do_main()
+            self.do_main()
 
     def visitModule(self, node, declare=False):
         if declare:
@@ -424,7 +426,7 @@ class generateVisitor(ASTVisitor):
                     else:
                         print >>self.out, '    __sys__::__init(argc, argv);'
                 else:
-                    print >>self.out, '    __'+'__::__'.join([n for n in mod.mod_path])+'__::__init();' # XXX sep func
+                    print >>self.out, '    '+mod.full_path()+'::__init();'
 
     def do_comment(self, s):
         if not s: return
@@ -484,7 +486,8 @@ class generateVisitor(ASTVisitor):
             self.deindent()
             self.output('}')
 
-    def class_hpp(self, node, declare=True): # XXX remove declare
+    def class_hpp(self, node):
+        declare = True
         cl = getmv().classes[node.name]
         self.output('extern class_ *cl_'+cl.cpp_name+';')
 
@@ -544,7 +547,8 @@ class generateVisitor(ASTVisitor):
         self.deindent()
         self.output('};\n')
 
-    def class_cpp(self, node, declare=False): # XXX declare
+    def class_cpp(self, node):
+        declare = False
         cl = getmv().classes[node.name]
 
         if cl.virtuals:
@@ -680,7 +684,7 @@ class generateVisitor(ASTVisitor):
                 merge = set()
                 for types in z: merge.update(types)
                 merged.append(merge)
-                
+
             if (ident in list(subclasses)[0].funcs):
                 formals = list(subclasses)[0].funcs[ident].formals[1:]
             else:
@@ -880,10 +884,20 @@ class generateVisitor(ASTVisitor):
             self.deindent()
             self.output('}')
 
-    def fastfor(self, node, assname, neg, func=None):
+    def do_fastfor(self, node, qual, quals, iter, func, genexpr):
+        if len(qual.list.args) == 3 and not const_literal(qual.list.args[2]): 
+            for arg in qual.list.args: # XXX simplify
+                if arg in getmv().tempcount:
+                    self.start()
+                    self.visitm(getmv().tempcount[arg], ' = ', arg, func)
+                    self.eol()
+        self.fastfor(qual, iter, func)
+        self.forbody(node, quals, iter, func, False, genexpr)
+
+    def fastfor(self, node, assname, func=None):
         # --- for i in range(..) -> for( i=l, u=expr; i < u; i++ ) ..
         ivar, evar = getmv().tempcount[node.assign], getmv().tempcount[node.list]
-        self.start('FAST_FOR%s('%neg+assname+',')
+        self.start('FAST_FOR(%s,' % assname)
 
         if len(node.list.args) == 1:
             self.append('0,')
@@ -935,11 +949,9 @@ class generateVisitor(ASTVisitor):
         else:
             assname = getmv().tempcount[node.assign]
         assname = self.cpp_name(assname)
-
         print >>self.out
         if node.else_:
             self.output('%s = 0;' % getmv().tempcount[node.else_])
-
         if fastfor(node):
             self.do_fastfor(node, node, None, assname, func, False)
         elif self.fastenum(node):
@@ -979,7 +991,7 @@ class generateVisitor(ASTVisitor):
         self.append(',')
 
     def do_fastenum(self, node, func, genexpr):
-        self.start('FOR_IN_SEQ(')
+        self.start('FOR_IN_ENUM(')
         left, right = node.assign.nodes
         self.do_fastzip2_one(right, func)
         self.visit(node.list.args[0], func)
@@ -1051,7 +1063,7 @@ class generateVisitor(ASTVisitor):
         if is_init:
             ident = nokeywords(func.parent.ident)
         elif func.ident in ['__hash__']:
-            header += 'int '
+            header += 'int ' # XXX __ss_int leads to problem with virtual parent
         elif func.returnexpr:
             header += typesetreprnew(func.retnode.thing, func) # XXX mult
         else:
@@ -1116,15 +1128,12 @@ class generateVisitor(ASTVisitor):
             self.deindent()
 
     def cpp_name(self, name, func=None):
-        if self.module == getgx().main_module and name == 'init'+self.module.ident: # conflict with extmod init
-            return '_'+name
-        if name in [cl.ident for cl in getgx().allclasses]:
-            return '_'+name
-        elif name+'_' in [cl.ident for cl in getgx().allclasses]:
+        if ((self.module == getgx().main_module and name == 'init'+self.module.ident) or \
+            name in [cl.ident for cl in getgx().allclasses] or \
+            name+'_' in [cl.ident for cl in getgx().allclasses]):
             return '_'+name
         elif name in self.module.funcs and func and isinstance(func.parent, class_) and name in func.parent.funcs:
             return '__'+func.mv.module.ident+'__::'+name
-
         return nokeywords(name)
 
     def visitFunction(self, node, parent=None, declare=False):
@@ -1135,7 +1144,6 @@ class generateVisitor(ASTVisitor):
             func = getmv().funcs[node.name]
         else:
             func = getmv().lambdas[node.name]
-
         if func.invisible or (func.inherited and not func.ident == '__init__'):
             return
         if declare and func.declared: # XXX
@@ -1175,6 +1183,8 @@ class generateVisitor(ASTVisitor):
         self.output(self.indentation.join(self.group_declarations(pairs)))
 
         # --- function body
+        for fake_unpack in func.expand_args.values():
+            self.visit(fake_unpack, func)
         self.visit(node.code, func)
         if func.fakeret:
             self.visit(func.fakeret, func)
@@ -1618,7 +1628,7 @@ class generateVisitor(ASTVisitor):
                 self.append('0, ')
 
     def visitCallFunc(self, node, func=None):
-        objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(node)
+        objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(node)
         funcs = callfunc_targets(node, self.mergeinh)
 
         if self.library_func(funcs, 're', None, 'findall') or \
@@ -1667,6 +1677,8 @@ class generateVisitor(ASTVisitor):
                 return
             elif ident == 'hash':
                 self.append('hasher(') # XXX cleanup
+            elif ident == '__print': # XXX
+                self.append('print(')
             elif ident == 'isinstance' and isinstance(node.args[1], Name) and node.args[1].name in ['float','int']:
                 error("'isinstance' cannot be used with ints or floats; assuming always true", node, warning=True)
                 self.append('1')
@@ -1724,10 +1736,10 @@ class generateVisitor(ASTVisitor):
             self.visit(node, func)
 
     def visit_callfunc_args(self, funcs, node, func):
-        objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(node)
+        objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(node)
         target = funcs[0] # XXX
 
-        print_function = self.library_func(funcs, 'builtin', None, 'print')
+        print_function = self.library_func(funcs, 'builtin', None, '__print')
 
         castnull = False # XXX
         if (self.library_func(funcs, 'random', None, 'seed') or \
@@ -2148,21 +2160,6 @@ class generateVisitor(ASTVisitor):
             else:
                 self.output(ts+', '.join(names)+';')
 
-    def fastfor_switch(self, node, func):
-        self.start()
-        for arg in node.list.args:
-            if arg in getmv().tempcount:
-                self.start()
-                self.visitm(getmv().tempcount[arg], ' = ', arg, func)
-                self.eol()
-        self.start('if(')
-        if node.list.args[2] in getmv().tempcount:
-            self.append(getmv().tempcount[node.list.args[2]])
-        else:
-            self.visit(node.list.args[2])
-        self.append('>0) {')
-        print >>self.out, self.line
-
     # --- nested for loops: loop headers, if statements
     def listcomp_rec(self, node, quals, lcfunc, genexpr):
         if not quals:
@@ -2217,26 +2214,6 @@ class generateVisitor(ASTVisitor):
             self.start('FOR_IN'+pref+'('+iter+','+itervar+','+tail)
             print >>self.out, self.line+')'
             self.listcompfor_body(node, quals, iter, lcfunc, False, genexpr)
-
-    def do_fastfor(self, node, qual, quals, iter, func, genexpr):
-        if len(qual.list.args) == 3 and not const_literal(qual.list.args[2]):
-            self.fastfor_switch(qual, func)
-            self.indent()
-            self.fastfor(qual, iter, '', func)
-            self.forbody(node, quals, iter, func, False, genexpr)
-            self.deindent()
-            self.output('} else {')
-            self.indent()
-            self.fastfor(qual, iter, '_NEG', func)
-            self.forbody(node, quals, iter, func, False, genexpr)
-            self.deindent()
-            self.output('}')
-        else:
-            neg=''
-            if len(qual.list.args) == 3 and const_literal(qual.list.args[2]) and isinstance(qual.list.args[2], UnarySub):
-                neg = '_NEG'
-            self.fastfor(qual, iter, neg, func)
-            self.forbody(node, quals, iter, func, False, genexpr)
 
     def listcompfor_body(self, node, quals, iter, lcfunc, skip, genexpr):
         qual = quals[0]
@@ -2346,8 +2323,12 @@ class generateVisitor(ASTVisitor):
         self.start('print2(')
         if node.dest:
             self.visitm(node.dest, ', ', func)
-        if print_space: self.append('1,')
-        else: self.append('0,')
+        else:
+            self.append('NULL,')
+        if print_space: 
+            self.append('1,')
+        else: 
+            self.append('0,')
         self.append(str(len(node.nodes)))
         for n in node.nodes:
             types = [t[0].ident for t in self.mergeinh[n]]
@@ -2465,9 +2446,9 @@ class generateVisitor(ASTVisitor):
                 self.append('__'+singletype(node, module).ident+'__')
             else:
                 if (defclass('class_'),0) in self.mergeinh[node]:
-                    self.append('cl_'+node.name)
+                    self.append(namespaceclass(lookupclass(node, getmv()), add_cl='cl_'))
                 elif add_cl and [t for t in self.mergeinh[node] if isinstance(t[0], static_class)]:
-                    self.append('cl_'+node.name)
+                    self.append(namespaceclass(lookupclass(node, getmv()), add_cl='cl_'))
                 else:
                     if isinstance(func, class_) and node.name in func.parent.vars: # XXX
                         self.append(func.ident+'::')
@@ -2529,13 +2510,13 @@ def singletype2(types, type):
 def mod_namespace(module):
     return '__'+'__::__'.join(module.mod_path)+'__'
 
-def namespaceclass(cl):
+def namespaceclass(cl, add_cl=''):
     module = cl.mv.module
 
     if module.ident != 'builtin' and module != getmv().module and module.mod_path:
-        return mod_namespace(module)+'::'+nokeywords(cl.ident)
+        return mod_namespace(module)+'::'+add_cl+nokeywords(cl.ident)
     else:
-        return nokeywords(cl.ident)
+        return add_cl+nokeywords(cl.ident)
 
 # --- determine representation of node type set (within parameterized context)
 def typesetreprnew(node, parent, cplusplus=True, check_extmod=False, check_ret=False, var=None):
@@ -2553,9 +2534,10 @@ def typesetreprnew(node, parent, cplusplus=True, check_extmod=False, check_ret=F
     try:
         ts = typestrnew(split, parent, cplusplus, orig_parent, node, check_extmod, 0, check_ret, var)
     except RuntimeError:
-        if not hasattr(node, 'lineno'): node.lineno = None # XXX
         if not getmv().module.builtin and isinstance(node, variable) and not node.name.startswith('__'): # XXX startswith
-            error("variable %s has dynamic (sub)type" % repr(node), warning=True)
+            if node.parent: varname = repr(node)
+            else: varname = "'%s'" % node.name
+            error("variable %s has dynamic (sub)type" % varname, node, warning=True)
         ts = 'ERROR'
 
     if cplusplus:
@@ -2607,7 +2589,7 @@ def typestrnew(split, root_class, cplusplus, orig_parent, node=None, check_extmo
             if not node.name.startswith('__') : # XXX startswith
                 if orig_parent: varname = "%s" % node
                 else: varname = "'%s'" % node
-                error("variable %s has dynamic (sub)type: {%s}" % (varname, ', '.join([conv2.get(cl.ident, cl.ident) for cl in lcp])), warning=True)
+                error("variable %s has dynamic (sub)type: {%s}" % (varname, ', '.join([conv2.get(cl.ident, cl.ident) for cl in lcp])), node, warning=True)
         elif node not in getgx().bool_test_only:
             error("expression has dynamic (sub)type: {%s}" % ', '.join([conv2.get(cl.ident, cl.ident) for cl in lcp]), node, warning=True)
 
@@ -2721,8 +2703,6 @@ def polymorphic_cl(classes):
     cls = set([cl for cl in classes])
     if len(cls) > 1 and defclass('none') in cls and not defclass('int_') in cls and not defclass('float_') in cls and not defclass('bool_') in cls:
         cls.remove(defclass('none'))
-#    if defclass('float_') in cls and defclass('int_') in cls:
-#        cls.remove(defclass('int_'))
     if defclass('tuple2') in cls and defclass('tuple') in cls: # XXX hmm
         cls.remove(defclass('tuple2'))
     return cls
@@ -2787,20 +2767,19 @@ def assign_needs_cast_rec(argsplit, func, formalsplit, target, depth=0):
     if argclasses == noneset and formalclasses != noneset:
         return True
 
-    # no type
-    if not argclasses and formalclasses: # a = [[]]
+    # no type, e.g. [[]]
+    if not argclasses and formalclasses:
         return True
 
-    if defclass('none') in formalclasses:
-        formalclasses.remove(defclass('none'))
-    if defclass('tuple2') in formalclasses and defclass('tuple') in formalclasses: # XXX generalize? lcp?
-        formalclasses.remove(defclass('tuple'))
-    if len(formalclasses) != 1:
+    # subtype
+    lcp_args, lcp_formals = lowest_common_parents(polymorphic_cl(argclasses)), lowest_common_parents(polymorphic_cl(formalclasses))
+    if depth > 0 and len(lcp_args) == 1 and len(lcp_formals) == 1 and lcp_args != lcp_formals:
+        return True
+
+    # recurse on tvars
+    if not lcp_formals:
         return False
-
-    cl = formalclasses.pop()
-
-    tvars = cl.tvar_names()
+    tvars = lcp_formals[0].tvar_names()
     if tvars:
         for tvar in tvars:
             argsubsplit = split_subsplit(argsplit, tvar)
@@ -2883,7 +2862,7 @@ def analyze_virtuals():
     for node in getgx().merged_inh: # XXX all:
         # --- for every message
         if isinstance(node, CallFunc) and not inode(node).mv.module.builtin: #ident == 'builtin':
-            objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(node)
+            objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(node)
             if not method_call or objexpr not in getgx().merged_inh:
                 continue # XXX
 
@@ -2947,8 +2926,6 @@ def nokeywords(name):
 
 # --- generate C++ and Makefiles
 def generate_code():
-    print '[generating c++ code..]'
-
     ident = getgx().main_module.ident
 
     if sys.platform == 'win32':
@@ -2997,10 +2974,11 @@ def generate_code():
 
     cppfiles = ' '.join([m.filename[:-3].replace(' ', '\ ')+'.cpp' for m in mods])
     hppfiles = ' '.join([m.filename[:-3].replace(' ', '\ ')+'.hpp' for m in mods])
-    repath = connect_paths(getgx().libdir.replace(' ', '\ '), 're.cpp')
-    if not repath in cppfiles:
-        cppfiles += ' '+repath
-        hppfiles += ' '+connect_paths(getgx().libdir.replace(' ', '\ '), 're.hpp')
+    for always in ('re',):
+        repath = connect_paths(getgx().libdir.replace(' ', '\ '), always+'.cpp')
+        if not repath in cppfiles:
+            cppfiles += ' '+repath
+            hppfiles += ' '+connect_paths(getgx().libdir.replace(' ', '\ '), always+'.hpp')
 
     # import flags
     if getgx().flags: flags = getgx().flags
@@ -3020,6 +2998,7 @@ def generate_code():
             if not getgx().wrap_around_check: line += ' -D__SS_NOWRAP'
             if not getgx().bounds_checking: line += ' -D__SS_NOBOUNDS'
             if getgx().fast_random: line += ' -D__SS_FASTRANDOM'
+            if getgx().fast_hash: line += ' -D__SS_FASTHASH'
             if getgx().longlong: line += ' -D__SS_LONG'
             if getgx().extension_module:
                 if getgx().msvc: line += ' /DLL /LIBPATH:%s/libs /LIBPATH:python%s' % (prefix, pyver)

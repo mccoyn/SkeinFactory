@@ -31,12 +31,12 @@ class globalInfo: # XXX add comments, split up
         self.empty_constructors = set()
         self.sig_nr = {}
         self.nameclasses = {}
-        self.tuple2 = set()             # binary typed tuples
         self.module = None
         self.builtins = ['none', 'str_', 'float_', 'int_', 'class_', 'list', 'tuple', 'tuple2', 'dict', 'set', 'frozenset', 'bool_']
         self.assign_target = {}              # instance node for instance variable assignment
         self.alloc_info = {}                 # allocation site type information across iterations
         self.iterations = 0
+        self.total_iterations = 0
         self.lambdawrapper = {}
         self.sysdir = '/'.join(__file__.split(os.sep)[:-1])
         self.libdir = connect_paths(self.sysdir, 'lib')
@@ -51,12 +51,13 @@ class globalInfo: # XXX add comments, split up
         self.cpp_keywords.update(['main'])
         self.cpp_keywords.update(['sun'])
         self.cpp_keywords.update(['UNICODE', 'MAXINT'])
-        self.cpp_keywords.update(['WITH', 'WITH_VAR', 'END_WITH', 'FOR_IN', 'FOR_IN_SEQ', 'FOR_IN_T2', 'FOR_IN_ZIP', 'FAST_FOR', 'FAST_FOR_NEG', 'END_FOR'])
+        self.cpp_keywords.update(['WITH', 'WITH_VAR', 'END_WITH', 'FOR_IN', 'FOR_IN_T2', 'FOR_IN_ZIP', 'FOR_IN_ENUM', 'FOR_IN_NEW', 'FOR_IN_SEQ', 'FAST_FOR', 'END_FOR'])
         self.ss_prefix = '__ss_'
         self.list_types = {}
         self.loopstack = [] # track nested loops
         self.comments = {}
         self.import_order = 0 # module import order
+        self.class_def_order = 0
         # command-line options
         self.wrap_around_check = True
         self.bounds_checking = True
@@ -72,6 +73,9 @@ class globalInfo: # XXX add comments, split up
         self.genexp_to_lc = {}
         self.bool_test_only = set()
         self.tempcount = {}
+        self.added_funcs = 5
+        self.added_funcs_set = set()
+        self.fast_hash = False
 
 def newgx():
     return globalInfo()
@@ -181,6 +185,8 @@ class class_:
         getgx().nrcltypes += 1
         self.splits = {}                # contour: old contour (used between iterations)
         self.has_init = self.has_copy = self.has_deepcopy = False
+        self.def_order = getgx().class_def_order
+        getgx().class_def_order += 1
 
     def ancestors(self): # XXX attribute (faster)
         a = set(self.bases)
@@ -246,6 +252,9 @@ class module:
         self.node = node
         self.prop_includes = set()
         self.import_order = 0
+
+    def full_path(self):
+        return '__'+'__::__'.join(self.mod_path)+'__'
 
     def __repr__(self):
         return 'module '+self.ident
@@ -373,8 +382,8 @@ def is_enum(node):
 def is_zip2(node):
     return isinstance(node.list, CallFunc) and isinstance(node.list.node, Name) and node.list.node.name == 'zip' and len(node.list.args) == 2 and isinstance(node.assign, (AssList, AssTuple))
 
-def lookupvar(name, parent):
-    return defvar(name, parent, False)
+def lookupvar(name, parent, mv=None):
+    return defvar(name, parent, False, mv=mv)
 
 def defaultvar(name, parent, worklist=None):
     var = defvar(name, parent, True, worklist)
@@ -387,7 +396,9 @@ def defaultvar(name, parent, worklist=None):
 
     return var
 
-def defvar(name, parent, local, worklist=None):
+def defvar(name, parent, local, worklist=None, mv=None):
+    if not mv:
+        mv=getmv()
     if isinstance(parent, class_) and name in parent.parent.vars: # XXX
         return parent.parent.vars[name]
     if parent and name in parent.vars:
@@ -407,9 +418,9 @@ def defvar(name, parent, local, worklist=None):
             parent = parent.parent
 
         # not found: global
-        if name in getmv().globals:
-            return getmv().globals[name]
-        dest = getmv().globals
+        if name in mv.globals:
+            return mv.globals[name]
+        dest = mv.globals
 
     if not local:
         return None
@@ -421,6 +432,8 @@ def defvar(name, parent, local, worklist=None):
     newnode = cnode(var, parent=parent)
     if parent:
         newnode.mv = parent.mv
+    else:
+        newnode.mv = mv
     addtoworklist(worklist, newnode)
     getgx().types[newnode] = set()
 
@@ -519,18 +532,20 @@ def augmsg(node, msg):
 errormsgs = set()
 
 def error(msg, node=None, warning=False):
-    if msg in errormsgs: return
-    errormsgs.add(msg)
-
-    if warning: type = '*WARNING*'
-    else: type = '*ERROR*'
-
-    if node: lineno = ':'+str(node.lineno)
-    else: lineno = ''
-
-    msg = type+' '+getmv().module.filename+lineno+': '+msg
-    print msg
-
+    if isinstance(node, Function):
+        return
+    if warning: 
+        result = '*WARNING*'
+    else: 
+        result = '*ERROR*'
+    if node and (node,0,0) in getgx().cnode: 
+        result += ' '+inode(node).mv.module.filename
+        if hasattr(node, 'lineno') and node.lineno is not None:
+            result += ':'+str(node.lineno)
+    result += ': '+msg
+    if result not in errormsgs:
+        errormsgs.add(result)
+        print result
     if not warning:
         sys.exit(1)
 
@@ -574,17 +589,20 @@ def merged(nodes, dcpa=False, inheritance=False):
 
 def lookup_class_module(objexpr, mv, parent):
     if isinstance(objexpr, Name): # XXX Getattr?
-        var = lookupvar(objexpr.name, parent)
+        var = lookupvar(objexpr.name, parent, mv=mv)
         if var and not var.imported: # XXX cl?
             return None, None
     return lookupclass(objexpr, mv), lookupmodule(objexpr, mv)
 
 # --- analyze call expression: namespace, method call, direct call/constructor..
-def analyze_callfunc(node): # XXX generate target list XXX uniform variable system!
+def analyze_callfunc(node, node2=None, merge=None): # XXX generate target list XXX uniform variable system! XXX node2, merge?
     #print 'analyze callnode', node, inode(node).parent
     namespace, objexpr, method_call, parent_constr = inode(node).mv.module, None, False, False 
     constructor, direct_call = None, None
     mv = inode(node).mv
+ 
+    # anon func call
+    anon_func = is_anon_func(node, node2, merge)
 
     # method call
     if isinstance(node.node, Getattr):
@@ -595,7 +613,7 @@ def analyze_callfunc(node): # XXX generate target list XXX uniform variable syst
             # staticmethod call
             if ident in cl.staticmethods:
                 direct_call = cl.funcs[ident]
-                return objexpr, ident, direct_call, method_call, constructor, parent_constr
+                return objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func
 
             # ancestor call
             elif ident not in ['__setattr__', '__getattr__'] and inode(node).parent:
@@ -604,7 +622,7 @@ def analyze_callfunc(node): # XXX generate target list XXX uniform variable syst
                     if lookupimplementor(cl,ident):
                         parent_constr = True
                         ident = ident+lookupimplementor(cl, ident)+'__' # XXX change data structure
-                        return objexpr, ident, direct_call, method_call, constructor, parent_constr
+                        return objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func
 
         if module: # XXX elif?
             namespace, objexpr = module, None
@@ -619,8 +637,8 @@ def analyze_callfunc(node): # XXX generate target list XXX uniform variable syst
     # direct [constructor] call
     if isinstance(node.node, Name) or namespace != inode(node).mv.module:
         if isinstance(node.node, Name):
-            if lookupvar(ident, inode(node).parent):
-                return objexpr, ident, direct_call, method_call, constructor, parent_constr
+            if lookupvar(ident, inode(node).parent, mv=mv):
+                return objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func
         if ident in namespace.mv.classes:
             constructor = namespace.mv.classes[ident]
         elif ident in namespace.mv.funcs:
@@ -631,9 +649,9 @@ def analyze_callfunc(node): # XXX generate target list XXX uniform variable syst
             direct_call = namespace.mv.ext_funcs[ident]
         else:
             if namespace != inode(node).mv.module:
-                return objexpr, ident, None, False, None, False
+                return objexpr, ident, None, False, None, False, False
 
-    return objexpr, ident, direct_call, method_call, constructor, parent_constr
+    return objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func
 
 # XXX ugly: find ancestor class that implements function 'ident'
 def lookupimplementor(cl, ident):
@@ -653,7 +671,7 @@ def nrargs(node):
 
 # --- return list of potential call targets
 def callfunc_targets(node, merge):
-    objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(node)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(node)
     funcs = []
 
     if node.node in merge and [t for t in merge[node.node] if isinstance(t[0], function)]: # anonymous function call
@@ -682,8 +700,7 @@ def callfunc_targets(node, merge):
     return funcs
 
 def analyze_args(expr, func, node=None, skip_defaults=False, merge=None):
-    objexpr, ident, direct_call, method_call, constructor, parent_constr = analyze_callfunc(expr)
-    anon_func = is_anon_func(expr, node, merge)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(expr, node, merge)
 
     args = []
     kwdict = {}
@@ -740,15 +757,17 @@ def analyze_args(expr, func, node=None, skip_defaults=False, merge=None):
 
     return actuals, formals, defaults, extra, error
 
-def is_anon_func(expr, node, merge=None): # XXX move to analyze_callfunc
+def is_anon_func(expr, node, merge=None):
     types = set()
     if node:
         node = (expr.node, node.dcpa, node.cpa)
         if node in getgx().cnode:
             types = getgx().cnode[node].types()
-    else:
+    elif merge:
         if expr.node in merge:
             types = merge[expr.node]
+    else:
+        return False
     return bool([t for t in types if isinstance(t[0], function)])
 
 def connect_actual_formal(expr, func, parent_constr=False, check_error=False, merge=None):
@@ -772,7 +791,7 @@ def connect_actual_formal(expr, func, parent_constr=False, check_error=False, me
         missing = formals[len(actuals):-len(func.defaults)]
 
     skip_defaults = True # XXX
-    if not func.mv.module.builtin or func.mv.module.ident in ['random', 'itertools', 'datetime', 'ConfigParser', 'csv'] or (func.ident in ('sort','sorted', 'min', 'max', 'print')):
+    if not func.mv.module.builtin or func.mv.module.ident in ['random', 'itertools', 'datetime', 'ConfigParser', 'csv'] or (func.ident in ('sort','sorted', 'min', 'max', '__print')):
         if not (func.mv.module.builtin and func.ident == 'randrange'):
             skip_defaults = False
 
@@ -801,34 +820,6 @@ def const_literal(node):
     if isinstance(node, (UnarySub, UnaryAdd)):
         node = node.expr
     return isinstance(node, Const) and isinstance(node.value, (int, float))
-
-# --- XXX description, confusion_misc? what's this for..
-def confusion_misc():
-    confusion = set()
-
-    # use regular tuple if both elements have the same type representation
-    cl = defclass('tuple')
-    var1 = lookupvar('first', cl)
-    var2 = lookupvar('second', cl)
-    if not var1 or not var2: return # XXX ?
-
-    for dcpa in getgx().tuple2.copy():
-        getgx().tuple2.remove(dcpa)
-
-    # use regular tuple template for tuples used in addition
-    for node in getgx().merged_all:
-        if isinstance(node, CallFunc):
-            if isinstance(node.node, Getattr) and node.node.attrname in ['__add__','__iadd__'] and not isinstance(node.args[0], Const):
-
-                tupletypes = set()
-                for types in [getgx().merged_all[node.node.expr], getgx().merged_all[node.args[0]]]:
-                    for t in types:
-                        if t[0].ident == 'tuple':
-                            if t[1] in getgx().tuple2:
-                                getgx().tuple2.remove(t[1])
-                                getgx().types[getgx().cnode[var1, t[1], 0]].update(getgx().types[getgx().cnode[var2, t[1], 0]])
-
-                            tupletypes.update(getgx().types[getgx().cnode[var1, t[1], 0]])
 
 def property_setter(dec):
     return isinstance(dec, Getattr) and isinstance(dec.expr, Name) and dec.attrname == 'setter'

@@ -249,10 +249,7 @@ class moduleVisitor(ASTVisitor):
                 self.visit(Class(dummy, [], None, Pass()))
 
         if self.module.ident != 'builtin':
-            try:
-                n = From('builtin', [('*', None)], None) # Python2.5+
-            except TypeError:
-                n = From('builtin', [('*', None)])       # Python2.4
+            n = From('builtin', [('*', None)], None) # Python2.5+
             getmv().importnodes.append(n)
             self.visit(n)
 
@@ -444,7 +441,11 @@ class moduleVisitor(ASTVisitor):
             if name == '*':
                 self.ext_funcs.update(mod.funcs)
                 self.ext_classes.update(mod.classes)
-
+                for import_name, import_mod in mod.mv.imports.items():
+                    var = defaultvar(import_name, None) # XXX merge
+                    var.imported = True
+                    getgx().types[inode(var)] = set([(import_mod, 0)])
+                    self.imports[import_name] = import_mod
                 for name, extvar in mod.mv.globals.items():
                     if not extvar.imported and not name in ['__name__']:
                         var = defaultvar(name, None) # XXX merge
@@ -482,7 +483,7 @@ class moduleVisitor(ASTVisitor):
         return mod
 
     def visitFunction(self, node, parent=None, is_lambda=False, inherited_from=None):
-        if not getmv().module.builtin and (node.varargs or node.kwargs or [x for x in node.argnames if not isinstance(x, str)]):
+        if not getmv().module.builtin and (node.varargs or node.kwargs):
             error('argument (un)packing is not supported', node)
 
         if not parent and not is_lambda and node.name in getmv().funcs:
@@ -516,6 +517,16 @@ class moduleVisitor(ASTVisitor):
         if is_lambda:
             self.lambdas[node.name] = func
 
+        # --- add unpacking statement for tuple formals
+        func.expand_args = {}
+        for i, formal in enumerate(func.formals):
+            if isinstance(formal, tuple):
+                tmp = self.tempvar((node,i), func)
+                func.formals[i] = tmp.name
+                fake_unpack = Assign([self.unpack_rec(formal)], Name(tmp.name))
+                func.expand_args[tmp.name] = fake_unpack
+                self.visit(fake_unpack, func)
+
         formals = func.formals[:]
         func.defaults = node.defaults
 
@@ -547,13 +558,16 @@ class moduleVisitor(ASTVisitor):
                 defaultvar('self', func)
             parent.funcs[func.ident] = func
 
+    def unpack_rec(self, formal):
+        if isinstance(formal, str):
+            return AssName(formal, 'OP_ASSIGN')
+        else:
+            return AssTuple([self.unpack_rec(elem) for elem in formal])
+
     def visitLambda(self, node, func=None):
         lambdanr = len(self.lambdas)
         name = '__lambda%d__' % lambdanr
-        try:
-            fakenode = Function(None, name, node.argnames, node.defaults, node.flags, None, Return(node.code))
-        except TypeError:
-            fakenode = Function(name, node.argnames, node.defaults, node.flags, None, Return(node.code)) # XXX 2.3?
+        fakenode = Function(None, name, node.argnames, node.defaults, node.flags, None, Return(node.code))
         self.visit(fakenode, None, True)
         f = self.lambdas[name]
         f.lambdanr = lambdanr
@@ -1200,6 +1214,8 @@ class moduleVisitor(ASTVisitor):
         elif isinstance(node.node, Name):
             # direct call
             ident = node.node.name
+            if ident == 'print':
+                ident = node.node.name = '__print' # XXX
 
             if ident in ['getattr', 'setattr', 'slice', 'type']:
                 error("'%s' function is not supported" % ident, node.node)
@@ -1319,17 +1335,11 @@ class moduleVisitor(ASTVisitor):
             if newclass.ident in ['int_']: msgs += ['lshift', 'rshift', 'and', 'xor', 'or']
             for msg in msgs:
                 if not '__i'+msg+'__' in newclass.funcs:
-                    try:
-                        self.visit(Function(None, '__i'+msg+'__', ['self', 'other'], [], 0, None, Stmt([Return(CallFunc(Getattr(Name('self'), '__'+msg+'__'), [Name('other')], None, None))])), newclass)
-                    except TypeError:
-                        self.visit(Function('__i'+msg+'__', ['self', 'other'], [], 0, None, Stmt([Return(CallFunc(Getattr(Name('self'), '__'+msg+'__'), [Name('other')], None, None))])), newclass)
+                    self.visit(Function(None, '__i'+msg+'__', ['self', 'other'], [], 0, None, Stmt([Return(CallFunc(Getattr(Name('self'), '__'+msg+'__'), [Name('other')], None, None))])), newclass)
 
         # --- __str__
         if not newclass.mv.module.builtin and not '__str__' in newclass.funcs:
-            try:
-                self.visit(Function(None, '__str__', ['self'], [], 0, None, Return(CallFunc(Getattr(Name('self'), '__repr__'), []))), newclass)
-            except TypeError:
-                self.visit(Function('__str__', ['self'], [], 0, None, Return(CallFunc(Getattr(Name('self'), '__repr__'), []))), newclass)
+            self.visit(Function(None, '__str__', ['self'], [], 0, None, Return(CallFunc(Getattr(Name('self'), '__repr__'), []))), newclass)
             newclass.funcs['__str__'].invisible = True
 
     def visitGetattr(self, node, func=None, callfunc=False):
@@ -1356,12 +1366,8 @@ class moduleVisitor(ASTVisitor):
 
     def fncl_passing(self, node, newnode, func):
         mv = self
-        if func:
-            if hasattr(func, 'inherited_from'):
-                if func and func.inherited_from: 
-                    mv = func.inherited_from.mv # XXX XXX XXX generalize XXX XXX XXX
-            else:
-                error("instance has no attribute 'inherited_from':  %s" % func, node, warning = True)
+        if isinstance(func, function) and func.inherited_from: 
+            mv = func.inherited_from.mv # XXX XXX XXX generalize XXX XXX XXX
         lfunc, lclass = lookupfunc(node, mv), lookupclass(node, mv)
         if lfunc:
             if lfunc.mv.module.builtin:
@@ -1422,10 +1428,13 @@ class moduleVisitor(ASTVisitor):
         inode(node2).lambdawrapper = f
         return f
 
+def clear_block(m):
+    return m.string.count('\n', m.start(), m.end())*'\n'
+
 def parsefile(name):
     # Convert block comments into strings which will be duely ignored.
     pat = re.compile(r"#{.*?#}", re.MULTILINE | re.DOTALL)
-    filebuf = re.sub(pat, '', ''.join(open(name, 'U').readlines()))
+    filebuf = re.sub(pat, clear_block, ''.join(open(name, 'U').readlines()))
     try:
         return parse(filebuf)
     except SyntaxError, s:
