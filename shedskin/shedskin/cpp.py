@@ -2853,7 +2853,7 @@ def get_includes(mod):
 
 def subclass(a, b):
     if not hasattr(a, 'bases'):
-        error("AttributeError: function instance has no attribute 'bases'", a, warning=True);
+        error("AttributeError: function instance has no attribute 'bases', a:'%s'" % a, None, warning=True);
         return False
     if b in a.bases:
         return True
@@ -2891,6 +2891,9 @@ def analyze_virtuals():
             if not ident.startswith('__'):
                 redefined = False
                 for concrete_cl in classes:
+                    if not hasattr(concrete_cl, 'concrete_cl'):
+                        error("AttributeError: static_class instance has no attribute 'ancestors_upto', concrete_cl:'%s'" % concrete_cl, None, warning=True);
+                        continue;
                     if [cl for cl in concrete_cl.ancestors_upto(abstract_cl) if ident in cl.funcs and not cl.funcs[ident].inherited]:
                         redefined = True
 

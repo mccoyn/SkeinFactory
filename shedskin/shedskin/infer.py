@@ -644,7 +644,7 @@ def iterative_dataflow_analysis():
     while True:
         getgx().iterations += 1
         getgx().total_iterations += 1
-        if getgx().iterations > 30:
+        if getgx().iterations > 300:
             print '\n*WARNING* reached maximum number of iterations'
             break
 
