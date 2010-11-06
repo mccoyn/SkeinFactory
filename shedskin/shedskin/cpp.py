@@ -2852,6 +2852,9 @@ def get_includes(mod):
     return imports
 
 def subclass(a, b):
+    if not hasattr(a, 'bases'):
+        error("AttributeError: function instance has no attribute 'bases'", a, warning=True);
+        return False
     if b in a.bases:
         return True
     else:

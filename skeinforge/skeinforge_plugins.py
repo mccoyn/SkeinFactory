@@ -3,18 +3,18 @@
 import __init__
 
 from fabmetheus_utilities import gcodec
-#from skeinforge_application.skeinforge_plugins import analyze
-#from skeinforge_application.skeinforge_plugins import craft
-#from skeinforge_application.skeinforge_plugins import help
-#from skeinforge_application.skeinforge_plugins import meta
-#from skeinforge_application.skeinforge_plugins import profile
+from skeinforge_application.skeinforge_plugins import analyze
+from skeinforge_application.skeinforge_plugins import craft
+from skeinforge_application.skeinforge_plugins import help
+from skeinforge_application.skeinforge_plugins import meta
+from skeinforge_application.skeinforge_plugins import profile
 #from skeinforge_application.skeinforge_plugins.analyze_plugins import behold
 #from skeinforge_application.skeinforge_plugins.analyze_plugins import comment
 #from skeinforge_application.skeinforge_plugins.analyze_plugins import interpret
 #from skeinforge_application.skeinforge_plugins.analyze_plugins import skeinview
 #from skeinforge_application.skeinforge_plugins.analyze_plugins import statistic
 #from skeinforge_application.skeinforge_plugins.analyze_plugins import vectorwrite
-#from skeinforge_application.skeinforge_plugins.craft_plugins import carve
+from skeinforge_application.skeinforge_plugins.craft_plugins import carve
 #from skeinforge_application.skeinforge_plugins.craft_plugins import chamber
 #from skeinforge_application.skeinforge_plugins.craft_plugins import chop
 #from skeinforge_application.skeinforge_plugins.craft_plugins import cleave
@@ -51,22 +51,22 @@ from fabmetheus_utilities import gcodec
 #from skeinforge_application.skeinforge_plugins.craft_plugins import whittle
 #from skeinforge_application.skeinforge_plugins.craft_plugins import widen
 #from skeinforge_application.skeinforge_plugins.craft_plugins import wipe
-#from skeinforge_application.skeinforge_plugins.meta_plugins import description
-#from skeinforge_application.skeinforge_plugins.meta_plugins import polyfile
-#from skeinforge_application.skeinforge_plugins.profile_plugins import cutting
-#from skeinforge_application.skeinforge_plugins.profile_plugins import extrusion
-#from skeinforge_application.skeinforge_plugins.profile_plugins import milling
-#from skeinforge_application.skeinforge_plugins.profile_plugins import winding
+from skeinforge_application.skeinforge_plugins.meta_plugins import description
+from skeinforge_application.skeinforge_plugins.meta_plugins import polyfile
+from skeinforge_application.skeinforge_plugins.profile_plugins import cutting
+from skeinforge_application.skeinforge_plugins.profile_plugins import extrusion
+from skeinforge_application.skeinforge_plugins.profile_plugins import milling
+from skeinforge_application.skeinforge_plugins.profile_plugins import winding
 
 def add_all():
 	"add all of the plugins to the dictionary"
 
 	# skeinforge plugins
-	#gcodec.Plugins.add(analyze.getNewPlugin())
-	#gcodec.Plugins.add(craft.getNewPlugin())
-	#gcodec.Plugins.add(help.getNewPlugin())
-	#gcodec.Plugins.add(meta.getNewPlugin())
-	#gcodec.Plugins.add(profile.getNewPlugin())
+	gcodec.Plugins.add(analyze.getNewPlugin())
+	gcodec.Plugins.add(craft.getNewPlugin())
+	gcodec.Plugins.add(help.getNewPlugin())
+	gcodec.Plugins.add(meta.getNewPlugin())
+	gcodec.Plugins.add(profile.getNewPlugin())
 	
 	# analyze plugins
 	#gcodec.Plugins.add(behold.getNewPlugin())
@@ -77,7 +77,7 @@ def add_all():
 	#gcodec.Plugins.add(vectorwrite.getNewPlugin())
 
 	# carve plugins
-	#gcodec.Plugins.add(carve.getNewPlugin())
+	gcodec.Plugins.add(carve.getNewPlugin())
 	#gcodec.Plugins.add(chamber.getNewPlugin())
 	#gcodec.Plugins.add(chop.getNewPlugin())
 	#gcodec.Plugins.add(cleave.getNewPlugin())
@@ -116,14 +116,14 @@ def add_all():
 	#gcodec.Plugins.add(wipe.getNewPlugin())
 
 	# meta plugins
-	#gcodec.Plugins.add(description.getNewPlugin())
-	#gcodec.Plugins.add(polyfile.getNewPlugin())
+	gcodec.Plugins.add(description.getNewPlugin())
+	gcodec.Plugins.add(polyfile.getNewPlugin())
 	
 	# profile plugins
-	#gcodec.Plugins.add(cutting.getNewPlugin())
-	#gcodec.Plugins.add(extrusion.getNewPlugin())
-	#gcodec.Plugins.add(milling.getNewPlugin())
-	#gcodec.Plugins.add(winding.getNewPlugin())
+	gcodec.Plugins.add(cutting.getNewPlugin())
+	gcodec.Plugins.add(extrusion.getNewPlugin())
+	gcodec.Plugins.add(milling.getNewPlugin())
+	gcodec.Plugins.add(winding.getNewPlugin())
 
 if __name__ == "__main__":
 	add_all()
