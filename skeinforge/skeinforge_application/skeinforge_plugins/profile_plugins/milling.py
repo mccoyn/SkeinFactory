@@ -51,7 +51,9 @@ class MillingPlugin (settings.Plugin):
 	def getNewRepository(self):
 		"Get the repository constructor."
 		return MillingRepository()
-
+		
+	def writeOutput( self, fileName = ''):
+		return
 
 class MillingRepository:
 	"A class to handle the milling settings."
@@ -63,7 +65,7 @@ class MillingRepository:
 def main():
 	"Display the export dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[1 :] ) )
+		MillingPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

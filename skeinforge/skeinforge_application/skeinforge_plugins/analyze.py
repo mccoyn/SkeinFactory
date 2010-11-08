@@ -45,6 +45,9 @@ class AnalyzePlugin (settings.Plugin):
 		"Get the repository constructor."
 		return skeinforge_analyze.AnalyzeRepository()
 
+def writeOutput( fileName = ''):
+	skeinforge_analyze.writeOutput(fileName)
+	
 def main():
 	"Display the analyze dialog."
 	if len( sys.argv ) > 1:

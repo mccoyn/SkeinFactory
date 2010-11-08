@@ -51,6 +51,9 @@ class ExtrusionPlugin (settings.Plugin):
 		"Get the repository constructor."
 		return ExtrusionRepository()
 	
+	def writeOutput( self, fileName = ''):
+		return
+			
 class ExtrusionRepository (settings.Repository):
 	"A class to handle the export settings."
 	def __init__(self):
@@ -61,7 +64,7 @@ class ExtrusionRepository (settings.Repository):
 def main():
 	"Display the export dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[1 :] ) )
+		ExtrusionPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

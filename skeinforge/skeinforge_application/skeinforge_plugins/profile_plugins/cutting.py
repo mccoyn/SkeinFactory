@@ -52,6 +52,9 @@ class CuttingPlugin (settings.Plugin):
 		"Get the repository constructor."
 		return CuttingRepository()
 
+	def writeOutput( self, fileName = ''):
+		return
+
 class CuttingRepository:
 	"A class to handle the cutting settings."
 	def __init__(self):
@@ -62,7 +65,7 @@ class CuttingRepository:
 def main():
 	"Display the export dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[1 :] ) )
+		CuttingPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 

@@ -51,7 +51,10 @@ class WindingPlugin (settings.Plugin):
 	def getNewRepository(self):
 		"Get the repository constructor."
 		return WindingRepository()
-
+		
+	def writeOutput( self, fileName = ''):
+		return
+		
 class WindingRepository:
 	"A class to handle the winding settings."
 	def __init__(self):
@@ -62,7 +65,7 @@ class WindingRepository:
 def main():
 	"Display the export dialog."
 	if len( sys.argv ) > 1:
-		writeOutput(' '.join( sys.argv[1 :] ) )
+		WindingPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
 		settings.startMainLoopFromConstructor( getNewRepository() )
 
