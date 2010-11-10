@@ -68,6 +68,7 @@ class globalInfo: # XXX add comments, split up
         self.annotation = False
         self.msvc = False
         self.output_dir= ''
+        self.max_iterations = 30
         self.makefile_name = 'Makefile' # XXX other default?
         self.item_rvalue = {}
         self.genexp_to_lc = {}
