@@ -1,3 +1,5 @@
+SHEDSKIN=shedskin/build/lib.linux-i686-2.6/shedskin/__init__.py
+
 all: skeinfactory/skeinfactory
 
 clean:
@@ -26,7 +28,7 @@ skeinfactory/skeinfactory: skeinfactory/Makefile
 	cp -ru patch/* skeinfactory
 	cd skeinfactory ; make skeinfactory
 
-skeinfactory/Makefile: shedskin/build/lib.linux-i686-2.6/shedskin/__init__.py skeinforge/skeinfactory.py
+skeinfactory/Makefile: $(SHEDSKIN) skeinforge/skeinfactory.py
 	cp -u skeinforge/operator.ss skeinforge/operator.py
 	cp -u skeinforge/shutil.ss skeinforge/shutil.py
 	cp -u skeinforge/tkFileDialog.ss skeinforge/tkFileDialog.py
@@ -34,7 +36,7 @@ skeinfactory/Makefile: shedskin/build/lib.linux-i686-2.6/shedskin/__init__.py sk
 	cp -u skeinforge/traceback.ss skeinforge/traceback.py
 	cp -u skeinforge/cmath.ss skeinforge/cmath.py
 	cp -u skeinforge/struct.ss skeinforge/struct.py
-	cd skeinforge ; python ../shedskin/build/lib.linux-i686-2.6/shedskin/__init__.py --dir "../skeinfactory" skeinfactory.py
+	cd skeinforge ; python ../$(SHEDSKIN) --dir "../skeinfactory" skeinfactory.py
 	
-shedskin/build/lib.linux-i686-2.6/shedskin/__init__.py: shedskin/setup.py
+$(SHEDSKIN): shedskin/setup.py
 	cd shedskin ; ./setup.py build
