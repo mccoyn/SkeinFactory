@@ -239,7 +239,7 @@ def main():
 	if len( sys.argv ) > 1:
 		CarvePlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( CarveRepository() )
+		settings.startMainLoopFromConstructor( CarvePlugin().CarveRepository() )
 
 if __name__ == "__main__":
 	main()

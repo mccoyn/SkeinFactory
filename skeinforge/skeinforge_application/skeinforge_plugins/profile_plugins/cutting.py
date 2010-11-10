@@ -67,7 +67,7 @@ def main():
 	if len( sys.argv ) > 1:
 		CuttingPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( CuttingPlugin().getNewRepository() )
 
 if __name__ == "__main__":
 	main()

@@ -67,7 +67,7 @@ def main():
 	if len( sys.argv ) > 1:
 		WindingPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( WindingPlugin().getNewRepository() )
 
 if __name__ == "__main__":
 	main()

@@ -67,7 +67,7 @@ def main():
 	if len( sys.argv ) > 1:
 		MillingPlugin().writeOutput(' '.join( sys.argv[1 :] ) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor( MillingPlugin().getNewRepository() )
 
 if __name__ == "__main__":
 	main()
