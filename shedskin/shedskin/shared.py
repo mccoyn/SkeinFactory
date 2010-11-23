@@ -532,7 +532,7 @@ def augmsg(node, msg):
 
 errormsgs = set()
 
-def error(msg, node=None, warning=False):
+def error(msg, node=None, warning=False, fatal=None):
     if isinstance(node, Function):
         return
     if warning: 
@@ -547,8 +547,12 @@ def error(msg, node=None, warning=False):
     if result not in errormsgs:
         errormsgs.add(result)
         print result
-    if not warning:
-        sys.exit(1)
+    if fatal is none:
+        if not warning:
+            sys.exit(1)
+    else:
+        if fatal:
+            sys.exit(1)
 
 # --- merge constraint network along combination of given dimensions (dcpa, cpa, inheritance)
 # e.g. for annotation we merge everything; for code generation, we might want to create specialized code
@@ -786,9 +790,9 @@ def connect_actual_formal(expr, func, parent_constr=False, check_error=False, me
 
     if check_error and func.ident != 'sum' and func.lambdanr is None and expr not in getgx().lambdawrapper: # XXX sum
         if not func.node.varargs and not func.node.kwargs and len(actuals)+len(keywords) > len(formals):
-            error("too many arguments in call to '%s'" % func.ident, expr)
+            error("too many arguments in call to '%s'" % func.ident, expr, fatal=False)
         if not func.node.varargs and not func.node.kwargs and len(actuals)+len(keywords) < len(formals)-len(func.defaults) and not expr.star_args:
-            error("not enough arguments in call to '%s'" % func.ident, expr)
+            error("not enough arguments in call to '%s'" % func.ident, expr, fatal=False)
         missing = formals[len(actuals):-len(func.defaults)]
 
     skip_defaults = True # XXX
