@@ -547,7 +547,7 @@ def error(msg, node=None, warning=False, fatal=None):
     if result not in errormsgs:
         errormsgs.add(result)
         print result
-    if fatal is none:
+    if fatal is None:
         if not warning:
             sys.exit(1)
     else:
