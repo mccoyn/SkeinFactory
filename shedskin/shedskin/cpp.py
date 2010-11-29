@@ -1709,7 +1709,7 @@ class generateVisitor(ASTVisitor):
             self.visitm(node.node, '(', func)
 
         else:
-            error("unbound identifier '"+ident+"'", node, fatal=FALSE)
+            error("unbound identifier '"+ident+"'", node, False)
 
         if not funcs:
             if constructor: self.append(')')
