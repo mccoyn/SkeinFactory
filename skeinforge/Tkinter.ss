@@ -509,6 +509,122 @@ class Label(Widget):
         """
         Widget.__init__(self, master, 'label', cnf)
 
+class Listbox(Widget):
+    """Listbox widget which can display a list of strings."""
+    def __init__(self, master=None, cnf={}, **kw):
+        """Construct a listbox widget with the parent MASTER.
+
+        Valid resource names: background, bd, bg, borderwidth, cursor,
+        exportselection, fg, font, foreground, height, highlightbackground,
+        highlightcolor, highlightthickness, relief, selectbackground,
+        selectborderwidth, selectforeground, selectmode, setgrid, takefocus,
+        width, xscrollcommand, yscrollcommand, listvariable."""
+        Widget.__init__(self, master, 'listbox', cnf)
+    def activate(self, index):
+        """Activate item identified by INDEX."""
+        self.tk.call(self._w, 'activate', index)
+    def bbox(self, *args):
+        """Return a tuple of X1,Y1,X2,Y2 coordinates for a rectangle
+        which encloses the item identified by index in ARGS."""
+        return (0,0,0,0)
+    def curselection(self):
+        """Return list of indices of currently selected item."""
+        return []
+    def delete(self, first, last=None):
+        """Delete items from FIRST to LAST (not included)."""
+        self.tk.call(self._w, 'delete', first, last)
+    def get(self, first, last=None):
+        """Get list of items from FIRST to LAST (not included)."""
+        return []
+    def index(self, index):
+        """Return index of item identified with INDEX."""
+        i = self.tk.call(self._w, 'index', index)
+        if i == 'none': return None
+        return getint(i)
+    def insert(self, index, *elements):
+        """Insert ELEMENTS at INDEX."""
+        self.tk.call((self._w, 'insert', index) + elements)
+    def nearest(self, y):
+        """Get index of item which is nearest to y coordinate Y."""
+        return getint(self.tk.call(
+            self._w, 'nearest', y))
+    def scan_mark(self, x, y):
+        """Remember the current X, Y coordinates."""
+        self.tk.call(self._w, 'scan', 'mark', x, y)
+    def scan_dragto(self, x, y):
+        """Adjust the view of the listbox to 10 times the
+        difference between X and Y and the coordinates given in
+        scan_mark."""
+        self.tk.call(self._w, 'scan', 'dragto', x, y)
+    def see(self, index):
+        """Scroll such that INDEX is visible."""
+        self.tk.call(self._w, 'see', index)
+    def selection_anchor(self, index):
+        """Set the fixed end oft the selection to INDEX."""
+        self.tk.call(self._w, 'selection', 'anchor', index)
+    def select_anchor(self, index):
+        selection_anchor(self, index)
+    def selection_clear(self, first, last=None):
+        """Clear the selection from FIRST to LAST (not included)."""
+        self.tk.call(self._w,
+                 'selection', 'clear', first, last)
+    def select_clear(self, index):
+        selection_clear(self, index)
+    def selection_includes(self, index):
+        """Return 1 if INDEX is part of the selection."""
+        return self.tk.getboolean(self.tk.call(
+            self._w, 'selection', 'includes', index))
+    def select_includes(self, index):
+        selection_includes(self, index)
+    def selection_set(self, first, last=None):
+        """Set the selection from FIRST to LAST (not included) without
+        changing the currently selected elements."""
+        self.tk.call(self._w, 'selection', 'set', first, last)
+    def select_set(self, index):
+        selection_set(self, index)
+    def size(self):
+        """Return the number of elements in the listbox."""
+        return getint(self.tk.call(self._w, 'size'))
+    def xview(self, *what):
+        """Query and change horizontal position of the view."""
+        if not what:
+            return self._getdoubles(self.tk.call(self._w, 'xview'))
+        self.tk.call((self._w, 'xview') + what)
+    def xview_moveto(self, fraction):
+        """Adjust the view in the window so that FRACTION of the
+        total width of the entry is off-screen to the left."""
+        self.tk.call(self._w, 'xview', 'moveto', fraction)
+    def xview_scroll(self, number, what):
+        """Shift the x-view according to NUMBER which is measured in "units" or "pages" (WHAT)."""
+        self.tk.call(self._w, 'xview', 'scroll', number, what)
+    def yview(self, *what):
+        """Query and change vertical position of the view."""
+        if not what:
+            return self._getdoubles(self.tk.call(self._w, 'yview'))
+        self.tk.call((self._w, 'yview') + what)
+    def yview_moveto(self, fraction):
+        """Adjust the view in the window so that FRACTION of the
+        total width of the entry is off-screen to the top."""
+        self.tk.call(self._w, 'yview', 'moveto', fraction)
+    def yview_scroll(self, number, what):
+        """Shift the y-view according to NUMBER which is measured in "units" or "pages" (WHAT)."""
+        self.tk.call(self._w, 'yview', 'scroll', number, what)
+    def itemcget(self, index, option):
+        """Return the resource value for an ITEM and an OPTION."""
+        return self.tk.call(
+            (self._w, 'itemcget') + (index, '-'+option))
+    def itemconfigure(self, index, cnf=None):
+        """Configure resources of an ITEM.
+
+        The values for resources are specified as keyword arguments.
+        To get an overview about the allowed keyword arguments
+        call the method without arguments.
+        Valid resource names: background, bg, foreground, fg,
+        selectbackground, selectforeground."""
+        return self._configure(('itemconfigure', index), cnf, kw)
+    def itemconfig(self, index, cnf=None):
+        itemconfigure(self, index, cnf)
+    
 class Menu(Widget):
     """Menu widget which allows to display menu bars, pull-down menus and pop-up menus."""
     """Menu widget which allows to display menu bars, pull-down menus and pop-up menus."""

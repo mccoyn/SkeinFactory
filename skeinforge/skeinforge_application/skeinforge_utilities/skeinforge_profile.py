@@ -133,7 +133,7 @@ class AddProfile:
 		self.entry = settings.Tkinter.Entry( gridPosition.master )
 		self.entry.bind('<Return>', self.addSelectionWithEvent )
 		self.entry.grid( row = gridPosition.row, column = 1, columnspan = 3, sticky = settings.Tkinter.W )
-		self.addButton = settings.Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', text = 'Add Profile', command = self.addSelection )
+		self.addButton = settings.Tkinter.Button( gridPosition.master, {'activebackground': 'black', 'activeforeground' : 'white', 'text' : 'Add Profile', 'command' : self.addSelection } )
 		self.addButton.grid( row = gridPosition.row, column = 0 )
 
 	def addSelection(self):
@@ -171,7 +171,7 @@ class DeleteProfile( AddProfile ):
 	def addToDialog( self, gridPosition ):
 		"Add this to the dialog."
 		gridPosition.increment()
-		self.deleteButton = settings.Tkinter.Button( gridPosition.master, activebackground = 'black', activeforeground = 'white', text = "Delete Profile", command = self.deleteSelection )
+		self.deleteButton = settings.Tkinter.Button( gridPosition.master, {'activebackground' : 'black', 'activeforeground' : 'white', 'text' : "Delete Profile", 'command' : self.deleteSelection } )
 		self.deleteButton.grid( row = gridPosition.row, column = 0 )
 
 	def deleteSelection(self):
@@ -188,13 +188,13 @@ class DeleteProfileDialog:
 		self.row = 0
 		root.title('Delete Warning')
 		self.gridPosition.increment()
-		self.label = settings.Tkinter.Label( self.root, text = 'Do you want to delete the profile?')
+		self.label = settings.Tkinter.Label( self.root, {'text' : 'Do you want to delete the profile?'})
 		self.label.grid( row = self.row, column = 0, columnspan = 3, sticky = settings.Tkinter.W )
 		columnIndex = 1
-		deleteButton = settings.Tkinter.Button( root, activebackground = 'black', activeforeground = 'red', command = self.delete, fg = 'red', text = 'Delete')
+		deleteButton = settings.Tkinter.Button( root, {'activebackground' : 'black', 'activeforeground' : 'red', 'command' : self.delete, 'fg' : 'red', 'text' : 'Delete' })
 		deleteButton.grid( row = self.row, column = columnIndex )
 		columnIndex += 1
-		noButton = settings.Tkinter.Button( root, activebackground = 'black', activeforeground = 'darkgreen', command = self.no, fg = 'darkgreen', text = 'Do Nothing')
+		noButton = settings.Tkinter.Button( root, {'activebackground' : 'black', 'activeforeground' : 'darkgreen', 'command' : self.no, 'fg' : 'darkgreen', 'text' : 'Do Nothing' })
 		noButton.grid( row = self.row, column = columnIndex )
 
 	def delete(self):
@@ -255,7 +255,7 @@ class ProfileListboxSetting( settings.StringSetting ):
 		self.root = gridPosition.master
 		gridPosition.increment()
 		scrollbar = HiddenScrollbar( gridPosition.master )
-		self.listbox = settings.Tkinter.Listbox( gridPosition.master, selectmode = settings.Tkinter.SINGLE, yscrollcommand = scrollbar.set )
+		self.listbox = settings.Tkinter.Listbox( gridPosition.master, {'selectmode' : settings.Tkinter.SINGLE, 'yscrollcommand' : scrollbar.set } )
 		self.listbox.bind('<ButtonRelease-1>', self.buttonReleaseOne )
 		gridPosition.master.bind('<FocusIn>', self.focusIn )
 		scrollbar.config( command = self.listbox.yview )
