@@ -145,12 +145,8 @@ def propagate():
 
     # --- iterative dataflow analysis
     while worklist:
-        worklistLen = len(worklist)
         a = worklist.pop(0)
         a.in_list = 0
-        
-        #if repr(a.thing) == "(function (class list, 'sort'), 'elem')":
-        #	continue;
 
         if not a.mv.module.builtin and a.changed: # XXX general mechanism for seeding/changes -> cpa
             for callfunc in a.callfuncs:
@@ -181,9 +177,6 @@ def propagate():
                     b = getgx().checkcallfunc.pop()
                     for callfunc in b.callfuncs:
                         cpa(getgx().cnode[callfunc, b.dcpa, b.cpa], worklist)
-
-        worklistLen = len(worklist) - worklistLen
-        if DEBUG and worklistLen > 10000: print 'propagate: %d(%d), %s' % (worklistLen, len(worklist), a)
 
 # --- determine cartesian product of possible function and argument types
 def possible_functions(node):
@@ -299,13 +292,19 @@ def redirect(c, dcpa, func, callfunc, ident, callnode):
     if isinstance(func.parent, class_) and func.ident in func.parent.staticmethods:
         dcpa = 1
 
-    # dict, defaultdict
+    # dict.__init__
     if (ident, nrargs(callfunc)) in (('dict', 1), ('defaultdict', 2)):
         clnames = [x[0].ident for x in c if isinstance(x[0], class_)]
         if 'dict' in clnames or 'defaultdict' in clnames:
             func = list(callnode.types())[0][0].funcs['__initdict__']
         else:
             func = list(callnode.types())[0][0].funcs['__inititer__']
+
+    # dict.update
+    if func.ident == 'update' and isinstance(func.parent, class_) and func.parent.ident in ('dict', 'defaultdict'):
+        clnames = [x[0].ident for x in c if isinstance(x[0], class_)]
+        if not ('dict' in clnames or 'defaultdict' in clnames):
+            func = func.parent.funcs['updateiter']
 
     # list, tuple
     if ident in ('list', 'tuple', 'set', 'frozenset') and nrargs(callfunc) == 1:
@@ -640,7 +639,7 @@ def update_progressbar(perc):
 
 # --- cartesian product algorithm (cpa) & iterative flow analysis (ifa)
 def iterative_dataflow_analysis():
-    print '[iterative type analysis..]'
+    print '[analyzing types..]'
     backup = backup_network()
 
     getgx().orig_types = {}
@@ -855,10 +854,10 @@ def restore_network(backup):
     for func in getgx().allfuncs:
         func.cp = {}
 
-    for cl in getgx().modules['builtin'].classes.values():
+    for cl in getgx().modules['builtin'].mv.classes.values():
         for func in cl.funcs.values():
             func.cp = {}
-    for func in getgx().modules['builtin'].funcs.values():
+    for func in getgx().modules['builtin'].mv.funcs.values():
         func.cp = {}
 
 def merge_simple_types(types):
@@ -870,7 +869,10 @@ def merge_simple_types(types):
     return frozenset(merge)
 
 def analyze(source, testing=False):
-    gc.set_threshold(23456, 10, 10)
+    try:
+        gc.set_threshold(23456, 10, 10)
+    except AttributeError: # not all Python implementations support this
+        pass
 
     if testing:
         setgx(newgx())
@@ -950,12 +952,12 @@ def analyze(source, testing=False):
 
     # --- determine which classes need copy, deepcopy methods
     if 'copy' in getgx().modules:
-        func = getgx().modules['copy'].funcs['copy']
+        func = getgx().modules['copy'].mv.funcs['copy']
         var = func.vars[func.formals[0]]
         for cl in set([t[0] for t in getgx().merged_inh[var]]):
             cl.has_copy = True # XXX transitive, modeling
 
-        func = getgx().modules['copy'].funcs['deepcopy']
+        func = getgx().modules['copy'].mv.funcs['deepcopy']
         var = func.vars[func.formals[0]]
         for cl in set([t[0] for t in getgx().merged_inh[var]]):
             cl.has_deepcopy = True # XXX transitive, modeling
@@ -976,6 +978,6 @@ def analyze(source, testing=False):
     # error for dynamic expression
     for node in getgx().merged_all:
         if isinstance(node, Node) and not isinstance(node, AssAttr) and not inode(node).mv.module.builtin:
-            cpp.typesetreprnew(node, inode(node).parent)
+            cpp.nodetypestr(node, inode(node).parent)
 
     return getgx()

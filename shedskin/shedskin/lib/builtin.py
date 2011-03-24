@@ -304,9 +304,9 @@ class str_(pyseq):
     def splitlines(self, c=0):
         return ['']
     def partition(self, sep):
-        return ['','','']
+        return ('',)
     def rpartition(self, sep):
-        return ['','','']
+        return ('',)
     def rsplit(self, sep='', c=-1):
         return ['']
     def split(self, sep='',c=-1):
@@ -456,8 +456,12 @@ class dict(pyiter):
         return self.value
     def popitem(self):
         return (self.unit, self.value)
+
     def update(self, d):
         self.__setunit__(d.unit, d.value)
+    def updateiter(self, other):
+        item = iter(other).next()
+        self.__setunit__(item[0], item[1])
 
     def __delete__(self, k):
         self.__key__(k)
@@ -622,6 +626,7 @@ class KeyboardInterrupt(BaseException): pass
 class SystemExit(BaseException): pass
 
 __exception = OSError('') # XXX remove
+__exception = IOError('') 
 __exception.errno = 0
 __exception.filename = ''
 __exception.message = ''
@@ -813,6 +818,8 @@ class __iter(pyiter):
         return self
     def __len__(self): # xrange and such
         return 1
+    def __getitem__(self, i): # modeling shortcut
+        return self.unit
 
 def iter(a):
     return a.__iter__()

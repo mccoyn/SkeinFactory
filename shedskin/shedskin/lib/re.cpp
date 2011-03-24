@@ -28,10 +28,10 @@ tuple2<str *, str *> *match_object::group(__ss_int n, __ss_int m, __ss_int o, ..
     tuple2<str *, str *> *t = new tuple2<str *, str *>();
     va_list ap;
     va_start(ap, o);
-    t->append(group(1, m));
-    t->append(group(1, o));
+    t->units.push_back(group(1, m));
+    t->units.push_back(group(1, o));
     for(__ss_int i=0; i<n-2; i++)
-        t->append(group(1, va_arg(ap, __ss_int)));
+        t->units.push_back(group(1, va_arg(ap, __ss_int)));
     va_end(ap);
     return t;
 }
@@ -40,10 +40,10 @@ tuple2<str *, str *> *match_object::group(__ss_int n, str *m, str *o, ...) {
     tuple2<str *, str *> *t = new tuple2<str *, str *>();
     va_list ap;
     va_start(ap, o);
-    t->append(group(1, m));
-    t->append(group(1, o));
+    t->units.push_back(group(1, m));
+    t->units.push_back(group(1, o));
     for(__ss_int i=0; i<n-2; i++)
-        t->append(group(1, va_arg(ap, str *)));
+        t->units.push_back(group(1, va_arg(ap, str *)));
     va_end(ap);
     return t;
 }
@@ -109,13 +109,13 @@ tuple2<str *, str *> *match_object::groups(str *defval)
 dict<str *, str *> *match_object::groupdict(str *defval)
 {
     dict<str *, str *> *r;
-    str *k;
     int t;
-    __iter<str *> *__tk;
-
     r = new dict<str *, str *>();
-
-    FOR_IN(k, re->groupindex, tk)
+    str *k;
+    dict<str *, __ss_int>::for_in_loop __3;
+    int __2;
+    dict<str *, __ss_int> *__1;
+    FOR_IN_NEW(k,re->groupindex,1,2,3)
         t = re->groupindex->__getitem__(k);
 
         if(captured[t * 2] != -1) r->__setitem__(new str(k->unit),
@@ -303,14 +303,17 @@ str *re_object::sub(str *repl, str *subj, __ss_int maxn)
 
 str *re_object::sub(replfunc func, str *string, __ss_int maxn) {
     list<str *> *l;
-    __re__::match_object *match;
-    __iter<__re__::match_object *> *__1;
     int at;
 
     at = 0;
     l = (new list<str *>());
 
-    FOR_IN(match,finditer(string),1)
+    __re__::match_object *match;
+    __iter<__re__::match_object *>::for_in_loop __3;
+    int __2;
+    __iter<__re__::match_object *> *__1;
+
+    FOR_IN_NEW(match,finditer(string),1,2,3)
         l->append(string->__slice__(3, at, match->start(), 0));
         l->append(func(match));
         at = match->end();
@@ -454,9 +457,8 @@ match_object *re_object::__exec(str *subj, __ss_int pos, __ss_int endpos, __ss_i
 {
     match_object *mobj;
     int *captured, clen, r, t, mx_i, nendpos;
-    str *k, *mx_s;
+    str *mx_s;
     mx_s = NULL;
-    __iter<str *> *__tk;
 
     //allocate captured array
     clen = (capture_count + 1) * 2 * 3;
@@ -496,7 +498,12 @@ match_object *re_object::__exec(str *subj, __ss_int pos, __ss_int endpos, __ss_i
 
     //find lastgroup
     mx_i = -1;
-    FOR_IN(k, groupindex, tk)
+
+    str *k;
+    dict<str *, __ss_int>::for_in_loop __3;
+    int __2;
+    dict<str *, __ss_int> *__1;
+    FOR_IN_NEW(k,groupindex,1,2,3)
         t = groupindex->__getitem__(k);
         if(captured[t * 2] != -1 && t > mx_i)
         {

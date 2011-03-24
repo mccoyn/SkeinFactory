@@ -72,7 +72,6 @@ template <class T, class U> class __dictiterkeys;
 template <class T, class U> class __dictitervalues;
 template <class T, class U> class __dictiteritems;
 class __fileiter;
-class __striter;
 class __xrange;
 class __rangeiter;
 
@@ -127,11 +126,14 @@ public:
     virtual __ss_int __int__();
 
     virtual __ss_bool __nonzero__();
+
+    static const bool is_pyseq = false;
 };
 
 template <class T> class pyiter : public pyobj {
 public:
     virtual __iter<T> *__iter__() = 0;
+    virtual __ss_bool __contains__(T t);
 
     typedef T for_in_unit;
     typedef __iter<T> * for_in_loop;
@@ -143,19 +145,11 @@ public:
 
 template <class T> class pyseq : public pyiter<T> {
 public:
-    __GC_VECTOR(T) units;
-
-    virtual __ss_int __len__();
-    virtual T __getitem__(__ss_int i);
-    virtual void *append(T t);
-    virtual void slice(__ss_int x, __ss_int l, __ss_int u, __ss_int s, pyseq<T> *c);
+    virtual __ss_int __len__() = 0;
+    virtual T __getitem__(__ss_int i) = 0;
     virtual __ss_int __cmp__(pyobj *p);
-    virtual __ss_bool __contains__(T t) = 0;
-    void resize(int n);
 
-    /* iteration */
-
-    __iter<T> *__iter__();
+    virtual __iter<T> *__iter__();
 
     typedef T for_in_unit;
     typedef int for_in_loop;
@@ -163,11 +157,22 @@ public:
     inline int for_in_init();
     inline bool for_in_has_next(int i);
     inline T for_in_next(int &i);
+
+    static const bool is_pyseq = true;
+};
+
+template <class R, class A> class pycall1 : public pyobj {
+public:
+    virtual R __call__(A a) = 0;
+};
+template <class R, class A, class B> class pycall2 : public pyobj {
+public:
+    virtual R __call__(A a, B b) = 0;
 };
 
 template <class T> class list : public pyseq<T> {
 public:
-    using pyseq<T>::units;
+    __GC_VECTOR(T) units;
 
     list();
     list(int count, ...);
@@ -207,12 +212,18 @@ public:
     str *__repr__();
     __ss_bool __eq__(pyobj *l);
 
+    void resize(__ss_int i); /* XXX remove */
+
     inline T __getfast__(__ss_int i);
+    inline T __getitem__(__ss_int i);
+    inline __ss_int __len__();
 
     T pop();
     T pop(int m);
     void *remove(T e);
     void *insert(int m, T e);
+
+    void *append(T a);
 
     void *reverse();
     template<class U> void *sort(__ss_int (*cmp)(T, T), U (*key)(T), __ss_int reverse);
@@ -233,7 +244,7 @@ public:
 #endif
 };
 
-template<class A, class B> class tuple2 : public pyseq<A> {
+template<class A, class B> class tuple2 : public pyobj {
 public:
     A first;
     B second;
@@ -246,10 +257,6 @@ public:
     B __getsecond__();
 
     str *__repr__();
-
-    __ss_bool __contains__(A a);
-    __ss_bool __contains__(B b);
-
     __ss_int __len__();
 
     __ss_bool __eq__(tuple2<A,B> *b);
@@ -267,7 +274,7 @@ public:
 
 template<class T> class tuple2<T,T> : public pyseq<T> {
 public:
-    using pyseq<T>::units;
+    __GC_VECTOR(T) units;
 
     tuple2();
     tuple2(int count, ...);
@@ -282,6 +289,9 @@ public:
     T __getsecond__();
 
     inline T __getfast__(__ss_int i);
+    inline T __getitem__(__ss_int i);
+
+    inline __ss_int __len__();
 
     str *__repr__();
 
@@ -315,6 +325,7 @@ public:
 class str : public pyseq<str *> {
 public:
     __GC_STRING unit;
+    bool charcache;
     long hash;
 
     str();
@@ -398,8 +409,6 @@ public:
 
     __ss_int __int__(); /* XXX compilation warning for int(pyseq<str *> *) */
 
-    __iter<str *> *__iter__();
-
     str *__iadd__(str *b);
     str *__imul__(__ss_int n);
 
@@ -428,7 +437,6 @@ static void __throw_dict_changed();
 
 template <class K, class V> class dict : public pyiter<K> {
 public:
-
 	int fill;
     int used;
     int mask;
@@ -460,6 +468,7 @@ public:
     V get(K k, V v);
     V pop(K k);
     tuple2<K, V> *popitem();
+    template <class U> void *update(U *other);
     void *update(dict<K, V> *e);
 
     __ss_bool __gt__(dict<K,V> *s);
@@ -645,7 +654,7 @@ public:
 
     str *name;
     str *mode;
-    int closed;
+    __ss_int closed;
 
     bool universal_mode;
     bool cr;
@@ -658,7 +667,7 @@ public:
     str *readline(int n=-1);
     list<str *> *readlines();
     void *write(str *s);
-    void *writelines(pyseq<str *> *p);
+    template<class U> void *writelines(U *iter);
     void *flush();
     int __ss_fileno();
 
@@ -669,7 +678,7 @@ public:
     virtual void *seek(__ss_int i, __ss_int w=0);
     virtual void *close();
 
-    int tell();
+    __ss_int tell();
 
     void __enter__();
     void __exit__();
@@ -792,18 +801,8 @@ public:
     bool __stop_iteration;
 
     __iter<T> *__iter__();
-
-    virtual T next();  /* subclasses must implement 'next' or '__get_next' */
+    virtual T next(); /* __get_next can be overloaded to avoid (slow) exception handling */
     virtual T __get_next();
-
-    inline __iter<T> *for_in_init();
-    inline bool for_in_has_next(__iter<T> *iter);
-    inline T for_in_next(__iter<T> *iter);
-
-    /* deprecated, used by FOR_IN */
-
-    int for_has_next();
-    T for_get_next();
 
     str *__repr__();
 };
@@ -840,19 +839,11 @@ public:
 template <class T> class __seqiter : public __iter<T> {
 public:
     unsigned int counter;
+    int size;
     pyseq<T> *p;
     __seqiter<T>();
     __seqiter<T>(pyseq<T> *p);
     T next();
-};
-
-class __striter : public __seqiter<str *> {
-public:
-    int counter, size;
-    str *p;
-
-    __striter(str *p);
-    str *next();
 };
 
 template <class K, class V> class __dictiterkeys : public __iter<K> {
@@ -985,7 +976,10 @@ template<class A, class B> str *__modtuple(str *fmt, tuple2<A,B> *t);
 void __init();
 void __start(void (*initfunc)());
 void __ss_exit(int code=0);
-void slicenr(__ss_int x, __ss_int &l, __ss_int &u, __ss_int &s, __ss_int len);
+
+/* slicing */
+
+static void inline slicenr(__ss_int x, __ss_int &l, __ss_int &u, __ss_int &s, __ss_int len);
 
 /* hashing */
 
@@ -1305,7 +1299,15 @@ public:
 
 class IOError : public StandardError {
 public:
-    IOError(str *msg=0) : StandardError(msg) {}
+    int __ss_errno;
+    str *filename;
+    str *message;
+    str *strerror;
+
+    IOError(str *msg=0);
+    str *__str__();
+    str *__repr__();
+
 #ifdef __SS_BIND
     PyObject *__to_py__() { return PyExc_IOError; }
 #endif
@@ -1419,7 +1421,11 @@ public:
 #endif
 };
 
+#ifndef __SS_NOASSERT
 #define ASSERT(x, y) if(!(x)) throw new AssertionError(y);
+#else
+#define ASSERT(x, y)
+#endif
 
 static void __throw_index_out_of_range() { /* improve inlining */
    throw new IndexError(new str("index out of range"));
@@ -1432,6 +1438,9 @@ static void __throw_set_changed() {
 }
 static void __throw_dict_changed() {
     throw new RuntimeError(new str("dict changed size during iteration"));
+}
+static void __throw_slice_step_zero() {
+    throw new ValueError(new str("slice step cannot be zero"));
 }
 static void __throw_stop_iteration() {
     throw new StopIteration();
@@ -1467,20 +1476,9 @@ static void __throw_stop_iteration() {
     for(__ ## n = 0; (unsigned int)__ ## n < (__ ## temp)->units.size(); __ ## n ++) { \
         i = (__ ## temp)->units[__ ## n]; \
 
-#define FOR_IN_T2(i, m, obj, n) \
-    __ ## obj = m; \
-    for(__ ## n = 0; __ ## n < 2; __ ## n ++) { \
-        if (! __ ## n) i = (__ ## obj)->__getfirst__(); \
-        else i = (__ ## obj)->__getsecond__(); \
-
 #define END_FOR }
 
 /* deprecated by FOR_IN_NEW */
-
-#define FOR_IN(i, m, temp) \
-    __ ## temp = ___iter(m); \
-    while((__ ## temp)->for_has_next()) { \
-        i = (__ ## temp)->for_get_next(); \
 
 #define FOR_IN_SEQ(i, m, temp, n) \
     __ ## temp = m; \
@@ -1633,6 +1631,15 @@ template<class T> inline __ss_bool __eq(T a, T b) { return ((a&&b)?(a->__eq__(b)
 #ifdef __SS_LONG /* XXX */
 template<> inline __ss_bool __eq(__ss_int a, __ss_int b) { return __mbool(a == b); }
 #endif
+template<> inline __ss_bool __eq(str *a, str *b) {
+    if(a&&b) {
+        if (a->charcache && b->charcache) 
+            return __mbool(a==b);
+        else
+            return __mbool(a->__eq__(b));
+    } else
+        return __mbool(a==b);
+}
 template<> inline __ss_bool __eq(int a, int b) { return __mbool(a == b); }
 template<> inline __ss_bool __eq(__ss_bool a, __ss_bool b) { return __mbool(a == b); }
 template<> inline __ss_bool __eq(double a, double b) { return __mbool(a == b); }
@@ -1758,62 +1765,39 @@ template<class T> inline __iter<T> *pyiter<T>::for_in_init() {
 }
 
 template<class T> inline bool pyiter<T>::for_in_has_next(__iter<T> *iter) {
-    return iter->for_has_next(); /* XXX opt end cond */
+    iter->__result = iter->__get_next();
+    return not iter->__stop_iteration;
 }
 
 template<class T> inline T pyiter<T>::for_in_next(__iter<T> *iter) {
-    return iter->for_get_next();
+    return iter->__result;
+}
+
+template<class T> inline __ss_bool pyiter<T>::__contains__(T t) {
+    T e;
+    pyiter<T>::for_in_loop __3;
+    int __2;
+    pyiter<T> *__1;
+    FOR_IN_NEW(e,this,1,2,3)
+        if(__eq(e,t))
+            return __mbool(true);
+    END_FOR 
+    return __mbool(false);
 }
 
 /* pyseq methods */
-
-template<class T> __ss_int pyseq<T>::__len__() {
-    return units.size();
-}
-
-template<class T> T pyseq<T>::__getitem__(__ss_int i) {
-    i = __wrap(this, i);
-    return units[i];
-}
-
-template<class T> void *pyseq<T>::append(T t) {
-    units.push_back(t);
-    return NULL;
-}
-
-template<class T> void pyseq<T>::slice(__ss_int x, __ss_int l, __ss_int u, __ss_int s, pyseq<T> *c) {
-    slicenr(x, l, u, s, __len__());
-    if(s == 1) {
-        c->units.resize(u-l);
-        memcpy(&(c->units[0]), &(this->units[l]), sizeof(T)*(u-l));
-    } else if(s > 0)
-        for(int i=l; i<u; i += s)
-            c->append(units[i]);
-    else
-        for(int i=l; i>u; i += s)
-            c->append(units[i]);
-}
 
 template<class T> __ss_int pyseq<T>::__cmp__(pyobj *p) {
     if (!p) return 1;
     pyseq<T> *b = (pyseq<T> *)p;
     int i, cmp;
     int mnm = ___min(2, 0, this->__len__(), b->__len__());
-
     for(i = 0; i < mnm; i++) {
-        cmp = __cmp(this->units[i], b->units[i]);
+        cmp = __cmp(this->__getitem__(i), b->__getitem__(i));
         if(cmp)
             return cmp;
     }
     return __cmp(this->__len__(), b->__len__());
-}
-
-template<class T> __ss_bool pyseq<T>::__contains__(T t) {
-    return __mbool(false);
-}
-
-template<class T> void pyseq<T>::resize(int n) {
-    units.resize(n);
 }
 
 template<class T> __iter<T> *pyseq<T>::__iter__() {
@@ -1872,12 +1856,16 @@ template<class K, class V> dict<K, V>::dict(int count, ...)  {
     va_end(ap);
 }
 
-template<class K, class V> static inline void __add_to_dict(dict<K, V> *d, tuple2<K, V> *t) {
-    d->__setitem__(t->__getfirst__(), t->__getsecond__());
+template<class K, class V, class U> static inline void __add_to_dict(dict<K, V> *d, U *iter) {
+    __iter<typename U::for_in_unit> *it = ___iter(iter);
+    typename U::for_in_unit a, b;
+    a = it->next();
+    b = it->next();
+    d->__setitem__(a, b);
 }
 
-template<class K, class V> static inline void __add_to_dict(dict<K, V> *d, pyseq<K> *t) {
-    d->__setitem__(t->__getitem__(0), t->__getitem__(1));
+template<class K, class V> static inline void __add_to_dict(dict<K, V> *d, tuple2<K, V> *t) {
+    d->__setitem__(t->__getfirst__(), t->__getsecond__());
 }
 
 template<class K, class V> template<class U> dict<K, V>::dict(U *other) {
@@ -1905,6 +1893,7 @@ template<class K, class V> dict<K, V>::dict(PyObject *p) {
         throw new TypeError(new str("error in conversion to Shed Skin (dictionary expected)"));
 
     this->__class__ = cl_dict;
+    EMPTY_TO_MINSIZE(this);
     PyObject *key, *value;
 
     PyObject *iter = PyObject_GetIter(p);
@@ -1920,8 +1909,13 @@ template<class K, class V> PyObject *dict<K, V>::__to_py__() {
    PyObject *p = PyDict_New();
    int pos = 0;
    dictentry<K,V> *entry;
-   while(next(&pos, &entry))
-       PyDict_SetItem(p, __to_py(entry->key), __to_py(entry->value));
+   while(next(&pos, &entry)) {
+       PyObject *pkey = __to_py(entry->key);
+       PyObject *pvalue = __to_py(entry->value);
+       PyDict_SetItem(p, pkey, pvalue);
+       Py_DECREF(pkey);
+       Py_DECREF(pvalue);
+   }
    return p;
 }
 #endif
@@ -2459,6 +2453,17 @@ template <class K, class V> void *dict<K,V>::update(dict<K,V>* other)
     return NULL;
 }
 
+template <class K, class V> template<class U> void *dict<K,V>::update(U *iter) {
+    typename U::for_in_unit e;
+    typename U::for_in_loop __3;
+    int __2;
+    U *__1;
+    FOR_IN_NEW(e,iter,1,2,3)
+		__setitem__(e->__getitem__(0), e->__getitem__(1));
+    END_FOR
+    return NULL;
+}
+
 template<class K, class V> dict<K,V> *dict<K,V>::copy() {
     dict<K,V> *c = new dict<K,V>;
     *c = *this;
@@ -2474,16 +2479,15 @@ template<class K, class V> dict<K,V> *dict<K,V>::__copy__() {
 template<class K, class V> dict<K,V> *dict<K,V>::__deepcopy__(dict<void *, pyobj *> *memo) {
     dict<K,V> *c = new dict<K,V>();
     memo->__setitem__(this, c);
-
     K e;
-    __iter<K> *__0;
-    FOR_IN(e, this, 0)
+    dict<K,V>::for_in_loop __3;
+    int __2;
+    dict<K,V> *__1;
+    FOR_IN_NEW(e,this,1,2,3)
         c->__setitem__(__deepcopy(e, memo), __deepcopy(this->__getitem__(e), memo));
     END_FOR
     return c;
 }
-
-
 
 /* list methods */
 
@@ -2528,7 +2532,7 @@ template<class T> list<T>::list(str *s) {
     this->units.resize(len(s));
     int sz = s->unit.size();
     for(int i=0; i<sz; i++)
-        this->units[i] = __char_cache[s->unit[i]];
+        this->units[i] = __char_cache[((unsigned char)(s->unit[i]))];
 }
 
 #ifdef __SS_BIND
@@ -2555,6 +2559,19 @@ template<class T> void list<T>::clear() {
     units.resize(0);
 }
 
+template<class T> void list<T>::resize(__ss_int i) {
+    units.resize(i);
+}
+
+template<class T> __ss_int list<T>::__len__() {
+    return units.size();
+}
+
+template<class T> T list<T>::__getitem__(__ss_int i) {
+    i = __wrap(this, i);
+    return units[i];
+}
+
 template<class T> __ss_bool list<T>::__eq__(pyobj *p) {
    list<T> *b = (list<T> *)p;
    unsigned int len = this->units.size();
@@ -2563,6 +2580,11 @@ template<class T> __ss_bool list<T>::__eq__(pyobj *p) {
        if(!__eq(this->units[i], b->units[i]))
            return False;
    return True;
+}
+
+template<class T> void *list<T>::append(T a) {
+    this->units.push_back(a);
+    return NULL;
 }
 
 template<class T> template<class U> void *list<T>::extend(U *iter) {
@@ -2594,7 +2616,7 @@ template<class T> void *list<T>::extend(tuple2<T,T> *p) {
 template<class T> void *list<T>::extend(str *s) {
     int sz = s->unit.size();
     for(int i=0; i<sz; i++)
-        this->units.push_back(__char_cache[s->unit[i]]);
+        this->units.push_back(__char_cache[((unsigned char)(s->unit[i]))]);
     return NULL;
 }
 
@@ -2621,15 +2643,26 @@ template<class T> int list<T>::empty() {
 
 template<class T> list<T> *list<T>::__slice__(__ss_int x, __ss_int l, __ss_int u, __ss_int s) {
     list<T> *c = new list<T>();
-    this->slice(x, l, u, s, c);
+    slicenr(x, l, u, s, this->__len__());
+    if(s == 1) {
+        c->units.resize(u-l);
+        memcpy(&(c->units[0]), &(this->units[l]), sizeof(T)*(u-l));
+    } else if(s > 0)
+        for(int i=l; i<u; i += s)
+            c->units.push_back(units[i]);
+    else
+        for(int i=l; i>u; i += s)
+            c->units.push_back(units[i]);
     return c;
 }
 
 template<class T> void *list<T>::__setslice__(__ss_int x, __ss_int l, __ss_int u, __ss_int s, pyiter<T> *b) {
-    T e;
     list<T> *la = new list<T>(); /* XXX avoid intermediate list */
-    __iter<T> *__0;
-    FOR_IN(e, b, 0)
+    typename pyiter<T>::for_in_unit e;
+    typename pyiter<T>::for_in_loop __3;
+    int __2;
+    pyiter<T> *__1;
+    FOR_IN_NEW(e,b,1,2,3)
         la->units.push_back(e);
     END_FOR
     this->__setslice__(x, l, u, s, la);
@@ -2800,10 +2833,16 @@ template<class T> str *list<T>::__repr__() {
     return r;
 }
 
-template<class T> T list<T>::pop(int m) {
-    if (m<0) m = this->__len__()+m;
-    T e = units[m];
-    units.erase(units.begin()+m);
+template<class T> T list<T>::pop(int i) {
+    int len = this->__len__();
+    if(len==0)
+        throw new IndexError(new str("pop from empty list"));
+    if(i<0) 
+        i = len+i;
+    if(i<0 or i>=len)
+        throw new IndexError(new str("pop index out of range"));
+    T e = units[i];
+    units.erase(units.begin()+i);
     return e;
 }
 template<class T> T list<T>::pop() {
@@ -2848,7 +2887,10 @@ template<class T> void *list<T>::sort(__ss_int, __ss_int, __ss_int reverse) {
 }
 
 template<class T> void *list<T>::insert(int m, T e) {
-    if (m<0) m = this->__len__()+m;
+    int len = this->__len__();
+    if (m<0) m = len+m;
+    if (m<0) m = 0;
+    if (m>=len) m = len;
     units.insert(units.begin()+m, e);
     return NULL;
 }
@@ -2859,7 +2901,7 @@ template<class T> void *list<T>::remove(T e) {
             units.erase(units.begin()+i);
             return NULL;
         }
-    return NULL;
+    throw new ValueError(new str("list.remove(x): x not in list"));
 }
 
 template<class T> inline bool list<T>::for_in_has_next(int i) {
@@ -2874,12 +2916,12 @@ template<class T> inline T list<T>::for_in_next(int &i) {
 
 inline str *str::__getitem__(__ss_int i) {
     i = __wrap(this, i);
-    return __char_cache[(unsigned char)unit[i]];
+    return __char_cache[((unsigned char)(unit[i]))];
 }
 
 inline str *str::__getfast__(__ss_int i) {
     i = __wrap(this, i);
-    return __char_cache[(unsigned char)unit[i]];
+    return __char_cache[((unsigned char)(unit[i]))];
 }
 
 inline __ss_int str::__len__() {
@@ -2891,7 +2933,7 @@ inline bool str::for_in_has_next(int i) {
 }
 
 inline str *str::for_in_next(int &i) {
-    return __char_cache[unit[i++]];
+    return __char_cache[((unsigned char)(unit[i++]))];
 }
 
 template <class U> str *str::join(U *iter) {
@@ -2915,9 +2957,12 @@ template <class U> str *str::join(U *iter) {
 
 /* __iter methods */
 
-template<class T> __iter<T> *__iter<T>::__iter__() { __stop_iteration = false; return this; }
+template<class T> __iter<T> *__iter<T>::__iter__() { 
+    __stop_iteration = false; 
+    return this; 
+}
 
-template<class T> T __iter<T>::next() { /* subclasses must implement 'next' or '__get_next' */
+template<class T> T __iter<T>::next() { /* __get_next can be overloaded instead to avoid (slow) exception handling */
     __result = this->__get_next();
     if(__stop_iteration)
         throw new StopIteration();
@@ -2930,31 +2975,6 @@ template<class T> T __iter<T>::__get_next() {
     } catch (StopIteration *) {
         __stop_iteration = true;
     }
-    return __result;
-}
-
-template<class T> inline __iter<T> *__iter<T>::for_in_init() {
-    __stop_iteration = false;
-    return this;
-}
-
-template<class T> inline bool __iter<T>::for_in_has_next(__iter<T> *iter) {
-     iter->__result = iter->__get_next();
-     return not iter->__stop_iteration;
-}
-
-template<class T> inline T __iter<T>::for_in_next(__iter<T> *iter) {
-     return iter->__result;
-}
-
-/* deprecated, used by FOR_IN */
-
-template<class T> int __iter<T>::for_has_next() {
-    __result = this->__get_next();
-    return not this->__stop_iteration;
-}
-
-template<class T> T __iter<T>::for_get_next() {
     return __result;
 }
 
@@ -2994,10 +3014,14 @@ template<class T> set<T>::set(PyObject *p) {
 
 template<class T> PyObject *set<T>::__to_py__() {
     list<T> *l = new list<T>(this); /* XXX optimize */
+    PyObject *s;
+    PyObject *p = __to_py(l);
     if(frozen)
-        return PyFrozenSet_New(__to_py(l));
+        s = PyFrozenSet_New(p);
     else
-        return PySet_New(__to_py(l));
+        s = PySet_New(p);
+    Py_DECREF(p);
+    return s;
 }
 
 #endif
@@ -3160,7 +3184,6 @@ template <class T> void *set<T>::add(T key)
 {
     long hash = hasher<T>(key);
     int n_used = used;
-
     insert_key(key, hash);
     if ((used > n_used && fill*3 >= (mask+1)*2))
         resize(used>50000 ? used*2 : used*4);
@@ -3602,9 +3625,11 @@ template<class T> set<T> *set<T>::copy() {
 
 template<class T> __ss_bool set<T>::issubset(set<T> *s) {
     if(__len__() > s->__len__()) { return False; }
-    T e;
-    __iter<T> *__0;
-    FOR_IN(e, this, 0)
+    typename set<T>::for_in_unit e;
+    typename set<T>::for_in_loop __3;
+    int __2;
+    set<T> *__1;
+    FOR_IN_NEW(e,this,1,2,3)
         if(!s->__contains__(e))
             return False;
     END_FOR
@@ -3613,9 +3638,11 @@ template<class T> __ss_bool set<T>::issubset(set<T> *s) {
 
 template<class T> __ss_bool set<T>::issuperset(set<T> *s) {
     if(__len__() < s->__len__()) return False;
-    T e;
-    __iter<T> *__0;
-    FOR_IN(e, s, 0)
+    typename set<T>::for_in_unit e;
+    typename set<T>::for_in_loop __3;
+    int __2;
+    set<T> *__1;
+    FOR_IN_NEW(e,s,1,2,3)
         if(!__contains__(e))
             return False;
     END_FOR
@@ -3639,10 +3666,11 @@ template<class T> set<T> *set<T>::__copy__() {
 template<class T> set<T> *set<T>::__deepcopy__(dict<void *, pyobj *> *memo) {
     set<T> *c = new set<T>();
     memo->__setitem__(this, c);
-
-    T e;
-    __iter<T> *__0;
-    FOR_IN(e, this, 0)
+    typename set<T>::for_in_unit e;
+    typename set<T>::for_in_loop __3;
+    int __2;
+    set<T> *__1;
+    FOR_IN_NEW(e,this,1,2,3)
         c->add(__deepcopy(e, memo));
     END_FOR
     return c;
@@ -3667,9 +3695,8 @@ template<class T> T __setiter<T>::next() {
 /* tuple2 methods */
 
 template<class T> void tuple2<T, T>::__init2__(T a, T b) {
-    units.resize(2);
-    units[0] = a;
-    units[1] = b;
+    units.push_back(a);
+    units.push_back(b);
 }
 
 template<class T> tuple2<T, T>::tuple2() {
@@ -3713,7 +3740,7 @@ template<class T> tuple2<T, T>::tuple2(str *s) {
     this->units.resize(len(s));
     int sz = s->unit.size();
     for(int i=0; i<sz; i++)
-        this->units[i] = __char_cache[s->unit[i]];
+        this->units[i] = __char_cache[((unsigned char)(s->unit[i]))];
 }
 
 template<class T> T tuple2<T, T>::__getfirst__() {
@@ -3725,6 +3752,15 @@ template<class T> T tuple2<T, T>::__getsecond__() {
 template<class T> inline T tuple2<T, T>::__getfast__(__ss_int i) {
     i = __wrap(this, i);
     return this->units[i];
+}
+
+template<class T> __ss_int tuple2<T, T>::__len__() {
+    return units.size();
+}
+
+template<class T> T tuple2<T, T>::__getitem__(__ss_int i) {
+    i = __wrap(this, i);
+    return units[i];
 }
 
 template<class T> str *tuple2<T, T>::__repr__() {
@@ -3789,7 +3825,16 @@ template<class T> __ss_bool tuple2<T, T>::__eq__(pyobj *p) {
 
 template<class T> tuple2<T,T> *tuple2<T, T>::__slice__(__ss_int x, __ss_int l, __ss_int u, __ss_int s) {
     tuple2<T,T> *c = new tuple2<T,T>();
-    this->slice(x, l, u, s, c);
+    slicenr(x, l, u, s, this->__len__());
+    if(s == 1) {
+        c->units.resize(u-l);
+        memcpy(&(c->units[0]), &(this->units[l]), sizeof(T)*(u-l));
+    } else if(s > 0)
+        for(int i=l; i<u; i += s)
+            c->units.push_back(units[i]);
+    else
+        for(int i=l; i>u; i += s)
+            c->units.push_back(units[i]);
     return c;
 }
 
@@ -3832,7 +3877,7 @@ template<class T> tuple2<T, T>::tuple2(PyObject *p) {
     this->__class__ = cl_tuple;
     int size = PyTuple_Size(p);
     for(int i=0; i<size; i++)
-        append(__to_ss<T>(PyTuple_GetItem(p, i)));
+        this->units.push_back(__to_ss<T>(PyTuple_GetItem(p, i)));
 }
 
 template<class T> PyObject *tuple2<T, T>::__to_py__() {
@@ -3866,14 +3911,6 @@ template<class A, class B> A tuple2<A, B>::__getfirst__() {
 }
 template<class A, class B> B tuple2<A, B>::__getsecond__() {
     return second;
-}
-
-template<class A, class B> __ss_bool tuple2<A, B>::__contains__(A a) {
-    return __mbool(__eq(first, a));
-}
-
-template<class A, class B> __ss_bool tuple2<A, B>::__contains__(B b) {
-    return __mbool(__eq(second, b));
 }
 
 template<class A, class B> __ss_int tuple2<A, B>::__len__() {
@@ -3958,13 +3995,14 @@ template<class T> str *__iter<T>::__repr__() {
 template<class T> __seqiter<T>::__seqiter() {}
 template<class T> __seqiter<T>::__seqiter(pyseq<T> *p) {
     this->p = p;
+    size = p->__len__();
     counter = 0;
 }
 
 template<class T> T __seqiter<T>::next() {
-    if(counter==p->units.size())
+    if(counter==size)
         __throw_stop_iteration();
-    return p->units[counter++];
+    return p->__getitem__(counter++);
 }
 
 template<class K, class V> __dictiterkeys<K, V>::__dictiterkeys(dict<K,V> *p) {
@@ -4052,12 +4090,15 @@ template <class U, class B> typename __sumtype2<typename U::for_in_unit,B>::type
 
 /* max */
 
-template<class T, class B> T ___max(int, B (*key)(T), pyiter<T> *a) {
-    T e, max = 0;
+template<class A, class B> typename A::for_in_unit ___max(int, B (*key)(typename A::for_in_unit), A *iter) {
+    typename A::for_in_unit max;
     B maxkey, maxkey2;
     int first = 1;
-    __iter<T> *__0;
-    FOR_IN(e, a, 0)
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3;
+    int __2;
+    A *__1;
+    FOR_IN_NEW(e,iter,1,2,3)
         if(key) {
             maxkey2 = key(e);
             if(first || __cmp(maxkey2, maxkey) == 1) {
@@ -4073,33 +4114,33 @@ template<class T, class B> T ___max(int, B (*key)(T), pyiter<T> *a) {
         throw new ValueError(new str("max() arg is an empty sequence"));
     return max;
 }
-template<class T> T ___max(int nn, int, pyiter<T> *a) { return ___max(nn, (int (*)(T))0, a); } /* XXX */
 
-template<class T, class B> T ___max(int, B (*key)(T), pyseq<T> *l) {
-    int len = l->units.size();
-    int i;
-    if(len==0)
-        throw new ValueError(new str("maximum of empty sequence"));
-    T m = l->units[0];
+/* XXX copy-pasto */
+template<class A, class B> typename A::for_in_unit ___max(int, pycall1<B, typename A::for_in_unit> *key, A *iter) {
+    typename A::for_in_unit max;
     B maxkey, maxkey2;
-    if(key)
-        maxkey = key(m);
-    for(i=1; i<len; i++) {
-        T elem = l->units[i];
+    int first = 1;
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3;
+    int __2;
+    A *__1;
+    FOR_IN_NEW(e,iter,1,2,3)
         if(key) {
-            maxkey2 = key(elem);
-            if(__cmp(maxkey2, maxkey) == 1) {
-                m = elem;
+            maxkey2 = key->__call__(e);
+            if(first || __cmp(maxkey2, maxkey) == 1) {
+                max = e;
                 maxkey = maxkey2;
             }
-        } else if(__cmp(elem,m) == 1)
-            m = elem;
-    }
-    return m;
+        } else if(first || __cmp(e, max) == 1)
+            max = e;
+        if(first)
+            first = 0;
+    END_FOR
+    if(first)
+        throw new ValueError(new str("max() arg is an empty sequence"));
+    return max;
 }
-template<class T> T ___max(int nn, int, pyseq<T> *a) { return ___max(nn, (int (*)(T))0, a); } /* XXX */
-template<class B> str *___max(int nn, B (*key)(str *), str *l) { return ___max(nn, key, (pyiter<str *> *)l); }
-inline str *___max(int nn, int key, str *l) { return ___max(nn, key, (pyiter<str *> *)l); }
+template<class A> typename A::for_in_unit ___max(int nn, int, A *iter) { return ___max(nn, (int (*)(typename A::for_in_unit))0, iter); }
 
 template<class T, class B> inline T ___max(int, B (*key)(T), T a, T b) { return (__cmp(key(a), key(b))==1)?a:b; }
 template<class T> inline  T ___max(int, int, T a, T b) { return (__cmp(a, b)==1)?a:b; }
@@ -4117,7 +4158,7 @@ template<class T, class B> T ___max(int n, B (*key)(T), T a, T b, T c, ...) {
     va_end(ap);
     return m;
 }
-template<class T> T ___max(int n, int key, T a, T b, T c, ...) { /* XXX */
+template<class T> T ___max(int n, int key, T a, T b, T c, ...) {
     T m = ___max(2, key, ___max(2, key, a, b), c);
     va_list ap;
     va_start(ap, c);
@@ -4131,12 +4172,15 @@ template<class T> T ___max(int n, int key, T a, T b, T c, ...) { /* XXX */
 
 /* min */
 
-template<class T, class B> T ___min(int, B (*key)(T), pyiter<T> *a) {
-    T e, min = 0;
+template<class A, class B> typename A::for_in_unit ___min(int, B (*key)(typename A::for_in_unit), A *iter) {
+    typename A::for_in_unit min;
     B minkey, minkey2;
     int first = 1;
-    __iter<T> *__0;
-    FOR_IN(e, a, 0)
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3;
+    int __2;
+    A *__1;
+    FOR_IN_NEW(e,iter,1,2,3)
         if(key) {
             minkey2 = key(e);
             if(first || __cmp(minkey2, minkey) == -1) {
@@ -4152,33 +4196,7 @@ template<class T, class B> T ___min(int, B (*key)(T), pyiter<T> *a) {
         throw new ValueError(new str("min() arg is an empty sequence"));
     return min;
 }
-template<class T> T ___min(int nn, int, pyiter<T> *a) { return ___min(nn, (int (*)(T))0, a); }
-
-template<class T, class B> T ___min(int, B (*key)(T), pyseq<T> *l) {
-    int len = l->units.size();
-    int i;
-    if(len==0)
-        throw new ValueError(new str("minimum of empty sequence"));
-    T m = l->units[0];
-    B minkey, minkey2;
-    if(key)
-        minkey = key(m);
-    for(i=1; i<len; i++) {
-        T elem = l->units[i];
-        if(key) {
-            minkey2 = key(elem);
-            if(__cmp(minkey2, minkey) == -1) {
-                m = elem;
-                minkey = minkey2;
-            }
-        } else if(__cmp(elem, m) == -1)
-            m = elem;
-    }
-    return m;
-}
-template<class T> T ___min(int nn, int, pyseq<T> *a) { return ___min(nn, (int (*)(T))0, a); }
-template<class B> str *___min(int nn, B (*key)(str *), str *l) { return ___min(nn, key, (pyiter<str *> *)l); }
-inline str *___min(int nn, int key, str *l) { return ___min(nn, key, (pyiter<str *> *)l); }
+template<class A> typename A::for_in_unit ___min(int nn, int, A *iter) { return ___min(nn, (int (*)(typename A::for_in_unit))0, iter); }
 
 template<class T, class B> inline T ___min(int, B (*key)(T), T a, T b) { return (__cmp(key(a), key(b))==-1)?a:b; }
 template<class T> inline  T ___min(int, int, T a, T b) { return (__cmp(a, b)==-1)?a:b; }
@@ -4295,103 +4313,76 @@ template <class A> __iter<tuple2<__ss_int, A> *> *enumerate(pyiter<A> *x) {
 
 list<tuple2<void *, void *> *> *__zip(int nn);
 
-template<class A> static inline list<A> *__list_comp_0(list<A> *result, pyiter<A> *a) {
-    A e;
-    result->clear();
-
-    __iter<A> *__0;
-    FOR_IN(e,a,0)
-        result->append(e);
+template <class A> list<tuple2<typename A::for_in_unit, typename A::for_in_unit> *> *__zip(int nn, A *iter) {
+    list<tuple2<typename A::for_in_unit, typename A::for_in_unit> *> *result = (new list<tuple2<typename A::for_in_unit, typename A::for_in_unit> *>());
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3;
+    int __2;
+    A *__1;
+    FOR_IN_NEW(e,iter,1,2,3)
+        result->append((new tuple2<typename A::for_in_unit, typename A::for_in_unit>(1, e)));
     END_FOR
     return result;
 }
 
-template <class A> list<tuple2<A,A> *> *__zip(int nn, pyiter<A> *a) {
-    list<A> la;
-    list<tuple2<A,A> *> *result;
-    __list_comp_0(&la, a);
-    int __1, __2, i;
-    result = (new list<tuple2<A,A> *>());
-
-    FAST_FOR(i,0,len(&la),1,1,2)
-        result->append((new tuple2<A,A>(1, la.units[i])));
-    END_FOR
-    return result;
-}
-
-template <class A, class B> list<tuple2<A, B> *> *__zip(int, pyiter<A> *a, pyiter<B> *b) {
-    list<A> la;
-    list<B> lb;
-    int __1, __2, i;
-    list<tuple2<A, B> *> *result;
-
-    __list_comp_0(&la, a);
-    __list_comp_0(&lb, b);
-    result = (new list<tuple2<A, B> *>());
-
-    FAST_FOR(i,0,___min(2, 0, len(&la), len(&lb)),1,1,2)
-        result->append((new tuple2<A, B>(2, la.units[i], lb.units[i])));
-    END_FOR
-    return result;
-}
-
-template <class A, class B> list<tuple2<A, B> *> *__zip(int, pyseq<A> *a, pyseq<B> *b) {
-    if(a->__class__ == cl_str_ || b->__class__ == cl_str_) /* XXX */
-        return __zip(2, ((pyiter<A> *)((str *)a)), ((pyiter<B> *)((str *)b)));
-    list<tuple2<A, B> *> *result;
-    result = new list<tuple2<A, B> *>();
-
-    int n = ___min(2, 0, len(a), len(b));
-    result->units.reserve(n);
-
-    tuple2<A, B> *v = new tuple2<A, B>[n];
-
-    for(int i=0; i<n; i++) {
-        v[i].__init2__(a->units[i], b->units[i]);
-        result->units.push_back(&v[i]);
+template <class A, class B> list<tuple2<typename A::for_in_unit, typename B::for_in_unit> *> *__zip(int, A *itera, B *iterb) {
+    list<tuple2<typename A::for_in_unit, typename B::for_in_unit> *> *result = (new list<tuple2<typename A::for_in_unit, typename B::for_in_unit> *>());
+    tuple2<typename A::for_in_unit, typename B::for_in_unit> *tuples;
+    int count = -1;
+    if(A::is_pyseq && B::is_pyseq) {
+        count = __SS_MIN(len(itera), len(iterb));
+        tuples = new tuple2<typename A::for_in_unit, typename B::for_in_unit>[count];
+        result->units.resize(count);
     }
-
-    return result;
-}
-
-template <class A> list<tuple2<A,A> *> *__zip(int, pyiter<A> *a, pyiter<A> *b, pyiter<A> *c) {
-    list<int> *__0;
-    list<A> la, lb, lc;
-    int __1, __2, i;
-
-    list<tuple2<A,A> *> *result;
-
-    __list_comp_0(&la, a);
-    __list_comp_0(&lb, b);
-    __list_comp_0(&lc, c);
-
-    result = (new list<tuple2<A,A> *>());
-
-    FAST_FOR(i,0,___min(3, 0, len(&la), len(&lb), len(&lc)),1,1,2)
-        result->append((new tuple2<A,A>(3, la.units[i], lb.units[i], lc.units[i])));
-    END_FOR
-    return result;
-}
-
-template <class A> list<tuple2<A,A> *> *__zip(int, pyseq<A> *a, pyseq<A> *b, pyseq<A> *c) {
-    if(a->__class__ == cl_str_ || b->__class__ == cl_str_ || c->__class__ == cl_str_) /* XXX */
-        return __zip(3, ((pyiter<A> *)((str *)a)), ((pyiter<A> *)((str *)b)), ((pyiter<A> *)((str *)c)));
-    list<tuple2<A, A> *> *result;
-    result = new list<tuple2<A, A> *>();
-
-    int n = ___min(3, 0, len(a), len(b), len(c));
-    result->units.reserve(n);
-
-    tuple2<A, A> *v = new tuple2<A, A>[n];
-
-    for(int i=0; i<n; i++) {
-        v[i].units.resize(3);
-        v[i].units[0] = a->units[i];
-        v[i].units[1] = b->units[i];
-        v[i].units[2] = c->units[i];
-        result->units.push_back(&v[i]);
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3 = itera->for_in_init();
+    typename B::for_in_unit f;
+    typename B::for_in_loop __6 = iterb->for_in_init();
+    int i = 0;
+    while(itera->for_in_has_next(__3) and iterb->for_in_has_next(__6)) {
+        e = itera->for_in_next(__3);
+        f = iterb->for_in_next(__6);
+        if(count == -1)
+            result->append((new tuple2<typename A::for_in_unit, typename B::for_in_unit>(2, e, f)));
+        else {
+            tuples[i].__init2__(e, f);
+            result->units[i] = &tuples[i];
+            i++;
+        }
     }
+    return result;
+}
 
+template <class A, class B, class C> list<tuple2<typename A::for_in_unit, typename A::for_in_unit> *> *__zip(int, A *itera, B *iterb, C *iterc) {
+    list<tuple2<typename A::for_in_unit, typename A::for_in_unit> *> *result = (new list<tuple2<typename A::for_in_unit, typename A::for_in_unit> *>());
+    tuple2<typename A::for_in_unit, typename A::for_in_unit> *tuples;
+    int count = -1;
+    if(A::is_pyseq && B::is_pyseq && C::is_pyseq) {
+        count = __SS_MIN3(len(itera), len(iterb), len(iterc));
+        tuples = new tuple2<typename A::for_in_unit, typename A::for_in_unit>[count];
+        result->units.resize(count);
+    }
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3 = itera->for_in_init();
+    typename B::for_in_unit f;
+    typename B::for_in_loop __6 = iterb->for_in_init();
+    typename C::for_in_unit g;
+    typename C::for_in_loop __7 = iterc->for_in_init();
+    int i = 0;
+    while(itera->for_in_has_next(__3) and iterb->for_in_has_next(__6) and iterc->for_in_has_next(__7)) {
+        e = itera->for_in_next(__3);
+        f = iterb->for_in_next(__6);
+        g = iterc->for_in_next(__7);
+        if(count == -1)
+            result->append((new tuple2<typename A::for_in_unit, typename A::for_in_unit>(3, e, f, g)));
+        else {
+            tuples[i].units.push_back(e);
+            tuples[i].units.push_back(f);
+            tuples[i].units.push_back(g);
+            result->units[i] = &tuples[i];
+            i++;
+        }
+    }
     return result;
 }
 
@@ -4409,16 +4400,26 @@ template <class A> A next(__iter<A> *iter1) { return iter1->next(); }
 
 /* map */
 
-template <class A, class B> list<A> *map(int, A (*func)(B), pyiter<B> *b) {
+template <class A, class B> list<B> *map(int, B (*func)(typename A::for_in_unit), A *iter) {
     if(!func)
         throw new ValueError(new str("'map' function argument cannot be None"));
-    list<A> *result = new list<A>();
-    __iter<B> *itb = b->__iter__();
-    B nextb;
-    while(1) {
-        try { nextb = next(itb); } catch (StopIteration *) { return result; }
-        result->append((*func)(nextb));
+    list<B> *result = new list<B>();
+    int count = -1;
+    if(A::is_pyseq) {
+        count = len(iter);
+        result->units.resize(count);
     }
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3 = iter->for_in_init();
+    int i = 0;
+    while(iter->for_in_has_next(__3)) {
+        e = iter->for_in_next(__3);
+        if(count == -1)
+            result->append((*func)(e));
+        else
+            result->units[i++] = (*func)(e);
+    }
+    return result;
 }
 
 template <class A, class B, class C> list<A> *map(int n, A (*func)(B, C), pyiter<B> *b, pyiter<C> *c) {
@@ -4466,84 +4467,82 @@ template <class A, class B, class C, class D> list<A> *map(int, A (*func)(B, C, 
 
 /* reduce */
 
-template <class A> A reduce(A (*func)(A, A), pyiter<A> *a, A initial) {
-    __iter<A> *ita = a->__iter__();
-    A result = initial;
-    try {
-        while(1)
-            result = (*func)(result, ita->next());
-    } catch(StopIteration *) {
-        return result;
-    }
-}
-
-template <class A> A reduce(A (*func)(A, A), pyiter<A> *a) {
-    __iter<A> *ita = a->__iter__();
-    A result;
-    try {
-        result = ita->next();
-    } catch(StopIteration *) {
-        throw new TypeError(new str("reduce() of empty sequence with no initial value"));
-    }
-    try {
-        while(1)
-            result = (*func)(result, ita->next());
-    } catch(StopIteration *) {
-        return result;
-    }
-}
-
-template <class A> A reduce(A (*func)(A, A), pyseq<A> *a, A initial) {
-    unsigned int len = a->units.size();
-    A result = initial;
-    for(unsigned int i=0; i<len;i++)
-        result = (*func)(result, a->units[i]);
+template<class A> typename A::for_in_unit reduce(typename A::for_in_unit (*func)(typename A::for_in_unit, typename A::for_in_unit), A *iter, typename A::for_in_unit initial) {
+    typename A::for_in_unit result = initial;
+    typename A::for_in_loop __7 = iter->for_in_init();
+    while(iter->for_in_has_next(__7))
+        result = (*func)(result, iter->for_in_next(__7));
     return result;
 }
 
-template <class A> A reduce(A (*func)(A, A), pyseq<A> *a) {
-    unsigned int len = a->units.size();
-    if(!len)
+template<class A> typename A::for_in_unit reduce(typename A::for_in_unit (*func)(typename A::for_in_unit, typename A::for_in_unit), A *iter) {
+    typename A::for_in_unit result;
+    typename A::for_in_loop __7 = iter->for_in_init();
+    int first = 1;
+    while(iter->for_in_has_next(__7)) {
+        if(first) {
+            result = iter->for_in_next(__7);
+            first = 0;
+        } else
+            result = (*func)(result, iter->for_in_next(__7));
+    }
+    if(first) 
         throw new TypeError(new str("reduce() of empty sequence with no initial value"));
-    A result = a->units[0];
-    for(unsigned int i=1; i<len;i++)
-        result = (*func)(result, a->units[i]);
     return result;
 }
-
-str *reduce(str *(*func)(str *, str *), str *a);
-str *reduce(str *(*func)(str *, str *), str *a, str *initial);
 
 /* filter */
 
-template <class A, class B> list<A> *filter(B (*func)(A), pyiter<A> *a) {
-    __iter<A> *ita = a->__iter__();
-    list<A> *result = new list<A>();
-    A value;
-    try {
-        while(1) {
-            value = ita->next();
-            if(func) {
-                if(___bool((*func)(value)))
-                    result->append(value);
-            } else if(___bool(value))
-                result->append(value);
-        }
-    } catch(StopIteration *) {
-        return result;
+template <class A, class B> list<typename A::for_in_unit> *filter(B (*func)(typename A::for_in_unit), A *iter) {
+    list<typename A::for_in_unit> *result = new list<typename A::for_in_unit>();
+    typename A::for_in_unit e;
+    typename A::for_in_loop __3 = iter->for_in_init();
+    while(iter->for_in_has_next(__3)) {
+        e = iter->for_in_next(__3);
+        if(func) {
+            if(___bool((*func)(e)))
+                result->append(e);
+        } else if(___bool(e))
+            result->append(e);
     }
+    return result;
 }
 
 template <class A, class B> tuple2<A,A> *filter(B (*func)(A), tuple2<A,A> *a) {
-    return new tuple2<A,A>(filter(func, (pyiter<A> *)a)); /* XXX inefficient */
+    tuple2<A,A> *result = new tuple2<A,A>();
+    int size = len(a);
+    A e;
+    for(int i=0; i<size; i++) {
+        e = a->units[i];
+        if(func) {
+            if(___bool((*func)(e)))
+                result->units.push_back(e);
+        } else if(___bool(e))
+            result->units.push_back(e);
+    }
+    return result;
 }
+
 template <class B> str *filter(B (*func)(str *), str *a) {
-    return (new str())->join(filter(func, (pyiter<str *> *)a)); /* XXX inefficient */
+    str *result = new str();
+    int size = len(a);
+    char e;
+    str *c;
+    for(int i=0; i<size; i++) {
+        e = a->unit[i];
+        if(func) {
+            c = __char_cache[((unsigned char)e)];
+            if(___bool((*func)(c)))
+                result->unit.push_back(e);
+        } else 
+            result->unit.push_back(e);
+    }
+    return result;
 }
 
 template <class A> list<A> *filter(void *func, pyiter<A> *a) { return filter(((int(*)(A))(func)), a); }
+inline str *filter(void *func, str *a) { return filter(((int(*)(str *))(func)), a); }
 template <class A> tuple2<A,A> *filter(void *func, tuple2<A,A> *a) { return filter(((int(*)(A))(func)), a); }
-str *filter(void *func, str *a);
 
 /* pow */
 
@@ -4557,17 +4556,67 @@ complex *__power(complex *a, double b);
 
 template<class A> A __power(A a, A b);
 template<> inline double __power(double a, double b) { return pow(a,b); }
-template<> __ss_int __power(__ss_int a, __ss_int b);
+
+template<> inline __ss_int __power(__ss_int a, __ss_int b) {
+    switch(b) {
+        case 2: return a*a;
+        case 3: return a*a*a;
+        case 4: return a*a*a*a;
+        case 5: return a*a*a*a*a;
+        case 6: return a*a*a*a*a*a;
+        case 7: return a*a*a*a*a*a*a;
+        case 8: return a*a*a*a*a*a*a*a;
+        case 9: return a*a*a*a*a*a*a*a*a;
+        case 10: return a*a*a*a*a*a*a*a*a*a;
+    }
+    __ss_int res, tmp;
+
+    res = 1;
+    tmp = a;
+
+    while((b>0)) {
+        if ((b%2)) {
+            res = (res*tmp);
+        }
+        tmp = (tmp*tmp);
+        b = (b/2);
+    }
+    return res;
+}
 
 #ifdef __SS_LONG
-__ss_int __power(__ss_int a, __ss_int b, __ss_int c);
-#endif
-int __power(int a, int b, int c);
+inline __ss_int __power(__ss_int a, __ss_int b, __ss_int c) {
+    __ss_int res, tmp;
 
-inline __ss_int __power2(__ss_int a) { return a*a; }
-inline double __power2(double a) { return a*a; }
-inline __ss_int __power3(__ss_int a) { return a*a*a; }
-inline double __power3(double a) { return a*a*a; }
+    res = 1;
+    tmp = a;
+
+    while((b>0)) {
+        if ((b%2)) {
+            res = ((res*tmp)%c);
+        }
+        tmp = ((tmp*tmp)%c);
+        b = (b/2);
+    }
+    return res;
+}
+#endif
+
+inline int __power(int a, int b, int c) {
+    int res, tmp;
+
+    res = 1;
+    tmp = a;
+
+    while((b>0)) {
+        if ((b%2)) {
+            res = ((res*tmp)%c);
+        }
+        tmp = ((tmp*tmp)%c);
+        b = (b/2);
+    }
+    return res;
+}
 
 /* division */
 
@@ -4661,9 +4710,11 @@ tuple2<complex *, complex *> *divmod(complex *a, __ss_int b);
 namespace __dict__ {
     template<class A, class B> dict<A, B> *fromkeys(pyiter<A> *f, B b) {
         dict<A, B> *d = new dict<A, B>();
-        A e;
-        __iter<A> *__0;
-        FOR_IN(e, f, 0)
+        typename pyiter<A>::for_in_unit e;
+        typename pyiter<A>::for_in_loop __3;
+        int __2;
+        pyiter<A> *__1;
+        FOR_IN_NEW(e,f,1,2,3)
             d->__setitem__(e, b);
         END_FOR
         return d;
@@ -4758,9 +4809,12 @@ template<class A> __ss_bool all(A *iter) {
 
 int ord(str *c);
 
+static void __throw_chr_out_of_range() { /* improve inlining */
+    throw new ValueError(new str("chr() arg not in range(256)"));
+}
 inline str *chr(int i) {
     if(i < 0 || i > 255)
-        throw new ValueError(new str("chr() arg not in range(256)"));
+        __throw_chr_out_of_range();
     return __char_cache[i];
 }
 inline str *chr(__ss_bool b) { return chr(b.value); }
@@ -4796,6 +4850,58 @@ template<class T> complex::complex(T t) {
 #ifdef __SS_BIND
 PyObject *__ss__newobj__(PyObject *, PyObject *args, PyObject *kwargs);
 #endif
+
+/* slicing */
+
+static void inline slicenr(__ss_int x, __ss_int &l, __ss_int &u, __ss_int &s, __ss_int len) {
+    if(x&4) {
+        if (s == 0)
+            __throw_slice_step_zero();
+    } else
+        s = 1;
+
+    if (l>=len)
+        l = len;
+    else if (l<0) {
+        l = len+l;
+        if(l<0)
+            l = 0;
+    }
+    if (u>=len)
+        u = len;
+    else if (u<0) {
+        u = len+u;
+        if(u<0)
+            u = 0;
+    }
+
+    if(s<0) {
+        if (!(x&1))
+            l = len-1;
+        if (!(x&2))
+            u = -1;
+    }
+    else {
+        if (!(x&1))
+            l = 0;
+        if (!(x&2))
+            u = len;
+    }
+}
+
+/* file */
+
+template<class U> void *file::writelines(U *iter) {
+    __check_closed();
+    typename U::for_in_unit e;
+    typename U::for_in_loop __3;
+    int __2;
+    U *__1;
+    FOR_IN_NEW(e,iter,1,2,3)
+        write(e);
+    END_FOR
+    return NULL;
+}
 
 } // namespace __shedskin__
 #endif

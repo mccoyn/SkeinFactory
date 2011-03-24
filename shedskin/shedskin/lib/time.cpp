@@ -1,5 +1,6 @@
 #include "time.hpp"
 #include "time.h"
+#include <climits>
 
 namespace __time__ {
 
@@ -34,7 +35,7 @@ double clock()
        diff = (double)(now.QuadPart - ctrStart.QuadPart);
        return diff / divisor; */
 }
-#if defined( _MSC_VER )
+#ifdef WIN32
 __ss_int gettimeofday (struct timeval *tv, struct __ss_timezone *tz)
 {
    struct _timeb tb;
@@ -536,13 +537,11 @@ literal:
 			LEGAL_ALT(ALT_O);
 			continue;
 
-#ifndef TIME_MAX
-#define TIME_MAX	INT64_MAX
-#endif
 		case 's':	/* seconds since the epoch */
 			{
 				time_t sse = 0;
-				uint64_t rulim = TIME_MAX;
+				uint64_t rulim = LLONG_MAX;
+                struct tm *tm2;
 
 				if (*bp < '0' || *bp > '9') {
 					bp = NULL;
@@ -553,16 +552,18 @@ literal:
 					sse *= 10;
 					sse += *bp++ - '0';
 					rulim /= 10;
-				} while ((sse * 10 <= TIME_MAX) &&
+				} while ((sse * 10 <= LLONG_MAX) &&
 					 rulim && *bp >= '0' && *bp <= '9');
 
-				if (sse < 0 || (uint64_t)sse > TIME_MAX) {
+				if (sse < 0 || (uint64_t)sse > LLONG_MAX) {
 					bp = NULL;
 					continue;
 				}
 
-				if (localtime_s(tm, &sse) == NULL)
+				if ((tm2 = ::localtime(&sse)) == NULL)
 					bp = NULL;
+                else
+                    *tm = *tm2;
 			}
 			continue;
 

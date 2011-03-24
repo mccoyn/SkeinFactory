@@ -33,7 +33,9 @@ dict<void *, void *> *__ss_proxy;
 void __init() {
     GC_INIT();
 #ifdef __SS_BIND
+#ifndef __SS_PYPY
     Py_Initialize();
+#endif
     __ss_proxy = new dict<void *, void *>();
 #endif
 
@@ -64,7 +66,9 @@ void __init() {
 
     for(int i=0;i<256;i++) {
         char c = i;
-        __char_cache.push_back(new str(&c, 1));
+        str *charstr = new str(&c, 1);
+        charstr->charcache = 1;
+        __char_cache.push_back(charstr);
     }
 
     __join_cache = new list<str *>();
@@ -264,19 +268,19 @@ str *complex::__repr__() {
 
 /* str methods */
 
-str::str() : hash(-1) {
+str::str() : hash(-1), charcache(0) {
     __class__ = cl_str_;
 }
 
-str::str(const char *s) : unit(s), hash(-1) {
+str::str(const char *s) : unit(s), hash(-1), charcache(0) {
     __class__ = cl_str_;
 }
 
-str::str(__GC_STRING s) : unit(s), hash(-1) {
+str::str(__GC_STRING s) : unit(s), hash(-1), charcache(0) {
     __class__ = cl_str_;
 }
 
-str::str(const char *s, int size) : unit(s, size), hash(-1) { /* '\0' delimiter in C */
+str::str(const char *s, int size) : unit(s, size), hash(-1), charcache(0) { /* '\0' delimiter in C */
     __class__ = cl_str_;
 }
 
@@ -327,12 +331,12 @@ str *str::__join(pyseq<str *> *l, bool only_ones, int total) {
     int unitsize = unit.size();
     int elems = len(l);
     if(elems==1)
-        return l->units[0];
+        return l->__getitem__(0);
     str *s = new str();
     if(unitsize == 0 and only_ones) {
         s->unit.resize(total);
         for(int j=0; j<elems; j++)
-            s->unit[j] = l->units[j]->unit[0];
+            s->unit[j] = l->__getitem__(j)->unit[0];
     }
     else if(elems) {
         total += (elems-1)*unitsize;
@@ -340,7 +344,7 @@ str *str::__join(pyseq<str *> *l, bool only_ones, int total) {
         int tsz;
         int k = 0;
         for(int m = 0; m<elems; m++) {
-            str *t = l->units[m];
+            str *t = l->__getitem__(m);
             tsz = t->unit.size();
             if (tsz == 1)
                 s->unit[k] = t->unit[0];
@@ -733,7 +737,11 @@ __ss_int str::__cmp__(pyobj *p) {
 }
 
 __ss_bool str::__eq__(pyobj *p) {
-    return __mbool(unit == ((str *)p)->unit);
+    str *q = (str *)p;
+    int len = unit.size();
+    if(len != q->unit.size())
+        return __mbool(0);
+    return __mbool(strncmp(unit.data(), q->unit.data(), len) == 0);
 }
 
 str *str::__mul__(__ss_int n) { /* optimize */
@@ -959,17 +967,16 @@ str *__add_strs(int n, ...) {
 }
 
 str *str::__slice__(__ss_int x, __ss_int l, __ss_int u, __ss_int s) {
-    slicenr(x, l, u, s, __len__());
-
+    int len = unit.size();
+    slicenr(x, l, u, s, len);
     if(s == 1)
-        return new str(unit.substr(l, u-l));
+        return new str(unit.data()+l, u-l);
     else {
         __GC_STRING r;
         if(!(x&1) && !(x&2) && s==-1) {
-            int sz = unit.size();
-            r.resize(sz);
-            for(int i=0; i<sz; i++)
-                r[i] = unit[sz-i-1];
+            r.resize(len);
+            for(int i=0; i<len; i++)
+                r[i] = unit[len-i-1];
         }
         else if(s > 0)
             for(int i=l; i<u; i += s)
@@ -1058,7 +1065,7 @@ str *str::replace(str *a, str *b, int c) {
 
 str *str::upper() {
     if(unit.size() == 1)
-        return __char_cache[::toupper(unit[0])];
+        return __char_cache[((unsigned char)(::toupper(unit[0])))];
 
     str *toReturn = new str(*this);
     std::transform(toReturn->unit.begin(), toReturn->unit.end(), toReturn->unit.begin(), toupper);
@@ -1068,7 +1075,7 @@ str *str::upper() {
 
 str *str::lower() {
     if(unit.size() == 1)
-        return __char_cache[::tolower(unit[0])];
+        return __char_cache[((unsigned char)(::tolower(unit[0])))];
 
     str *toReturn = new str(*this);
     std::transform(toReturn->unit.begin(), toReturn->unit.end(), toReturn->unit.begin(), tolower);
@@ -1096,7 +1103,7 @@ str *str::capitalize() {
 }
 
 #ifdef __SS_BIND
-str::str(PyObject *p) : hash(0) {
+str::str(PyObject *p) : hash(-1) {
     if(!PyString_Check(p))
         throw new TypeError(new str("error in conversion to Shed Skin (string expected)"));
 
@@ -1154,7 +1161,7 @@ file::file(str *name, str *flags) {
     this->name = name;
     this->mode = flags;
     if (!f)
-        throw new IOError(__modct(new str("No such file or directory: '%s'"), 1, name));
+        throw new IOError(name);
     print_opt.endoffile = print_opt.space = 0;
     print_opt.lastchar = '\n';
 }
@@ -1216,16 +1223,9 @@ void *file::seek(__ss_int i, __ss_int w) {
     return NULL;
 }
 
-int file::tell() {
+__ss_int file::tell() {
     __check_closed();
     return ftell(f);
-}
-
-void *file::writelines(pyseq<str *> *l) {
-    __check_closed();
-    for(int i=0; i<len(l); i++)
-        write(l->__getitem__(i));
-    return NULL;
 }
 
 str *file::readline(int n) {
@@ -1344,7 +1344,7 @@ __ss_int __int(str *s, __ss_int base) {
 }
 
 template<> double __float(str *s) {
-    return atof((char *)(s->unit.c_str()));
+    return strtod(s->unit.c_str(), NULL);
 }
 
 __ss_bool isinstance(pyobj *p, class_ *c) {
@@ -1513,55 +1513,6 @@ template<> class_ *__type(double) { return cl_float_; }
 
 /* pow */
 
-template<> __ss_int __power(__ss_int a, __ss_int b) {
-    __ss_int res, tmp;
-
-    res = 1;
-    tmp = a;
-
-    while((b>0)) {
-        if ((b%2)) {
-            res = (res*tmp);
-        }
-        tmp = (tmp*tmp);
-        b = (b/2);
-    }
-    return res;
-}
-
-#ifdef __SS_LONG
-__ss_int __power(__ss_int a, __ss_int b, __ss_int c) {
-    __ss_int res, tmp;
-
-    res = 1;
-    tmp = a;
-
-    while((b>0)) {
-        if ((b%2)) {
-            res = ((res*tmp)%c);
-        }
-        tmp = ((tmp*tmp)%c);
-        b = (b/2);
-    }
-    return res;
-}
-#endif
-
-int __power(int a, int b, int c) {
-    int res, tmp;
-
-    res = 1;
-    tmp = a;
-
-    while((b>0)) {
-        if ((b%2)) {
-            res = ((res*tmp)%c);
-        }
-        tmp = ((tmp*tmp)%c);
-        b = (b/2);
-    }
-    return res;
-}
 
 complex *__power(complex *a, complex *b) {
     complex *r = new complex();
@@ -1600,48 +1551,11 @@ complex *__power(complex *a, double b) {
 tuple2<complex *, complex *> *divmod(complex *a, double b) { return a->__divmod__(b); }
 tuple2<complex *, complex *> *divmod(complex *a, __ss_int b) { return a->__divmod__(b); }
 
-/* slicing */
-
-void slicenr(__ss_int x, __ss_int &l, __ss_int &u, __ss_int &s, __ss_int len) {
-    if((x&4) && (s == 0))
-        throw new ValueError(new str("slice step cannot be zero"));
-
-    if (!(x&4))
-        s = 1;
-
-    if (l>=len)
-        l = len;
-    else if (l<0) {
-        l = len+l;
-        if(l<0)
-            l = 0;
-    }
-    if (u>=len)
-        u = len;
-    else if (u<0) {
-        u = len+u;
-        if(u<0)
-            u = 0;
-    }
-
-    if(s<0) {
-        if (!(x&1))
-            l = len-1;
-        if (!(x&2))
-            u = -1;
-    }
-    else {
-        if (!(x&1))
-            l = 0;
-        if (!(x&2))
-            u = len;
-    }
-}
 
 #ifdef __SS_LONG
 str *__str(__ss_int i, __ss_int base) {
     if(i<10 && i>=0 && base==10)
-        return __char_cache['0'+i];
+        return __char_cache[((unsigned char)('0'+i))];
     char buf[24];
     char *psz = buf+23;
 /*    if(i==INT_MIN)
@@ -1682,7 +1596,7 @@ str *__str(__ss_int i, __ss_int base) {
 
 str *__str(int i, int base) {
     if(base==10 && i<10 && i>=0)
-        return __char_cache['0'+i];
+        return __char_cache[((unsigned char)('0'+i))];
 
     char buf[12];
     char *psz = buf+11;
@@ -2134,23 +2048,7 @@ void print2(file *f, int comma, int n, ...) {
     p_opt->space = comma;
 }
 
-/* str, file iteration */
-
-__iter<str *> *str::__iter__() {
-    return new __striter(this);
-}
-
-__striter::__striter(str *p) {
-    this->p = p;
-    counter = 0;
-    size = p->unit.size();
-}
-
-str *__striter::next() {
-    if(counter == size)
-        throw new StopIteration();
-    return __char_cache[((unsigned char)(p->unit[counter++]))];
-}
+/* file iteration */
 
 __iter<str *> *file::__iter__() {
     return new __fileiter(this);
@@ -2172,13 +2070,6 @@ __fileiter::__fileiter(file *p) {
 str *__fileiter::next() {
     return p->next();
 }
-
-/* map, filter, reduce */
-
-str *filter(void *func, str *a) { return filter(((int(*)(str *))(func)), a); }
-
-str *reduce(str *(*func)(str *, str *), str *a) { return reduce(func, (pyiter<str *> *)a); }
-str *reduce(str *(*func)(str *, str *), str *a, str *initial) { return reduce(func, (pyiter<str *> *)a, initial); }
 
 /* glue */
 
@@ -2239,6 +2130,19 @@ str *OSError::__str__() {
 }
 str *OSError::__repr__() {
     return __add_strs(5, new str("OSError("), __str(__ss_errno), new str(", '"), strerror, new str("')"));
+}
+
+IOError::IOError(str *filename) {
+    this->filename = filename;
+    __ss_errno = errno;
+    message = new str("");
+    strerror = new str(::strerror(__ss_errno));
+}
+str *IOError::__str__() {
+    return __add_strs(7, new str("[Errno "), __str(__ss_errno), new str("] "), strerror, new str(": '"), filename, new str("'"));
+}
+str *IOError::__repr__() {
+    return __add_strs(5, new str("IOError("), __str(__ss_errno), new str(", '"), strerror, new str("')"));
 }
 
 template <> void *myallocate<__ss_int>(int n) { return GC_MALLOC_ATOMIC(n); }

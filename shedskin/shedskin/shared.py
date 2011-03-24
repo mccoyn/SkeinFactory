@@ -41,32 +41,26 @@ class globalInfo: # XXX add comments, split up
         self.sysdir = '/'.join(__file__.split(os.sep)[:-1])
         self.libdir = connect_paths(self.sysdir, 'lib')
         self.main_mod = 'test'
-        self.cpp_keywords = set(['asm', 'auto', 'bool', 'case', 'catch', 'char', 'const', 'const_cast', 'default', 'delete', 'do', 'double', 'dynamic_cast', 'enum', 'explicit', 'export', 'extern', 'false', 'float', 'friend', 'goto', 'inline', 'int', 'long', 'mutable', 'namespace', 'new', 'operator', 'private', 'protected', 'public', 'register', 'reinterpret_cast', 'short', 'signed', 'register', 'sizeof', 'static', 'static_cast', 'struct', 'switch', 'template', 'this', 'throw', 'true', 'typedef', 'typeid', 'typename', 'union', 'unsigned', 'using', 'virtual', 'void', 'volatile', 'wchar_t'])
-        self.cpp_keywords.update(['stdin', 'stdout', 'stderr', 'std', 'abstract', 'st_mtime', 'st_atime', 'st_ctime', 'errno', 'fileno', 'environ', 'rand', 'optind', 'opterr', 'optopt', 'optarg', 'exit'])
-        self.cpp_keywords.update(['ST_ATIME', 'ST_CTIME', 'ST_DEV', 'ST_GID', 'ST_INO', 'ST_MODE', 'ST_MTIME', 'ST_NLINK', 'ST_SIZE', 'ST_UID', 'S_ENFMT', 'S_IEXEC', 'S_IFBLK', 'S_IFCHR', 'S_IFDIR', 'S_IFIFO', 'S_IFLNK', 'S_IFREG', 'S_IFSOCK', 'S_IREAD', 'S_IRGRP', 'S_IROTH', 'S_IRUSR', 'S_IRWXG', 'S_IRWXO', 'S_IRWXU', 'S_ISGID', 'S_ISUID', 'S_ISVTX', 'S_IWGRP', 'S_IWOTH', 'S_IWRITE', 'S_IWUSR', 'S_IXGRP', 'S_IXOTH', 'S_IXUSR', 'S_IMODE', 'S_IFMT', 'S_ISDIR', 'S_ISCHR', 'S_ISBLK', 'S_ISREG', 'S_ISFIFO', 'S_ISLNK', 'S_ISSOCK'])
-        self.cpp_keywords.update(['F_OK', 'R_OK', 'W_OK', 'X_OK', 'NGROUPS_MAX', 'TMP_MAX', 'WCONTINUED', 'WNOHANG', 'WUNTRACED', 'O_RDONLY', 'O_WRONLY', 'O_RDWR', 'O_NDELAY', 'O_NONBLOCK', 'O_APPEND', 'O_DSYNC', 'O_RSYNC', 'O_SYNC', 'O_NOCTTY', 'O_CREAT', 'O_EXCL', 'O_TRUNC', 'O_BINARY', 'O_TEXT', 'O_LARGEFILE', 'O_SHLOCK', 'O_EXLOCK', 'O_NOINHERIT', '_O_SHORT_LIVED', 'O_TEMPORARY', 'O_RANDOM', 'O_SEQUENTIAL', 'O_ASYNC', 'O_DIRECT', 'O_DIRECTORY', 'O_NOFOLLOW', 'O_NOATIME', 'EX_OK', 'EX_USAGE', 'EX_DATAERR', 'EX_NOINPUT', 'EX_NOUSER', 'EX_NOHOST', 'EX_UNAVAILABLE', 'EX_SOFTWARE', 'EX_OSERR', 'EX_OSFILE', 'EX_CANTCREAT', 'EX_IOERR', 'EX_TEMPFAIL', 'EX_PROTOCOL', 'EX_NOPERM', 'EX_CONFIG', 'EX_NOTFOUND', 'P_WAIT', 'P_NOWAIT', 'P_OVERLAY', 'P_NOWAITO', 'P_DETACH', 'SEEK_CUR', 'SEEK_SET', 'SEEK_END'])
-        self.cpp_keywords.update(['SIGABRT', 'SIGALRM', 'SIGBUS', 'SIGCHLD', 'SIGCLD', 'SIGCONT', 'SIGFPE', 'SIGHUP', 'SIGILL', 'SIGINT', 'SIGIO', 'SIGIOT', 'SIGKILL', 'SIGPIPE', 'SIGPOLL', 'SIGPROF', 'SIGPWR', 'SIGQUIT', 'SIGRTMAX', 'SIGRTMIN', 'SIGSEGV', 'SIGSTOP', 'SIGSYS', 'SIGTERM', 'SIGTRAP', 'SIGTSTP', 'SIGTTIN', 'SIGTTOU', 'SIGURG', 'SIGUSR1', 'SIGUSR2', 'SIGVTALRM', 'SIGWINCH', 'SIGXCPU', 'SIGXFSZ', 'SIG_DFL', 'SIG_IGN'])
-        self.cpp_keywords.update(['AF_INET', 'AF_INET6', 'AI_PASSIVE', 'AF_UNIX', 'SOCK_STREAM', 'SOCK_DGRAM', 'SOL_IP', 'SOL_SOCKET', 'IP_TOS', 'IP_TTL', 'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR', 'INADDR_ANY', 'INADDR_LOOPBACK', 'INADDR_NONE', 'INADDR_BROADCAST', 'SO_REUSEADDR', 'SOMAXCONN', 'htonl', 'htons', 'ntohl', 'ntohs'])
-        self.cpp_keywords.update(['makedev', 'major', 'minor'])
-        self.cpp_keywords.update(['main'])
-        self.cpp_keywords.update(['sun'])
-        self.cpp_keywords.update(['UNICODE', 'MAXINT'])
-        self.cpp_keywords.update(['WITH', 'WITH_VAR', 'END_WITH', 'FOR_IN', 'FOR_IN_T2', 'FOR_IN_ZIP', 'FOR_IN_ENUM', 'FOR_IN_NEW', 'FOR_IN_SEQ', 'FAST_FOR', 'END_FOR'])
+        illegal_file = file(os.path.join(self.sysdir, 'illegal'))
+        self.cpp_keywords = set([line.strip() for line in illegal_file])
         self.ss_prefix = '__ss_'
         self.list_types = {}
         self.loopstack = [] # track nested loops
         self.comments = {}
         self.import_order = 0 # module import order
+        self.from_mod = {}
         self.class_def_order = 0
         # command-line options
         self.wrap_around_check = True
         self.bounds_checking = True
         self.fast_random = False
+        self.assertions = True
         self.extension_module = False
         self.longlong = False
         self.flags = None
         self.annotation = False
         self.msvc = False
+        self.pypy = False
         self.output_dir= ''
         self.max_iterations = 30
         self.makefile_name = 'Makefile' # XXX other default?
@@ -113,6 +107,20 @@ class variable:
     def types(self):
         return inode(self).types()
 
+    def masks_global(self):
+        if isinstance(self.parent, class_):
+            mv = self.parent.mv
+            if not mv.module.builtin and mv.module.in_globals(self.name):
+                return True
+        return False
+
+    def cpp_name(self):
+        name = self.name
+        if self.masks_global() or \
+           name in [cl.ident for cl in getgx().allclasses]:
+            name = '_'+name # XXX ss prefix
+        return nokeywords(name)
+
     def __repr__(self):
         if self.parent: return repr((self.parent, self.name))
         return self.name
@@ -155,7 +163,6 @@ class function:
         if node and getmv().module.ident != 'builtin':
             getgx().allfuncs.add(self)
 
-        self.parent_constr = None
         self.retvars = []
         self.invisible = False
         self.fakeret = None
@@ -256,6 +263,16 @@ class module:
 
     def full_path(self):
         return '__'+'__::__'.join(self.mod_path)+'__'
+
+    def include_path(self):
+        if self.filename.endswith('__init__.py'):
+            return '/'.join(self.mod_path)+'/__init__.hpp'
+        else:
+            return '/'.join(self.mod_path)+'.hpp'
+
+    def in_globals(self, ident):
+        mv = self.mv
+        return ident in mv.globals or ident in mv.funcs or ident in mv.ext_funcs or ident in mv.classes or ident in mv.ext_classes
 
     def __repr__(self):
         return 'module '+self.ident
@@ -444,10 +461,6 @@ def defclass(name):
     if name in getmv().classes: return getmv().classes[name]
     else: return getmv().ext_classes[name]
 
-def deffunc(name):
-    if name in getmv().funcs: return getmv().funcs[name]
-    else: return getmv().ext_funcs[name]
-
 class fakeGetattr(Getattr): pass # XXX ugly
 class fakeGetattr2(Getattr): pass
 class fakeGetattr3(Getattr): pass
@@ -480,13 +493,13 @@ def lookupclass(node, mv): # XXX lookupvar first?
         else: return None
     elif isinstance(node, Getattr):
         module = lookupmodule(node.expr, mv)
-        if module:
-            if hasattr(module, 'classes'):
-                if node.attrname in module.classes:
-                    return module.classes[node.attrname]
-            else:
-                error('module missing classes attribute:  %s  Class:%s' % (module, node.attrname), node, warning=True)
-    return None
+        if module and node.attrname in module.mv.classes:
+            return module.mv.classes[node.attrname]
+
+def lookupvariable(node, gv):
+    lcp = lowest_common_parents(polymorphic_t(gv.mergeinh[node.expr]))
+    if len(lcp) == 1 and isinstance(lcp[0], class_) and node.attrname in lcp[0].vars and not node.attrname in lcp[0].funcs:
+        return lcp[0].vars[node.attrname]
 
 def lookupfunc(node, mv): # XXX lookupvar first?
     if isinstance(node, Name):
@@ -495,9 +508,8 @@ def lookupfunc(node, mv): # XXX lookupvar first?
         else: return None
     elif isinstance(node, Getattr):
         module = lookupmodule(node.expr, mv)
-        if module and node.attrname in module.funcs:
-            return module.funcs[node.attrname]
-    return None
+        if module and node.attrname in module.mv.funcs:
+            return module.mv.funcs[node.attrname]
 
 # --- recursively determine (lvalue, rvalue) pairs in assignment expressions
 
@@ -530,29 +542,48 @@ def augmsg(node, msg):
     if hasattr(node, 'augment'): return '__i'+msg+'__'
     return '__'+msg+'__'
 
-errormsgs = set()
+ERRORS = set()
 
-def error(msg, node=None, warning=False, fatal=None):
-    if isinstance(node, Function):
-        return
+def error(msg, node=None, warning=False, mv=None, fatal=None):
     if warning: 
-        result = '*WARNING*'
+        kind = '*WARNING*'
     else: 
-        result = '*ERROR*'
-    if node and (node,0,0) in getgx().cnode: 
-        result += ' '+inode(node).mv.module.filename
-        if hasattr(node, 'lineno') and node.lineno is not None:
-            result += ':'+str(node.lineno)
-    result += ': '+msg
-    if result not in errormsgs:
-        errormsgs.add(result)
-        print result
+        kind = '*ERROR*'
+    if not mv and node and (node,0,0) in getgx().cnode:
+        mv = inode(node).mv
+    filename = lineno = None
+    if mv:
+        filename = mv.module.filename
+        if node and hasattr(node, 'lineno'):
+            lineno = node.lineno
+    result = (kind, filename, lineno, msg)
+    if result not in ERRORS:
+        ERRORS.add(result)
+    if not warning:
+        print format_error(result)
+        sys.exit(1)
+
     if fatal is None:
         if not warning:
+			print format_error(result)
             sys.exit(1)
     else:
         if fatal is True:
+			print format_error(result)
             sys.exit(1)
+
+def format_error(error):
+    (kind, filename, lineno, msg) = error
+    result = kind
+    if filename:
+        result += ' %s:' % filename
+        if lineno is not None:
+            result += '%d:' % lineno
+    return result+' '+msg
+
+def print_errors():
+    for error in sorted(ERRORS):
+        print format_error(error)
 
 # --- merge constraint network along combination of given dimensions (dcpa, cpa, inheritance)
 # e.g. for annotation we merge everything; for code generation, we might want to create specialized code
@@ -606,8 +637,11 @@ def analyze_callfunc(node, node2=None, merge=None): # XXX generate target list X
     constructor, direct_call = None, None
     mv = inode(node).mv
  
-    # anon func call
+    # anon func call XXX refactor as __call__ method call below
     anon_func = is_anon_func(node, node2, merge)
+    if is_callable(node, node2, merge):
+        method_call, objexpr, ident = True, node.node, '__call__'
+        return objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func
 
     # method call
     if isinstance(node.node, Getattr):
@@ -676,7 +710,7 @@ def nrargs(node):
 
 # --- return list of potential call targets
 def callfunc_targets(node, merge):
-    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(node)
+    objexpr, ident, direct_call, method_call, constructor, parent_constr, anon_func = analyze_callfunc(node, merge=merge)
     funcs = []
 
     if node.node in merge and [t for t in merge[node.node] if isinstance(t[0], function)]: # anonymous function call
@@ -763,19 +797,25 @@ def analyze_args(expr, func, node=None, skip_defaults=False, merge=None):
     return actuals, formals, defaults, extra, error
 
 def is_anon_func(expr, node, merge=None):
+    types = get_types(expr, node, merge)
+    return bool([t for t in types if isinstance(t[0], function)])
+
+def is_callable(expr, node, merge=None):
+    types = get_types(expr, node, merge)
+    return bool([t for t in types if isinstance(t[0], class_) and '__call__' in t[0].funcs])
+    
+def get_types(expr, node, merge):
     types = set()
-    if node:
+    if merge:
+        if expr.node in merge:
+            types = merge[expr.node]
+    elif node:
         node = (expr.node, node.dcpa, node.cpa)
         if node in getgx().cnode:
             types = getgx().cnode[node].types()
-    elif merge:
-        if expr.node in merge:
-            types = merge[expr.node]
-    else:
-        return False
-    return bool([t for t in types if isinstance(t[0], function)])
+    return types
 
-def connect_actual_formal(expr, func, parent_constr=False, check_error=False, merge=None):
+def connect_actual_formal(expr, func, parent_constr=False, merge=None):
     pairs = []
 
     actuals = [a for a in expr.args if not isinstance(a, Keyword)]
@@ -828,3 +868,65 @@ def const_literal(node):
 
 def property_setter(dec):
     return isinstance(dec, Getattr) and isinstance(dec.expr, Name) and dec.attrname == 'setter'
+
+# --- determine lowest common parent classes (inclusive)
+def lowest_common_parents(classes):
+    lcp = set(classes)
+
+    changed = 1
+    while changed:
+        changed = 0
+        for cl in getgx().allclasses:
+             desc_in_classes = [[c for c in ch.descendants(inclusive=True) if c in lcp] for ch in cl.children]
+             if len([d for d in desc_in_classes if d]) > 1:
+                 for d in desc_in_classes:
+                     lcp.difference_update(d)
+                 lcp.add(cl)
+                 changed = 1
+
+    for cl in lcp.copy():
+        if isinstance(cl, class_): # XXX
+            lcp.difference_update(cl.descendants())
+
+    result = [] # XXX there shouldn't be doubles
+    for cl in lcp:
+        if cl.ident not in [r.ident for r in result]:
+            result.append(cl)
+    return result
+
+def hmcpa(func):
+    got_one = 0
+    for dcpa, cpas in func.cp.items():
+        if len(cpas) > 1: return len(cpas)
+        if len(cpas) == 1: got_one = 1
+    return got_one
+
+def polymorphic_cl(classes):
+    cls = set([cl for cl in classes])
+    if len(cls) > 1 and defclass('none') in cls and not defclass('int_') in cls and not defclass('float_') in cls and not defclass('bool_') in cls:
+        cls.remove(defclass('none'))
+    if defclass('tuple2') in cls and defclass('tuple') in cls: # XXX hmm
+        cls.remove(defclass('tuple2'))
+    return cls
+
+def polymorphic_t(types):
+    return polymorphic_cl([t[0] for t in types])
+
+# --- number classes with low and high numbers, to enable constant-time subclass check
+def number_classes():
+    counter = 0
+    for cl in getgx().allclasses:
+        if not cl.bases:
+            counter = number_class_rec(cl, counter+1)
+
+def number_class_rec(cl, counter):
+    cl.low = counter
+    for child in cl.children:
+        counter = number_class_rec(child, counter+1)
+    cl.high = counter
+    return counter
+
+def nokeywords(name):
+    if name in getgx().cpp_keywords:
+        return getgx().ss_prefix+name
+    return name

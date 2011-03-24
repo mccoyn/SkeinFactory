@@ -7,7 +7,7 @@ Copyright 2005-2009 Mark Dufour; License GNU GPL version 3 (See LICENSE)
 import sys, getopt, os.path
 from distutils import sysconfig
 
-import infer, cpp, annotate
+import infer, cpp, annotate, shared
 from shared import newgx, setgx, getgx
 
 def usage():
@@ -18,8 +18,10 @@ def usage():
  -d --dir               Specify alternate directory for output files
  -e --extmod            Generate extension module
  -f --flags             Provide alternate Makefile flags
- -l --long              Use long long integers
+ -l --long              Use long long ("64-bit") integers
  -m --makefile          Specify alternate Makefile name
+ -o --noassert          Disable assert statements
+ -p --pypy              Make extension module PyPy-compatible
  -r --random            Use fast random number generator (rand())
  -s --strhash           Use fast string hashing algorithm (murmur)
  -v --msvc              Output MSVC-style Makefile
@@ -28,16 +30,16 @@ def usage():
 """
     sys.exit(1)
 
-def main():
+def start():
     setgx(newgx())
 
-    print '*** SHED SKIN Python-to-C++ Compiler 0.6 ***'
+    print '*** SHED SKIN Python-to-C++ Compiler 0.7.1 ***'
     print 'Copyright 2005-2010 Mark Dufour; License GNU GPL version 3 (See LICENSE)'
     print
 
     # --- some checks
     major, minor = sys.version_info[:2]
-    if (major, minor) not in [(2, 4), (2, 5), (2, 6)]:
+    if (major, minor) not in [(2, 4), (2, 5), (2, 6), (2, 7)]:
         print '*ERROR* Shed Skin is not compatible with this version of Python'
         sys.exit(1)
     if sys.platform == 'win32' and os.path.isdir('c:/mingw'):
@@ -46,7 +48,7 @@ def main():
 
     # --- command-line options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'vbchef:wad:m:rls', ['help', 'extmod', 'nobounds', 'nowrap', 'flags=', 'dir=', 'makefile=', 'random', 'long', 'msvc', 'ann', 'strhash', 'iterations='])
+        opts, args = getopt.getopt(sys.argv[1:], 'vbchef:wad:m:rolsp', ['help', 'extmod', 'nobounds', 'nowrap', 'flags=', 'dir=', 'makefile=', 'random', 'noassert', 'long', 'msvc', 'ann', 'strhash', 'iterations=', 'pypy'])
     except getopt.GetoptError:
         usage()
 
@@ -59,6 +61,8 @@ def main():
         if o in ['-l', '--long']: getgx().longlong = True
         if o in ['-w', '--nowrap']: getgx().wrap_around_check = False
         if o in ['-r', '--random']: getgx().fast_random = True
+        if o in ['-o', '--noassert']: getgx().assertions = False
+        if o in ['-p', '--pypy']: getgx().pypy = True
         if o in ['-m', '--makefile']: getgx().makefile_name = a
         if o in ['-s', '--strhash']: getgx().fast_hash = True
         if o in ['-v', '--msvc']: getgx().msvc = True
@@ -84,6 +88,13 @@ def main():
     infer.analyze(name)
     annotate.annotate()
     cpp.generate_code()
+    shared.print_errors()
+
+def main():
+    try:
+        start()
+    except KeyboardInterrupt:
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
