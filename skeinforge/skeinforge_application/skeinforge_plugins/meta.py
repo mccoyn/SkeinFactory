@@ -35,7 +35,7 @@ class MetaPlugin (settings.Plugin):
 
 def main():
 	"Display the meta dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor( MetaPlugin.getNewRepository() )
 
 if __name__ == "__main__":
 	main()

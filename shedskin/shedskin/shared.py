@@ -551,7 +551,7 @@ def error(msg, node=None, warning=False, fatal=None):
         if not warning:
             sys.exit(1)
     else:
-        if fatal:
+        if fatal is True:
             sys.exit(1)
 
 # --- merge constraint network along combination of given dimensions (dcpa, cpa, inheritance)

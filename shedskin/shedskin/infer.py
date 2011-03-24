@@ -374,6 +374,9 @@ def cpa(callnode, worklist):
 
         # connect call and return expressions
         if func.retnode and not constructor:
+            if (func.retnode.thing, dcpa, cpa) not in getgx().cnode:
+                error("KeyError: retnode '%s' not in cnode" % repr(func.retnode.thing), callnode, fatal = False)
+                continue
             retnode = getgx().cnode[func.retnode.thing, dcpa, cpa]
             addconstraint(retnode, callnode, worklist)
 
@@ -417,11 +420,14 @@ def actuals_formals(expr, func, node, dcpa, cpa, types, worklist):
         actuals = len(formals)*[expr.star_args]
         types = len(formals)*types
     else:
-        actuals, formals, _, varargs, error = analyze_args(expr, func, node)
-        if error:
+        actuals, formals, _, varargs, argsError = analyze_args(expr, func, node)
+        if argsError:
             return
 
     for (actual, formal, formaltype) in zip(actuals, formals, types):
+        if (func.vars[formal], dcpa, cpa) not in getgx().cnode:
+            error("KeyError: formal '%s' not in cnode" % repr(func.vars[formal]), node, fatal = False)
+            continue
         formalnode = getgx().cnode[func.vars[formal], dcpa, cpa]
 
         if formaltype[1] != 0: # ifa: remember dataflow information for non-simple types
@@ -914,7 +920,7 @@ def analyze(source, testing=False):
     for cl in getgx().allclasses:
         for name in cl.vars:
             if name in cl.parent.vars and not name.startswith('__'):
-                error("instance variable '%s' of class '%s' shadows class variable" % (name, cl.ident))
+                error("instance variable '%s' of class '%s' shadows class variable" % (name, cl.ident), fatal = False)
 
     getgx().merged_all = merged(getgx().types) #, inheritance=True)
     getgx().merge_dcpa = merged(getgx().types, dcpa=True)

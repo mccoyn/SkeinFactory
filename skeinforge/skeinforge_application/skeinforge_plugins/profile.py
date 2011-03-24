@@ -127,7 +127,7 @@ class ProfileMenuSaveListener:
 
 def main():
 	"Display the profile dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor( skeinforge_profile.getNewRepository() )
 
 if __name__ == "__main__":
 	main()

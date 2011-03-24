@@ -83,7 +83,7 @@ class HelpPlugin (settings.Plugin):
 
 def main():
 	"Display the help dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor( HelpPlugin.getNewRepository() )
 
 if __name__ == "__main__":
 	main()

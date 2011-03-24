@@ -363,11 +363,11 @@ def openWebPage( webPagePath ):
 		webPagePath = archive.getDocumentationPath('redirect.html')
 		gcodec.writeFileText( webPagePath, redirectionText )
 	webPagePath = '"%s"' % webPagePath # " to get around space in url bug
-	try:
-		os.startfile( webPagePath )#this is available on some python environments, but not all
-		return
-	except:
-		pass
+	#try:
+	#	os.startfile( webPagePath )#this is available on some python environments, but not all
+	#	return
+	#except:
+	#	pass
 	webbrowserName = webbrowser.get().name
 	if webbrowserName == '':
 		print('Skeinforge was not able to open the documentation file in a web browser.  To see the documentation, open the following file in a web browser:')
